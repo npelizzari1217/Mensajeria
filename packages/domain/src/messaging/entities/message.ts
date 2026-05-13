@@ -4,7 +4,7 @@ import { Subject } from '../../shared/value-objects/subject';
 import { MessageBody } from '../../shared/value-objects/message-body';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Result, ok, err } from '../../shared/result';
-import { MessageRecipient, MessageRecipientProps } from './message-recipient';
+import { MessageRecipient } from './message-recipient';
 
 /**
  * Message entity — aggregate root for the Messaging bounded context.

@@ -1,8 +1,6 @@
 import { Subject } from '../../shared/value-objects/subject';
 import { ThreadId } from '../value-objects/thread-id';
 import { Timestamp } from '../../shared/value-objects/timestamp';
-import { Result, ok, err } from '../../shared/result';
-import { Message } from './message';
 
 /**
  * ConversationThread entity.

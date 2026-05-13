@@ -42,11 +42,12 @@ export { MessageSent } from './messaging/events/message-sent';
 export { MessageRead } from './messaging/events/message-read';
 
 // Messaging Repositories
-export { MessageRepository, PaginationParams, PaginatedResult } from './messaging/repositories/message-repository';
+export { MessageRepository } from './messaging/repositories/message-repository';
+export type { PaginationParams, PaginatedResult } from './messaging/repositories/message-repository';
 export { AttachmentRepository } from './messaging/repositories/attachment-repository';
 
 // Messaging Ports
-export { IFileStorage } from './messaging/ports/file-storage';
+export type { IFileStorage } from './messaging/ports/file-storage';
 
 // Messaging Errors
 export { MessageNotFoundError, UnauthorizedMessageAccessError } from './messaging/errors/message.errors';
