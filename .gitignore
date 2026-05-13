@@ -1,19 +1,22 @@
-# Dependencies
+# Dependencias
 node_modules/
+.pnp
+.pnp.js
 .pnpm-store/
 
 # Build output
 dist/
 build/
 .next/
+out/
 
 # Turborepo
 .turbo/
 
-# Environment
+# Variables de Entorno (¡CRÍTICO! No las subas)
 .env
 .env.local
-.env.*.local
+.env.production
 
 # Logs
 *.log
@@ -38,6 +41,10 @@ uploads/
 
 # Test coverage
 coverage/
+
+# OpenCode / AI
+.engram/
+opencode_state.json
 
 # Prisma (generated)
 api/prisma/generated/
