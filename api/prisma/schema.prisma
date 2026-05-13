@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  TECNICO
+  USUARIO
+}
+
+enum MessageStatus {
+  PENDING
+  DELIVERED
+  READ
+}
+
+model User {
+  id        String   @id @default(uuid()) @map("user_id")
+  email     String   @unique
+  password  String   @map("password_hash")
+  name      String   @map("display_name")
+  role      Role     @default(USUARIO)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sentMessages      Message[]          @relation("sender")
+  messageRecipients MessageRecipient[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+model Message {
+  id              String              @id @default(uuid()) @map("message_id")
+  senderId        String              @map("sender_id")
+  sender          User                @relation("sender", fields: [senderId], references: [id])
+  threadId        String?             @map("thread_id")
+  thread          ConversationThread? @relation(fields: [threadId], references: [id])
+  parentMessageId String?             @map("parent_message_id")
+  parentMessage   Message?            @relation("MessageReplies", fields: [parentMessageId], references: [id])
+  replies         Message[]           @relation("MessageReplies")
+  subject         String
+  body            String
+  sentAt          DateTime            @default(now()) @map("sent_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+
+  recipients  MessageRecipient[]
+  attachments Attachment[]
+
+  @@index([senderId])
+  @@index([threadId])
+  @@map("messages")
+}
+
+model MessageRecipient {
+  id          String        @id @default(uuid())
+  messageId   String        @map("message_id")
+  message     Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  recipientId String        @map("recipient_id")
+  recipient   User          @relation(fields: [recipientId], references: [id])
+  status      MessageStatus @default(PENDING)
+  readAt      DateTime?     @map("read_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@unique([messageId, recipientId])
+  @@index([recipientId, status])
+  @@map("message_recipients")
+}
+
+model Attachment {
+  id          String   @id @default(uuid()) @map("attachment_id")
+  filename    String   @map("file_name")
+  mimeType    String   @map("mime_type")
+  size        Int
+  storagePath String   @map("storage_path")
+  messageId   String   @map("message_id")
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  @@index([messageId])
+  @@map("attachments")
+}
+
+model ConversationThread {
+  id           String   @id @default(uuid()) @map("thread_id")
+  subject      String
+  messageCount Int      @default(0) @map("message_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  messages Message[]
+
+  @@map("conversation_threads")
+}
