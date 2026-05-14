@@ -243,9 +243,11 @@ export class PrismaMessageRepository implements MessageRepository {
     );
     const total = Number(countRows[0]?.total ?? 0);
 
-    // Get paginated matching IDs ordered by created_at DESC
+    // Get paginated matching IDs ordered by relevance (ts_rank), then by creation date
     const rows = await this.prisma.$queryRawUnsafe<Array<{ message_id: string }>>(
-      `SELECT m.message_id FROM messages m WHERE ${whereClause} ORDER BY m.created_at DESC LIMIT $3 OFFSET $4`,
+      `SELECT m.message_id FROM messages m WHERE ${whereClause}
+       ORDER BY ts_rank(to_tsvector('spanish', coalesce(m.subject, '') || ' ' || coalesce(m.body, '')), plainto_tsquery('spanish', $1)) DESC, m.created_at DESC
+       LIMIT $3 OFFSET $4`,
       query,
       userId.get(),
       pageSize,

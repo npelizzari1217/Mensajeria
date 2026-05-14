@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { DomainError } from '@mensajeria/domain';
+import { DomainError, ValidationError } from '@mensajeria/domain';
 
 /**
  * ExceptionFilter — maps domain errors and HTTP exceptions to
@@ -73,6 +73,8 @@ export class AppExceptionFilter implements ExceptionFilter {
         return HttpStatus.UNAUTHORIZED;
       case 'UNAUTHORIZED_MESSAGE_ACCESS':
         return HttpStatus.FORBIDDEN;
+      case 'VALIDATION_ERROR':
+        return HttpStatus.UNPROCESSABLE_ENTITY;
       default:
         return HttpStatus.BAD_REQUEST;
     }

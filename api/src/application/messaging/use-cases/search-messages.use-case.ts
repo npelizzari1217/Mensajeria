@@ -53,9 +53,13 @@ export class SearchMessagesUseCase {
     }
     const userId = userIdResult.unwrap();
 
-    // 3. Normalize pagination
+    // 3. Validate pagination
     const page = Math.max(1, dto.page || 1);
-    const pageSize = Math.min(100, Math.max(1, dto.pageSize || 20));
+    const rawPageSize = dto.pageSize || 20;
+    if (rawPageSize > 100) {
+      return err(new ValidationError('pageSize must not exceed 100'));
+    }
+    const pageSize = Math.max(1, rawPageSize);
 
     // 4. Search
     const result = await this.messageRepo.search(userId, trimmedQuery, {
