@@ -18,6 +18,7 @@ export default function Layout() {
     { to: '/inbox', label: 'Recibidos' },
     { to: '/sent', label: 'Enviados' },
     { to: '/compose', label: 'Nuevo Mensaje' },
+    { to: '/search', label: 'Buscar' },
   ];
 
   return (

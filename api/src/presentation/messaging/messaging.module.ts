@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MessagingController } from './messaging.controller';
+import { MessagingGateway } from './messaging.gateway';
 import { SendMessageUseCase } from '../../application/messaging/use-cases/send-message.use-case';
 import { GetInboxUseCase } from '../../application/messaging/use-cases/get-inbox.use-case';
 import { GetSentUseCase } from '../../application/messaging/use-cases/get-sent.use-case';
@@ -70,6 +71,9 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
       useExisting: PrismaMessageRepository,
     },
 
+    // ── WebSocket Gateway ─────────────────────────────────────────
+    MessagingGateway,
+
     // ── Infrastructure: Auth ──────────────────────────────────────
     AuthGuard,
     JwtAuthPort,
@@ -80,6 +84,7 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
   ],
   exports: [
     'MessageRepository',
+    MessagingGateway,
   ],
 })
 export class MessagingModule {}

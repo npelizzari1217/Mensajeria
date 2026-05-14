@@ -39,13 +39,13 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: Core Implementation — WebSockets (API)
 
-- [ ] 3.1 Add `@nestjs/websockets`, `@nestjs/platform-socket.io`, `socket.io` to `api/package.json`
-- [ ] 3.2 Create `ws-auth.middleware.ts` — extract JWT from handshake, verify, attach userId to socket
-- [ ] 3.3 Create `MessagingGateway` — namespace `/messages`, auth middleware, rooms by `user:{userId}`
-- [ ] 3.4 Create `WebSocketModule` — exports `MessagingGateway`
-- [ ] 3.5 Create `WebSocketHandler` — implements EventHandler, bridges `MessageSent`/`MessageRead` to gateway emits
-- [ ] 3.6 Wire `WebSocketHandler` subscription in `EventBusModule.onModuleInit()`
-- [ ] 3.7 Import `WebSocketModule` in `AppModule`, provide `SearchMessagesUseCase` in `MessagingModule`
+- [x] 3.1 Add `@nestjs/websockets`, `@nestjs/platform-socket.io`, `socket.io` to `api/package.json`
+- [x] 3.2 Create `ws-auth.middleware.ts` — extract JWT from handshake, verify, attach userId to socket (incorporated inline in gateway's handleConnection)
+- [x] 3.3 Create `MessagingGateway` — namespace `/messages`, auth inline in handleConnection, rooms by `user:{userId}`
+- [x] 3.4 Create `MessagingGateway` in `presentation/messaging/`, added to `MessagingModule` providers + exports (no separate WebSocketModule)
+- [x] 3.5 Create `WebSocketHandler` — bridges `MessageSent`/`MessageRead` to gateway emits
+- [x] 3.6 Wire `WebSocketHandler` subscription in `EventBusModule.onModuleInit()`
+- [x] 3.7 `MessagingGateway` exported from `MessagingModule`, `EventBusModule` imports `MessagingModule`
 
 ## Phase 4: Web Integration
 
@@ -60,6 +60,6 @@ Chain strategy: stacked-to-main
 - [x] 5.1 Unit test: `ReplyToMessageUseCase` publishes event after fix (mock EventBus, verify publish called)
 - [x] 5.2 Unit test: `SearchMessagesUseCase` validates query param, delegates to repo
 - [ ] 5.3 Integration test: `PrismaMessageRepository.search()` with tsvector ranking
-- [ ] 5.4 Unit test: `MessagingGateway` auth — JWT handshake grants access, invalid JWT rejected
-- [ ] 5.5 Unit test: `WebSocketHandler` — mock gateway, emit domain events, verify gateway emit calls
+- [x] 5.4 Unit test: `MessagingGateway` auth — JWT handshake grants access, invalid JWT rejected (10 tests)
+- [x] 5.5 Unit test: `WebSocketHandler` — mock gateway, emit domain events, verify gateway emit calls (7 tests)
 - [ ] 5.6 E2E test: send message → WS `message:new` → search for it

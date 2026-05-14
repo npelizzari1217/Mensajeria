@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient, { getErrorMessage } from '../api/client';
+import { useSocket } from '../contexts/socket.context';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function formatDate(iso: string): string {
 
 export default function InboxPage() {
   const navigate = useNavigate();
+  const { socket } = useSocket();
 
   const [messages, setMessages] = useState<MessageListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -99,6 +101,22 @@ export default function InboxPage() {
   useEffect(() => {
     setPage(1);
   }, [filter]);
+
+  // Listen for real-time message:new events via WebSocket
+  // When a new message arrives, silently re-fetch the inbox to
+  // show it with full data (sender name, subject, etc.).
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = () => {
+      fetchInbox();
+    };
+
+    socket.on('message:new', handleNewMessage);
+    return () => {
+      socket.off('message:new', handleNewMessage);
+    };
+  }, [socket, fetchInbox]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 

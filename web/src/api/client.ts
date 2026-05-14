@@ -102,4 +102,35 @@ export function getErrorMessage(error: unknown): string {
   return 'Error desconocido';
 }
 
+// ── Search helper ────────────────────────────────────────────────────
+
+export interface SearchResult {
+  id: string;
+  senderId: string;
+  senderName: string;
+  subject: string;
+  body: string;
+  sentAt: string;
+  createdAt: string;
+  recipientIds?: string[];
+}
+
+export interface SearchResponse {
+  data: SearchResult[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export async function searchMessages(
+  q: string,
+  page = 1,
+  pageSize = 20,
+): Promise<SearchResponse> {
+  const { data } = await apiClient.get('/messages/search', {
+    params: { q, page, pageSize },
+  });
+  return data.data; // { data: SearchResult[], total, page, pageSize }
+}
+
 export default apiClient;

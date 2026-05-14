@@ -17,7 +17,7 @@ Authenticated users SHALL send, receive, reply, and filter text messages. No att
 
 ### R1: Send Message
 
-MUST create `Message` + 1+ `MessageRecipient` for authenticated user.
+MUST create `Message` + 1+ `MessageRecipient` for authenticated user. MUST publish `MessageSent` event via EventBus. MUST emit `message:new` via WebSocket to all recipients after persistence.
 
 | # | Scenario | GIVEN | WHEN | THEN |
 |---|----------|-------|------|------|
@@ -26,6 +26,7 @@ MUST create `Message` + 1+ `MessageRecipient` for authenticated user.
 | 1.3 | Empty dest | authenticated | POST recipients=[] | 422 |
 | 1.4 | Not found | authenticated | POST nonexistent userId | 404 |
 | 1.5 | No auth | no JWT | POST any | 401 |
+| 1.6 | Real-time WS | 1 recipient connected via WS | POST message to them | message:new WS event to recipient room in <500ms |
 
 ### R2: List Inbox
 
@@ -58,21 +59,23 @@ MUST return full detail to sender and recipients only.
 
 ### R5: Mark as Read
 
-Recipient MUST mark message read. Idempotent.
+Recipient MUST mark message read. Idempotent. MUST emit `message:read` via WebSocket to the original sender.
 
 | # | Scenario | GIVEN | WHEN | THEN |
 |---|----------|-------|------|------|
-| 5.1 | First | status=delivered | PATCH /messages/:id/read | 200, status→read, readAt set |
-| 5.2 | Idempotent | already status=read | PATCH /messages/:id/read | 200, readAt unchanged |
+| 5.1 | First read | status=delivered | PATCH /messages/:id/read | 200, status→read, readAt set, message:read emitted to sender |
+| 5.2 | Idempotent | already status=read | PATCH /messages/:id/read | 200, readAt unchanged, no duplicate event emitted |
 
 ### R6: Reply
 
 Authorized user MUST reply setting parentMessageId. Thread SHALL reconstruct via chain.
+MUST publish `MessageSent` event via EventBus. MUST emit `message:new` via WebSocket to recipients.
 
 | # | Scenario | GIVEN | WHEN | THEN |
 |---|----------|-------|------|------|
-| 6.1 | Reply | can view message ABC | POST parentMessageId=ABC | 201, new Message with parentMessageId=ABC |
+| 6.1 | Reply | can view message ABC | POST parentMessageId=ABC | 201, new Message, MessageSent published via EventBus |
 | 6.2 | Thread | chain A→B(A)→C(B) | GET /messages/:A/thread | 200, 3 msgs sentAt ASC |
+| 6.3 | Real-time WS | 1 recipient connected via WS | POST reply | message:new WS event to recipient room in <500ms |
 
 ### R7: Filters
 
