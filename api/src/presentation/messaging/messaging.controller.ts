@@ -20,8 +20,10 @@ import { GetMessageUseCase } from '../../application/messaging/use-cases/get-mes
 import { MarkAsReadUseCase } from '../../application/messaging/use-cases/mark-as-read.use-case';
 import { ReplyToMessageUseCase } from '../../application/messaging/use-cases/reply-to-message.use-case';
 import { GetThreadUseCase } from '../../application/messaging/use-cases/get-thread.use-case';
+import { SearchMessagesUseCase } from '../../application/messaging/use-cases/search-messages.use-case';
 import { SendMessageRequest } from './dto/send-message.request';
 import { PaginationQuery } from './dto/pagination.query';
+import { SearchQueryDTO } from './dto/search-query.dto';
 
 /**
  * MessagingController — REST endpoints for messaging.
@@ -41,6 +43,7 @@ export class MessagingController {
     private readonly markAsReadUseCase: MarkAsReadUseCase,
     private readonly replyToMessageUseCase: ReplyToMessageUseCase,
     private readonly getThreadUseCase: GetThreadUseCase,
+    private readonly searchMessagesUseCase: SearchMessagesUseCase,
   ) {}
 
   // ── Send Message ────────────────────────────────────────────────
@@ -168,6 +171,31 @@ export class MessagingController {
     }
 
     return { data: result.unwrap() };
+  }
+
+  // ── Search Messages ─────────────────────────────────────────────
+
+  @Get('search')
+  @HttpCode(HttpStatus.OK)
+  async search(
+    @Query() query: SearchQueryDTO,
+    @CurrentUser() user: { userId: string; role: string },
+  ) {
+    const page = parseInt(query.page ?? '1', 10);
+    const pageSize = parseInt(query.pageSize ?? '20', 10);
+
+    const result = await this.searchMessagesUseCase.execute({
+      userId: user.userId,
+      query: query.q,
+      page,
+      pageSize,
+    });
+
+    if (result.isErr()) {
+      throw result.unwrapErr();
+    }
+
+    return result.unwrap();
   }
 
   // ── Get Thread ──────────────────────────────────────────────────

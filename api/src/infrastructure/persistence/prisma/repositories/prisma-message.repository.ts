@@ -209,6 +209,74 @@ export class PrismaMessageRepository implements MessageRepository {
     return ok(allMessages);
   }
 
+  async search(
+    userId: UserId,
+    query: string,
+    pagination: PaginationParams,
+  ): Promise<Result<PaginatedResult<Message>, DomainError>> {
+    const page = pagination?.page ?? 1;
+    const pageSize = pagination?.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    // Use %L: string literal interpolation for safety with tsquery
+    // $1, $2 etc. for safe parameter binding of user-supplied values
+    const searchClause = `
+      to_tsvector('spanish', coalesce(m.subject, '') || ' ' || coalesce(m.body, ''))
+      @@ plainto_tsquery('spanish', $1)
+    `;
+
+    const accessClause = `
+      m.sender_id = $2
+      OR EXISTS (
+        SELECT 1 FROM message_recipients mr
+        WHERE mr.message_id = m.message_id AND mr.recipient_id = $2
+      )
+    `;
+
+    const whereClause = `${searchClause} AND ${accessClause}`;
+
+    // Count total matches
+    const countRows = await this.prisma.$queryRawUnsafe<Array<{ total: bigint }>>(
+      `SELECT COUNT(*)::bigint as total FROM messages m WHERE ${whereClause}`,
+      query,
+      userId.get(),
+    );
+    const total = Number(countRows[0]?.total ?? 0);
+
+    // Get paginated matching IDs ordered by created_at DESC
+    const rows = await this.prisma.$queryRawUnsafe<Array<{ message_id: string }>>(
+      `SELECT m.message_id FROM messages m WHERE ${whereClause} ORDER BY m.created_at DESC LIMIT $3 OFFSET $4`,
+      query,
+      userId.get(),
+      pageSize,
+      skip,
+    );
+
+    const ids = rows.map((r) => r.message_id);
+    if (ids.length === 0) {
+      return ok({ data: [], total: 0, page, pageSize });
+    }
+
+    // Fetch full message data with relations
+    const messages = await this.prisma.message.findMany({
+      where: { id: { in: ids } },
+      include: {
+        recipients: {
+          include: { recipient: { select: { name: true } } },
+        },
+        sender: { select: { id: true, name: true } },
+      },
+    });
+
+    // Preserve the ORDER BY from the search query
+    const idOrder = new Map(ids.map((id, i) => [id, i]));
+    messages.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
+
+    const data = messages.map((r) => MessageMapper.toDomain(r));
+
+    return ok({ data, total, page, pageSize });
+  }
+
   private async collectThreadMessages(
     currentId: string,
     visited: Set<string>,

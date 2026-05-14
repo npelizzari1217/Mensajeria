@@ -3,6 +3,7 @@ export { Result, Ok, Err, ok, err } from './shared/result';
 export { DomainError } from './shared/errors/domain-error';
 export { NotFoundError } from './shared/errors/not-found-error';
 export { StorageError } from './shared/errors/storage-error';
+export { ValidationError } from './shared/errors/validation-error';
 export { DomainEvent } from './shared/events/domain-event';
 export { EventBus, EventHandler } from './shared/event-bus';
 

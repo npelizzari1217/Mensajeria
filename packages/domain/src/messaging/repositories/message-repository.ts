@@ -74,4 +74,17 @@ export interface MessageRepository {
    * ordered by sentAt ascending.
    */
   findThread(messageId: MessageId): Promise<Result<Message[], DomainError>>;
+
+  /**
+   * Full-text search across messages the user has access to.
+   *
+   * Searches subject and body using PostgreSQL tsvector with Spanish config.
+   * Results are paginated and ordered by sentAt descending.
+   * Only returns messages where the user is sender or recipient.
+   */
+  search(
+    userId: UserId,
+    query: string,
+    pagination: PaginationParams,
+  ): Promise<Result<PaginatedResult<Message>, DomainError>>;
 }
