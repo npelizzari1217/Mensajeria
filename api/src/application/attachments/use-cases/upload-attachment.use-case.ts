@@ -12,6 +12,7 @@ import {
   err,
   DomainError,
   StorageError,
+  ValidationError,
 } from '@mensajeria/domain';
 import { UploadAttachmentDTO } from '../dtos/upload-attachment.dto';
 import { AttachmentResponse } from '../dtos/attachment-response.dto';
@@ -53,25 +54,25 @@ export class UploadAttachmentUseCase {
   ): Promise<Result<AttachmentResponse, DomainError>> {
     // 1. Validate file size
     if (dto.size > MAX_FILE_SIZE) {
-      return err(new Error('File size exceeds the 10 MB limit'));
+      return err(new ValidationError('File size exceeds the 10 MB limit'));
     }
 
     // 2. Validate MIME type
     if (!ALLOWED_MIME_TYPES.includes(dto.mimeType)) {
-      return err(new Error(`File type '${dto.mimeType}' is not allowed`));
+      return err(new ValidationError(`File type '${dto.mimeType}' is not allowed`));
     }
 
     // 3. Validate messageId
     const messageIdResult = MessageId.create(dto.messageId);
     if (messageIdResult.isErr()) {
-      return err(messageIdResult.unwrapErr());
+      return err(messageIdResult.unwrapErr()) as Result<AttachmentResponse, DomainError>;
     }
     const messageId = messageIdResult.unwrap();
 
     // 4. Validate userId
     const uidResult = UserId.create(userId);
     if (uidResult.isErr()) {
-      return err(uidResult.unwrapErr());
+      return err(uidResult.unwrapErr()) as Result<AttachmentResponse, DomainError>;
     }
     const uid = uidResult.unwrap();
 
@@ -116,7 +117,7 @@ export class UploadAttachmentUseCase {
     if (attachmentResult.isErr()) {
       // File was uploaded — attempt cleanup
       await this.fileStorage.delete(fileId).catch(() => {});
-      return err(attachmentResult.unwrapErr());
+      return err(attachmentResult.unwrapErr()) as Result<AttachmentResponse, DomainError>;
     }
     const attachment = attachmentResult.unwrap();
 

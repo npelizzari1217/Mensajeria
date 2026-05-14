@@ -19,6 +19,7 @@ export default function Layout() {
     { to: '/sent', label: 'Enviados' },
     { to: '/compose', label: 'Nuevo Mensaje' },
     { to: '/search', label: 'Buscar' },
+    { to: '/groups', label: 'Grupos' },
   ];
 
   return (

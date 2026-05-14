@@ -27,6 +27,16 @@ import { DeleteAttachmentUseCase } from '../../application/attachments/use-cases
 import { LocalFileStorage } from '../../infrastructure/storage/local-file-storage';
 
 /**
+ * Shape of a multer-uploaded file (only the fields we use).
+ */
+interface UploadedFile {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
+/**
  * AttachmentsController — REST endpoints for file attachments.
  *
  * - POST /v1/messages/:messageId/attachments — upload (multipart/form-data, field: 'file')
@@ -53,7 +63,7 @@ export class AttachmentsController {
   @HttpCode(HttpStatus.CREATED)
   async upload(
     @Param('messageId', ParseUUIDPipe) messageId: string,
-    @UploadedFile() file: Express.Multer.File | undefined,
+    @UploadedFile() file: UploadedFile | undefined,
     @CurrentUser() user: { userId: string; role: string },
   ) {
     if (!file) {

@@ -50,5 +50,21 @@ export { AttachmentRepository } from './messaging/repositories/attachment-reposi
 // Messaging Ports
 export type { IFileStorage } from './messaging/ports/file-storage';
 
+// Messaging Value Objects
+export { GroupRole } from './messaging/value-objects/group-role';
+
+// Messaging Entities — Groups
+export { Group } from './messaging/entities/group';
+export { GroupMember } from './messaging/entities/group-member';
+
+// Messaging Repositories — Groups
+export { GroupRepository } from './messaging/repositories/group-repository';
+
+// Messaging Events — Groups
+export { GroupCreated } from './messaging/events/group-created';
+export { GroupMemberAdded } from './messaging/events/group-member-added';
+export { GroupMemberRemoved } from './messaging/events/group-member-removed';
+
 // Messaging Errors
 export { MessageNotFoundError, UnauthorizedMessageAccessError } from './messaging/errors/message.errors';
+export { GroupNotFoundError, NotGroupMemberError, NotGroupAdminError, GroupAlreadyExistsError } from './messaging/errors/group.errors';

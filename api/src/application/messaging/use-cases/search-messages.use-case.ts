@@ -68,13 +68,13 @@ export class SearchMessagesUseCase {
     });
 
     if (result.isErr()) {
-      return result;
+      return result as unknown as Result<{ data: MessageResponse[]; total: number; page: number; pageSize: number }, DomainError>;
     }
 
     const paginated = result.unwrap();
 
     // 5. Map domain entities to response DTOs
-    const data = paginated.data.map((msg) => this.toResponse(msg));
+    const data = paginated.data.map((msg: Message) => this.toResponse(msg));
 
     return ok({ data, total: paginated.total, page: paginated.page, pageSize: paginated.pageSize });
   }

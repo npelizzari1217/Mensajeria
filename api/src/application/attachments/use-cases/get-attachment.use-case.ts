@@ -31,14 +31,14 @@ export class GetAttachmentUseCase {
     // 1. Validate attachmentId
     const fileIdResult = FileId.createFrom(attachmentId);
     if (fileIdResult.isErr()) {
-      return err(fileIdResult.unwrapErr());
+      return err(fileIdResult.unwrapErr()) as Result<AttachmentResponse, DomainError>;
     }
     const fileId = fileIdResult.unwrap();
 
     // 2. Validate userId
     const uidResult = UserId.create(userId);
     if (uidResult.isErr()) {
-      return err(uidResult.unwrapErr());
+      return err(uidResult.unwrapErr()) as Result<AttachmentResponse, DomainError>;
     }
     const uid = uidResult.unwrap();
 

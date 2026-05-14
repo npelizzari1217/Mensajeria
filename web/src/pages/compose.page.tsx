@@ -1,17 +1,20 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient, { getErrorMessage } from '../api/client';
+import { listGroups, type GroupResponse } from '../api/groups';
 
 /**
  * ComposePage — form to send a new message.
  *
- * Supports multiple recipients via comma-separated UUIDs in a textarea.
+ * Supports multiple recipients via comma-separated UUIDs in a textarea,
+ * OR selecting a group to send to all its members.
  * On success → redirects to /sent.
  */
 export default function ComposePage() {
   const navigate = useNavigate();
 
   const [recipientIdsText, setRecipientIdsText] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,6 +24,15 @@ export default function ComposePage() {
     subject?: string;
     body?: string;
   }>({});
+
+  const [groups, setGroups] = useState<GroupResponse[]>([]);
+
+  // Fetch groups for the selector
+  useEffect(() => {
+    listGroups()
+      .then(setGroups)
+      .catch(() => {}); // Silently fail — groups are optional
+  }, []);
 
   /**
    * Parses the comma-separated recipient IDs textarea value
@@ -36,9 +48,11 @@ export default function ComposePage() {
   function validate(): boolean {
     const errors: typeof fieldErrors = {};
     const ids = parseRecipientIds();
+    const hasGroup = selectedGroupId !== '';
+    const hasManualIds = ids.length > 0;
 
-    if (ids.length === 0) {
-      errors.recipientIds = 'Debes especificar al menos un destinatario';
+    if (!hasGroup && !hasManualIds) {
+      errors.recipientIds = 'Debes especificar destinatarios o seleccionar un grupo';
     }
     if (!subject.trim()) {
       errors.subject = 'El asunto es requerido';
@@ -61,11 +75,18 @@ export default function ComposePage() {
     setError(null);
 
     try {
-      await apiClient.post('/messages', {
-        recipientIds: parseRecipientIds(),
+      const payload: Record<string, unknown> = {
         subject: subject.trim(),
         body: body.trim(),
-      });
+      };
+
+      if (selectedGroupId) {
+        payload.groupId = selectedGroupId;
+      } else {
+        payload.recipientIds = parseRecipientIds();
+      }
+
+      await apiClient.post('/messages', payload);
       navigate('/sent', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -73,6 +94,8 @@ export default function ComposePage() {
       setLoading(false);
     }
   }
+
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
   return (
     <div className="page">
@@ -83,17 +106,53 @@ export default function ComposePage() {
       <form onSubmit={handleSubmit} noValidate className="compose-form">
         {error && <div className="alert alert-error">{error}</div>}
 
+        {/* Group selector */}
+        {groups.length > 0 && (
+          <div className="form-group">
+            <label htmlFor="groupId">Enviar a grupo (opcional)</label>
+            <select
+              id="groupId"
+              value={selectedGroupId}
+              onChange={(e) => {
+                setSelectedGroupId(e.target.value);
+                if (e.target.value) {
+                  setRecipientIdsText('');
+                }
+              }}
+            >
+              <option value="">-- Seleccionar grupo --</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name} ({g.memberCount} miembro{g.memberCount !== 1 ? 's' : ''})
+                </option>
+              ))}
+            </select>
+            {selectedGroup && (
+              <small className="text-muted">
+                El mensaje se enviara a los {selectedGroup.memberCount} miembros del grupo
+              </small>
+            )}
+          </div>
+        )}
+
         <div className="form-group">
           <label htmlFor="recipientIds">
-            Destinatarios (IDs separados por coma)
+            Destinatarios manuales (IDs separados por coma)
+            {groups.length > 0 && ' — o usa el grupo de arriba'}
           </label>
           <textarea
             id="recipientIds"
             rows={3}
             value={recipientIdsText}
-            onChange={(e) => setRecipientIdsText(e.target.value)}
+            onChange={(e) => {
+              setRecipientIdsText(e.target.value);
+              if (e.target.value) {
+                setSelectedGroupId('');
+              }
+            }}
             className={fieldErrors.recipientIds ? 'input-error' : ''}
             placeholder="UUIDs de los destinatarios, separados por coma"
+            disabled={!!selectedGroupId}
           />
           {fieldErrors.recipientIds && (
             <span className="field-error">{fieldErrors.recipientIds}</span>

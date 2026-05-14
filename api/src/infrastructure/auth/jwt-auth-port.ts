@@ -17,7 +17,7 @@ export class JwtAuthPort implements AuthPort {
     return jwt.sign(
       { sub: payload.sub, role: payload.role },
       this.secret,
-      { expiresIn: options?.expiresIn ?? this.defaultExpiresIn },
+      { expiresIn: options?.expiresIn ?? this.defaultExpiresIn } as jwt.SignOptions,
     );
   }
 

@@ -6,9 +6,36 @@ import {
   MessageBody,
   Timestamp,
   MessageRecipient,
+  MessageStatus,
   MessageStatusVO,
 } from '@mensajeria/domain';
-import { Message as PrismaMessage, MessageRecipient as PrismaMessageRecipient, MessageStatus } from '@prisma/client';
+import { Message as PrismaMessage, MessageRecipient as PrismaMessageRecipient, MessageStatus as PrismaMessageStatus } from '@prisma/client';
+
+/**
+ * Maps a domain MessageStatus to Prisma MessageStatus enum.
+ */
+function toPrismaStatus(status: MessageStatus): PrismaMessageStatus {
+  const map: Record<MessageStatus, PrismaMessageStatus> = {
+    [MessageStatus.Pending]: PrismaMessageStatus.PENDING,
+    [MessageStatus.Sent]: PrismaMessageStatus.DELIVERED,
+    [MessageStatus.Delivered]: PrismaMessageStatus.DELIVERED,
+    [MessageStatus.Read]: PrismaMessageStatus.READ,
+  };
+  return map[status];
+}
+
+/**
+ * Maps a Prisma MessageStatus to domain MessageStatus.
+ * Prisma uses UPPERCASE enums, domain uses PascalCase.
+ */
+function toDomainStatus(status: PrismaMessageStatus): MessageStatus {
+  const map: Record<PrismaMessageStatus, MessageStatus> = {
+    [PrismaMessageStatus.PENDING]: MessageStatus.Pending,
+    [PrismaMessageStatus.DELIVERED]: MessageStatus.Delivered,
+    [PrismaMessageStatus.READ]: MessageStatus.Read,
+  };
+  return map[status];
+}
 
 /**
  * Prisma recipient type including related user info.
@@ -41,8 +68,8 @@ export class MessageMapper {
       MessageRecipient.reconstruct({
         messageId: MessageId.reconstruct(r.messageId),
         recipientId: UserId.reconstruct(r.recipientId),
-        status: MessageStatusVO.reconstruct(r.status),
-        receivedAt: r.status === MessageStatus.PENDING ? null : Timestamp.reconstruct(r.createdAt),
+        status: MessageStatusVO.reconstruct(toDomainStatus(r.status)),
+        receivedAt: r.status === PrismaMessageStatus.PENDING ? null : Timestamp.reconstruct(r.createdAt),
         readAt: r.readAt ? Timestamp.reconstruct(r.readAt.toISOString()) : null,
         createdAt: Timestamp.reconstruct(r.createdAt.toISOString()),
         recipientName: r.recipient?.name,
@@ -78,7 +105,7 @@ export class MessageMapper {
       create: Array<{
         id: string;
         recipientId: string;
-        status: MessageStatus;
+        status: PrismaMessageStatus;
         readAt: Date | null;
         createdAt: Date;
       }>;
@@ -95,7 +122,7 @@ export class MessageMapper {
         create: message.getRecipients().map((r) => ({
           id: crypto.randomUUID(),
           recipientId: r.getRecipientId().get(),
-          status: r.getStatus().get() as MessageStatus,
+          status: toPrismaStatus(r.getStatus().get()),
           readAt: r.getReadAt() ? new Date(r.getReadAt()!.get()) : null,
           createdAt: new Date(r.getCreatedAt().get()),
         })),
@@ -107,11 +134,11 @@ export class MessageMapper {
    * Converts a domain MessageRecipient to Prisma update data.
    */
   static recipientToPrisma(recipient: MessageRecipient): {
-    status: MessageStatus;
+    status: PrismaMessageStatus;
     readAt: Date | null;
   } {
     return {
-      status: recipient.getStatus().get() as MessageStatus,
+      status: toPrismaStatus(recipient.getStatus().get()),
       readAt: recipient.getReadAt() ? new Date(recipient.getReadAt()!.get()) : null,
     };
   }

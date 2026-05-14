@@ -6,7 +6,7 @@ import {
   MessageRepository,
   PaginationParams,
   PaginatedResult,
-  MessageStatus,
+  MessageStatus as DomainMessageStatus,
   MessageStatusVO,
   NotFoundError,
   Result,
@@ -16,7 +16,7 @@ import {
 } from '@mensajeria/domain';
 import { PrismaService } from '../prisma.service';
 import { MessageMapper } from '../mappers/message-mapper';
-import { Prisma } from '@prisma/client';
+import { Prisma, MessageStatus as PrismaMessageStatus } from '@prisma/client';
 
 /**
  * PrismaMessageRepository — infrastructure adapter implementing MessageRepository.
@@ -63,11 +63,18 @@ export class PrismaMessageRepository implements MessageRepository {
     if (status) {
       const statusValue = status.get();
 
-      if (statusValue === MessageStatus.Pending) {
-        // For "unread" filter, match Pending + Delivered
-        where.status = { in: [MessageStatus.Pending, MessageStatus.Delivered] };
+      if (statusValue === DomainMessageStatus.Pending) {
+        // For "unread" filter, match PENDING + DELIVERED
+        where.status = { in: [PrismaMessageStatus.PENDING, PrismaMessageStatus.DELIVERED] };
       } else {
-        where.status = statusValue;
+        // Map domain status to Prisma status
+        const statusMap: Record<DomainMessageStatus, PrismaMessageStatus> = {
+          [DomainMessageStatus.Pending]: PrismaMessageStatus.PENDING,
+          [DomainMessageStatus.Sent]: PrismaMessageStatus.DELIVERED,
+          [DomainMessageStatus.Delivered]: PrismaMessageStatus.DELIVERED,
+          [DomainMessageStatus.Read]: PrismaMessageStatus.READ,
+        };
+        where.status = statusMap[statusValue];
       }
     }
 

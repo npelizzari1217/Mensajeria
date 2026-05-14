@@ -9,6 +9,8 @@ import SentPage from './pages/sent.page';
 import ComposePage from './pages/compose.page';
 import MessageDetailPage from './pages/message-detail.page';
 import SearchPage from './pages/search.page';
+import GroupsListPage from './pages/groups/index.page';
+import GroupDetailPage from './pages/groups/detail.page';
 
 export default function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,6 +47,8 @@ export default function App() {
           <Route path="/compose" element={<ComposePage />} />
           <Route path="/messages/:id" element={<MessageDetailPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/groups" element={<GroupsListPage />} />
+          <Route path="/groups/:id" element={<GroupDetailPage />} />
         </Route>
       </Route>
 
