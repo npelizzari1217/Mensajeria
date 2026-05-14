@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Inject,
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
@@ -14,7 +15,7 @@ import { AuthPort } from '../../../application/auth/ports/auth-port';
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authPort: AuthPort) {}
+  constructor(@Inject('AuthPort') private readonly authPort: AuthPort) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();

@@ -228,7 +228,7 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
     getSentUseCase = new GetSentUseCase(messageRepo);
     getMessageUseCase = new GetMessageUseCase(userRepo, messageRepo);
     markAsReadUseCase = new MarkAsReadUseCase(messageRepo, mockEventBus);
-    replyToMessageUseCase = new ReplyToMessageUseCase(userRepo, messageRepo);
+    replyToMessageUseCase = new ReplyToMessageUseCase(userRepo, messageRepo, mockEventBus);
   });
 
   it('full messaging flow: send → receive inbox → view detail → mark read → reply', async () => {

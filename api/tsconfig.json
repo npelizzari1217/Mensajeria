@@ -8,8 +8,7 @@
     "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"],
-      "@mensajeria/domain": ["../packages/domain/src"]
+      "@/*": ["./src/*"]
     },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
