@@ -70,6 +70,23 @@ a:hover {
   margin-bottom: 1.5rem;
 }
 
+.login-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.login-footer a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
+}
+
 /* ── App Layout ─────────────────────────────────────────────────── */
 
 .app-layout {

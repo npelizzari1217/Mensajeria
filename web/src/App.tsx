@@ -3,6 +3,7 @@ import { useAuth } from './contexts/auth.context';
 import ProtectedRoute from './components/protected-route';
 import Layout from './components/layout';
 import LoginPage from './pages/login.page';
+import RegisterPage from './pages/register.page';
 import InboxPage from './pages/inbox.page';
 import SentPage from './pages/sent.page';
 import ComposePage from './pages/compose.page';
@@ -22,11 +23,17 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Public route */}
+      {/* Public routes */}
       <Route
         path="/login"
         element={
           isAuthenticated ? <Navigate to="/inbox" replace /> : <LoginPage />
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          isAuthenticated ? <Navigate to="/inbox" replace /> : <RegisterPage />
         }
       />
 
