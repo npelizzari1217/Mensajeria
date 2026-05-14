@@ -110,7 +110,7 @@ describe('ReplyToMessageUseCase', () => {
     };
 
     replyUseCase = new ReplyToMessageUseCase(mockUserRepo, mockMessageRepo, mockEventBus);
-    threadUseCase = new GetThreadUseCase(mockUserRepo, mockMessageRepo);
+    threadUseCase = new GetThreadUseCase(mockMessageRepo);
   });
 
   describe('ReplyToMessageUseCase', () => {

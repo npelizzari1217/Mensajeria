@@ -119,14 +119,36 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
       save: vi.fn(async (message: Message) => {
         const sid = message.getSenderId().get();
         const existing = messageStore.get(sid) ?? [];
-        existing.push(message);
+        // Reconstruct with senderName from user store (for test assertions)
+        const user = userStore.get(sid);
+        const enriched = Message.reconstruct({
+          id: message.getId(),
+          senderId: message.getSenderId(),
+          subject: message.getSubject(),
+          body: message.getBody(),
+          parentMessageId: message.getParentMessageId(),
+          createdAt: message.getCreatedAt(),
+          recipients: message.getRecipients().map((r) =>
+            MessageRecipient.reconstruct({
+              messageId: r.getMessageId(),
+              recipientId: r.getRecipientId(),
+              status: r.getStatus(),
+              receivedAt: r.getReceivedAt(),
+              readAt: r.getReadAt(),
+              createdAt: r.getCreatedAt(),
+              recipientName: userStore.get(r.getRecipientId().get())?.getName(),
+            }),
+          ),
+          senderName: user?.getName(),
+        });
+        existing.push(enriched);
         messageStore.set(sid, existing);
 
         // Also index by recipient
-        for (const r of message.getRecipients()) {
+        for (const r of enriched.getRecipients()) {
           const rid = r.getRecipientId().get();
           const rMessages = recipientStore.get(rid) ?? [];
-          rMessages.push(message);
+          rMessages.push(enriched);
           recipientStore.set(rid, rMessages);
         }
 
@@ -226,7 +248,7 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
     sendMessageUseCase = new SendMessageUseCase(userRepo, messageRepo, mockEventBus);
     getInboxUseCase = new GetInboxUseCase(messageRepo);
     getSentUseCase = new GetSentUseCase(messageRepo);
-    getMessageUseCase = new GetMessageUseCase(userRepo, messageRepo);
+    getMessageUseCase = new GetMessageUseCase(messageRepo);
     markAsReadUseCase = new MarkAsReadUseCase(messageRepo, mockEventBus);
     replyToMessageUseCase = new ReplyToMessageUseCase(userRepo, messageRepo, mockEventBus);
   });

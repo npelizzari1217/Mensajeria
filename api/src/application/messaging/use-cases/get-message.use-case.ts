@@ -1,7 +1,6 @@
 import {
   MessageId,
   UserId,
-  UserRepository,
   MessageRepository,
   UnauthorizedMessageAccessError,
   Result,
@@ -17,10 +16,12 @@ import { MessageResponse } from '../dtos/message-response.dto';
  * Returns full message detail only if the requesting user is either
  * the sender or a recipient. Returns 403 (UnauthorizedMessageAccessError)
  * for anyone else.
+ *
+ * Sender and recipient names are populated by the repository mapper
+ * via Prisma joins — no additional queries needed.
  */
 export class GetMessageUseCase {
   constructor(
-    private readonly userRepo: UserRepository,
     private readonly messageRepo: MessageRepository,
   ) {}
 
@@ -53,35 +54,22 @@ export class GetMessageUseCase {
       return err(new UnauthorizedMessageAccessError(userId, messageId));
     }
 
-    // 4. Load sender info
-    const senderResult = await this.userRepo.findById(message.getSenderId());
-    const senderName = senderResult.isOk()
-      ? senderResult.unwrap().getName()
-      : 'Unknown';
-
-    // 5. Load recipient names
-    const recipientPromises = message.getRecipients().map(async (r) => {
-      const userResult = await this.userRepo.findById(r.getRecipientId());
-      const name = userResult.isOk() ? userResult.unwrap().getName() : 'Unknown';
-      return {
-        recipientId: r.getRecipientId().get(),
-        recipientName: name,
-        status: r.getStatus().toString(),
-        readAt: r.getReadAt()?.toString() ?? null,
-      };
-    });
-    const recipients = await Promise.all(recipientPromises);
-
+    // 4. Build response (names pre-populated by mapper from Prisma joins)
     return ok({
       id: message.getId().get(),
       senderId: message.getSenderId().get(),
-      senderName,
+      senderName: message.getSenderName() ?? 'Unknown',
       subject: message.getSubject().get(),
       body: message.getBody().get(),
       parentMessageId: message.getParentMessageId()?.get() ?? null,
       sentAt: message.getCreatedAt().toString(),
       createdAt: message.getCreatedAt().toString(),
-      recipients,
+      recipients: message.getRecipients().map((r) => ({
+        recipientId: r.getRecipientId().get(),
+        recipientName: r.getRecipientName() ?? 'Unknown',
+        status: r.getStatus().toString(),
+        readAt: r.getReadAt()?.toString() ?? null,
+      })),
     });
   }
 }

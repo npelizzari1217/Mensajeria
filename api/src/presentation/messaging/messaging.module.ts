@@ -36,8 +36,8 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
     },
     {
       provide: GetMessageUseCase,
-      useFactory: (userRepo, msgRepo) => new GetMessageUseCase(userRepo, msgRepo),
-      inject: ['UserRepository', 'MessageRepository'],
+      useFactory: (msgRepo) => new GetMessageUseCase(msgRepo),
+      inject: ['MessageRepository'],
     },
     {
       provide: MarkAsReadUseCase,
@@ -51,8 +51,8 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
     },
     {
       provide: GetThreadUseCase,
-      useFactory: (userRepo, msgRepo) => new GetThreadUseCase(userRepo, msgRepo),
-      inject: ['UserRepository', 'MessageRepository'],
+      useFactory: (msgRepo) => new GetThreadUseCase(msgRepo),
+      inject: ['MessageRepository'],
     },
     {
       provide: SearchMessagesUseCase,
