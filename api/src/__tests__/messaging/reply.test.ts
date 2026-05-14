@@ -18,6 +18,7 @@ import {
   err,
   NotFoundError,
   UnauthorizedMessageAccessError,
+  EventBus,
 } from '@mensajeria/domain';
 import { ReplyToMessageUseCase } from '../../application/messaging/use-cases/reply-to-message.use-case';
 import { GetThreadUseCase } from '../../application/messaging/use-cases/get-thread.use-case';
@@ -70,6 +71,7 @@ describe('ReplyToMessageUseCase', () => {
   let threadUseCase: GetThreadUseCase;
   let mockUserRepo: UserRepository;
   let mockMessageRepo: MessageRepository;
+  let mockEventBus: EventBus;
 
   const senderId = '00000000-0000-0000-0000-000000000001';
   const recipientId = '00000000-0000-0000-0000-000000000002';
@@ -102,7 +104,12 @@ describe('ReplyToMessageUseCase', () => {
       findThread: vi.fn(),
     } as any;
 
-    replyUseCase = new ReplyToMessageUseCase(mockUserRepo, mockMessageRepo);
+    mockEventBus = {
+      publish: vi.fn(),
+      subscribe: vi.fn(),
+    };
+
+    replyUseCase = new ReplyToMessageUseCase(mockUserRepo, mockMessageRepo, mockEventBus);
     threadUseCase = new GetThreadUseCase(mockUserRepo, mockMessageRepo);
   });
 

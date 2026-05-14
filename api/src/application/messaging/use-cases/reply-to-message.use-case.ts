@@ -12,7 +12,9 @@ import {
   Result,
   ok,
   err,
+  EventBus,
 } from '@mensajeria/domain';
+import { Inject } from '@nestjs/common';
 import { ReplyMessageDTO } from '../dtos/reply-message.dto';
 import { MessageResponse } from '../dtos/message-response.dto';
 
@@ -27,6 +29,7 @@ export class ReplyToMessageUseCase {
   constructor(
     private readonly userRepo: UserRepository,
     private readonly messageRepo: MessageRepository,
+    @Inject('EventBus') private readonly eventBus: EventBus,
   ) {}
 
   async execute(dto: ReplyMessageDTO): Promise<Result<MessageResponse, Error>> {
@@ -128,7 +131,7 @@ export class ReplyToMessageUseCase {
       message.getSenderId(),
       message.getRecipients().map((r) => r.getRecipientId()),
     );
-    void event;
+    this.eventBus.publish(event);
 
     // 11. Build response
     return ok({
