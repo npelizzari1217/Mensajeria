@@ -34,6 +34,8 @@ model User {
   messageRecipients MessageRecipient[]
   refreshTokens     RefreshToken[]
   groupMembers      GroupMember[]
+  drafts            Draft[]
+  pinnedMessages    UserPinnedMessage[]
 
   @@map("users")
 }
@@ -65,6 +67,7 @@ model Message {
 
   recipients  MessageRecipient[]
   attachments Attachment[]
+  pinnedBy    UserPinnedMessage[]
 
   @@index([senderId])
   @@index([threadId])
@@ -132,6 +135,34 @@ model GroupMember {
 
   @@unique([groupId, userId])
   @@map("group_members")
+}
+
+model UserPinnedMessage {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messageId String   @map("message_id")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  pinnedAt  DateTime @default(now()) @map("pinned_at")
+
+  @@unique([userId, messageId])
+  @@index([userId])
+  @@map("user_pinned_messages")
+}
+
+model Draft {
+  id           String   @id @default(uuid()) @map("draft_id")
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject      String?
+  body         String
+  recipientIds Json     @default("[]") @map("recipient_ids")
+  groupId      String?  @map("group_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("drafts")
 }
 
 model ConversationThread {

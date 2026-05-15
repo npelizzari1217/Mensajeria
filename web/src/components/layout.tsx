@@ -20,6 +20,8 @@ export default function Layout() {
     { to: '/compose', label: 'Nuevo Mensaje' },
     { to: '/search', label: 'Buscar' },
     { to: '/groups', label: 'Grupos' },
+    { to: '/drafts', label: 'Borradores' },
+    { to: '/pinned', label: 'Fijados' },
   ];
 
   return (

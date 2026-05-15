@@ -11,6 +11,9 @@ import MessageDetailPage from './pages/message-detail.page';
 import SearchPage from './pages/search.page';
 import GroupsListPage from './pages/groups/index.page';
 import GroupDetailPage from './pages/groups/detail.page';
+import DraftsListPage from './pages/drafts/index.page';
+import DraftEditPage from './pages/drafts/edit.page';
+import PinnedPage from './pages/pinned.page';
 
 export default function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -49,6 +52,9 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/groups" element={<GroupsListPage />} />
           <Route path="/groups/:id" element={<GroupDetailPage />} />
+          <Route path="/drafts" element={<DraftsListPage />} />
+          <Route path="/drafts/:id" element={<DraftEditPage />} />
+          <Route path="/pinned" element={<PinnedPage />} />
         </Route>
       </Route>
 

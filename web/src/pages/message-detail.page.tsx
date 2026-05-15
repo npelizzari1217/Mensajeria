@@ -60,6 +60,9 @@ export default function MessageDetailPage() {
   const [replyLoading, setReplyLoading] = useState(false);
   const [showReply, setShowReply] = useState(false);
 
+  const [pinned, setPinned] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+
   // Fetch message detail
   useEffect(() => {
     if (!id) return;
@@ -205,16 +208,43 @@ export default function MessageDetailPage() {
         ))}
       </div>
 
-      {/* Reply button */}
-      {!showReply && (
+      {/* Actions */}
+      <div className="message-actions">
+        {!showReply && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowReply(true)}
+          >
+            Responder
+          </button>
+        )}
+
         <button
           type="button"
-          className="btn btn-primary"
-          onClick={() => setShowReply(true)}
+          className={`btn btn-sm ${pinned ? 'btn-warning' : 'btn-secondary'}`}
+          disabled={pinLoading}
+          onClick={async () => {
+            if (!id) return;
+            setPinLoading(true);
+            try {
+              if (pinned) {
+                await apiClient.delete(`/pinned/${id}`);
+                setPinned(false);
+              } else {
+                await apiClient.post(`/pinned/${id}`);
+                setPinned(true);
+              }
+            } catch {
+              // Silent
+            } finally {
+              setPinLoading(false);
+            }
+          }}
         >
-          Responder
+          {pinLoading ? '...' : pinned ? 'Desfijar' : 'Fijar'}
         </button>
-      )}
+      </div>
 
       {/* Reply form */}
       {showReply && (

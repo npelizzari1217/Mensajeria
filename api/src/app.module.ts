@@ -4,12 +4,14 @@ import { AuthModule } from './presentation/auth/auth.module';
 import { MessagingModule } from './presentation/messaging/messaging.module';
 import { AttachmentsModule } from './presentation/attachments/attachments.module';
 import { GroupsModule } from './presentation/groups/groups.module';
+import { DraftsModule } from './presentation/drafts/drafts.module';
+import { PinnedModule } from './presentation/pinned/pinned.module';
 import { EventBusModule } from './infrastructure/event-bus/event-bus.module';
 import { AppExceptionFilter } from './presentation/shared/filters/exception.filter';
 import { ResponseInterceptor } from './presentation/shared/interceptors/response.interceptor';
 
 @Module({
-  imports: [AuthModule, MessagingModule, AttachmentsModule, GroupsModule, EventBusModule],
+  imports: [AuthModule, MessagingModule, AttachmentsModule, GroupsModule, DraftsModule, PinnedModule, EventBusModule],
   providers: [
     {
       provide: APP_FILTER,
