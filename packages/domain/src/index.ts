@@ -52,6 +52,8 @@ export type { IFileStorage } from './messaging/ports/file-storage';
 
 // Messaging Value Objects
 export { GroupRole } from './messaging/value-objects/group-role';
+export { ForwardedContent } from './messaging/value-objects/forwarded-content';
+export type { ForwardedContentProps } from './messaging/value-objects/forwarded-content';
 
 // Messaging Entities — Groups
 export { Group } from './messaging/entities/group';
@@ -65,6 +67,14 @@ export { GroupCreated } from './messaging/events/group-created';
 export { GroupMemberAdded } from './messaging/events/group-member-added';
 export { GroupMemberRemoved } from './messaging/events/group-member-removed';
 
+// Messaging Entities — Drafts
+export { Draft } from './messaging/entities/draft';
+export type { DraftCreateProps, DraftUpdateProps, DraftProps } from './messaging/entities/draft';
+
+// Messaging Repositories — Drafts
+export { DraftRepository } from './messaging/repositories/draft-repository';
+
 // Messaging Errors
 export { MessageNotFoundError, UnauthorizedMessageAccessError } from './messaging/errors/message.errors';
 export { GroupNotFoundError, NotGroupMemberError, NotGroupAdminError, GroupAlreadyExistsError } from './messaging/errors/group.errors';
+export { DraftNotFoundError } from './messaging/errors/draft.errors';
