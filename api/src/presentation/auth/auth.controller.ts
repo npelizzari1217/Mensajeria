@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { RegisterUserUseCase } from '../../application/auth/use-cases/register-user.use-case';
@@ -89,10 +90,12 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: Request) {
-    const token = req.cookies?.refreshToken;
+  async refresh(@Req() req: Request, @Body() body: { refreshToken?: string }) {
+    // Cookie takes precedence (web backward-compat); body fallback for mobile clients
+    // that cannot set httpOnly cookies (e.g. Expo Go via expo-secure-store).
+    const token = req.cookies?.refreshToken ?? body?.refreshToken;
     if (!token) {
-      throw new Error('Refresh token not found');
+      throw new UnauthorizedException('Refresh token not found');
     }
 
     const result = await this.refreshTokenUseCase.execute(token);

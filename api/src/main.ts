@@ -10,11 +10,14 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('v1');
 
-  // CORS — allow the web frontend
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
-    credentials: true,
-  });
+  // CORS — accept a comma-separated list of origins from env.
+  // In dev, this typically includes the web frontend, Expo Go (exp://*) and Metro (http://localhost:8081).
+  // Example: CORS_ORIGIN=http://localhost:5173,exp://*,http://localhost:8081
+  const rawOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
+  const corsOrigins = rawOrigin.includes(',')
+    ? rawOrigin.split(',').map((s) => s.trim())
+    : rawOrigin;
+  app.enableCors({ origin: corsOrigins, credentials: true });
 
   // Cookie parser for refresh token
   // eslint-disable-next-line @typescript-eslint/no-var-requires

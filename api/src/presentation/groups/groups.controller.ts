@@ -13,7 +13,7 @@ import { ListUserGroupsUseCase } from '../../application/groups/use-cases/list-u
 import { GetGroupDetailUseCase } from '../../application/groups/use-cases/get-group-detail.use-case';
 import { CreateGroupDTO, UpdateGroupDTO, AddGroupMemberDTO, ChangeMemberRoleDTO } from '../../application/groups/dtos/create-group.dto';
 
-@Controller('v1/groups')
+@Controller('groups')
 @UseGuards(AuthGuard)
 export class GroupsController {
   constructor(

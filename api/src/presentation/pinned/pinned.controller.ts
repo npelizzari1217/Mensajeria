@@ -8,7 +8,7 @@ import { PinMessageUseCase } from '../../application/pinned/use-cases/pin-messag
 import { UnpinMessageUseCase } from '../../application/pinned/use-cases/unpin-message.use-case';
 import { ListPinnedMessagesUseCase } from '../../application/pinned/use-cases/list-pinned-messages.use-case';
 
-@Controller('v1/pinned')
+@Controller('pinned')
 @UseGuards(AuthGuard)
 export class PinnedController {
   constructor(

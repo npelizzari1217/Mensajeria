@@ -11,7 +11,7 @@ import { SendDraftUseCase } from '../../application/drafts/use-cases/send-draft.
 import { DeleteDraftUseCase } from '../../application/drafts/use-cases/delete-draft.use-case';
 import { SaveDraftDTO, UpdateDraftDTO } from '../../application/drafts/dtos/draft.dto';
 
-@Controller('v1/drafts')
+@Controller('drafts')
 @UseGuards(AuthGuard)
 export class DraftsController {
   constructor(
