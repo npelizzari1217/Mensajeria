@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient, { getErrorMessage } from '../api/client';
 import { listGroups, type GroupResponse } from '../api/groups';
+import { saveDraft } from '../api/drafts';
 
 /**
  * ComposePage — form to send a new message.
@@ -18,6 +19,7 @@ export default function ComposePage() {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     recipientIds?: string;
@@ -65,6 +67,26 @@ export default function ComposePage() {
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
+  }
+
+  async function handleSaveDraft() {
+    setSavingDraft(true);
+    setError(null);
+
+    try {
+      const recipientIds = parseRecipientIds();
+      await saveDraft({
+        subject: subject.trim() || undefined,
+        body: body.trim(),
+        recipientIds: recipientIds.length > 0 ? recipientIds : undefined,
+        groupId: selectedGroupId || undefined,
+      });
+      navigate('/drafts', { replace: true });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSavingDraft(false);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -196,6 +218,14 @@ export default function ComposePage() {
             disabled={loading}
           >
             {loading ? 'Enviando...' : 'Enviar Mensaje'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={savingDraft || !body.trim()}
+            onClick={handleSaveDraft}
+          >
+            {savingDraft ? 'Guardando...' : 'Guardar Borrador'}
           </button>
           <button
             type="button"
