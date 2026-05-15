@@ -21,6 +21,8 @@ import { MarkAsReadUseCase } from '../../application/messaging/use-cases/mark-as
 import { ReplyToMessageUseCase } from '../../application/messaging/use-cases/reply-to-message.use-case';
 import { GetThreadUseCase } from '../../application/messaging/use-cases/get-thread.use-case';
 import { SearchMessagesUseCase } from '../../application/messaging/use-cases/search-messages.use-case';
+import { ForwardMessageUseCase } from '../../application/messaging/use-cases/forward-message.use-case';
+import { ExportThreadUseCase } from '../../application/messaging/use-cases/export-thread.use-case';
 import { SendMessageRequest } from './dto/send-message.request';
 import { PaginationQuery } from './dto/pagination.query';
 import { SearchQueryDTO } from './dto/search-query.dto';
@@ -44,6 +46,8 @@ export class MessagingController {
     private readonly replyToMessageUseCase: ReplyToMessageUseCase,
     private readonly getThreadUseCase: GetThreadUseCase,
     private readonly searchMessagesUseCase: SearchMessagesUseCase,
+    private readonly forwardMessageUseCase: ForwardMessageUseCase,
+    private readonly exportThreadUseCase: ExportThreadUseCase,
   ) {}
 
   // ── Send Message ────────────────────────────────────────────────
@@ -164,6 +168,51 @@ export class MessagingController {
       senderId: user.userId,
       parentMessageId: id,
       body: body.body,
+    });
+
+    if (result.isErr()) {
+      throw result.unwrapErr();
+    }
+
+    return { data: result.unwrap() };
+  }
+
+  // ── Export Thread ────────────────────────────────────────────────
+
+  @Get(':id/thread/export')
+  @HttpCode(HttpStatus.OK)
+  async exportThread(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { userId: string; role: string },
+    @Query('format') format?: string,
+  ) {
+    const result = await this.exportThreadUseCase.execute(
+      id,
+      user.userId,
+      format ?? 'json',
+    );
+
+    if (result.isErr()) {
+      throw result.unwrapErr();
+    }
+
+    return { data: result.unwrap() };
+  }
+
+  // ── Forward Message ──────────────────────────────────────────────
+
+  @Post(':id/forward')
+  @HttpCode(HttpStatus.CREATED)
+  async forward(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { recipientIds: string[]; comment?: string },
+    @CurrentUser() user: { userId: string; role: string },
+  ) {
+    const result = await this.forwardMessageUseCase.execute({
+      senderId: user.userId,
+      originalMessageId: id,
+      recipientIds: body.recipientIds,
+      comment: body.comment,
     });
 
     if (result.isErr()) {

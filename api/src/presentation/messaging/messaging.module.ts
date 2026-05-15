@@ -9,6 +9,8 @@ import { MarkAsReadUseCase } from '../../application/messaging/use-cases/mark-as
 import { ReplyToMessageUseCase } from '../../application/messaging/use-cases/reply-to-message.use-case';
 import { GetThreadUseCase } from '../../application/messaging/use-cases/get-thread.use-case';
 import { SearchMessagesUseCase } from '../../application/messaging/use-cases/search-messages.use-case';
+import { ForwardMessageUseCase } from '../../application/messaging/use-cases/forward-message.use-case';
+import { ExportThreadUseCase } from '../../application/messaging/use-cases/export-thread.use-case';
 import { PrismaMessageRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-message.repository';
 import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
 import { PrismaUserRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-user.repository';
@@ -59,6 +61,16 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
       useFactory: (msgRepo, eventBus) => new SearchMessagesUseCase(msgRepo, eventBus),
       inject: ['MessageRepository', 'EventBus'],
     },
+    {
+      provide: ForwardMessageUseCase,
+      useFactory: (userRepo, msgRepo, eventBus) => new ForwardMessageUseCase(userRepo, msgRepo, eventBus),
+      inject: ['UserRepository', 'MessageRepository', 'EventBus'],
+    },
+    {
+      provide: ExportThreadUseCase,
+      useFactory: (msgRepo) => new ExportThreadUseCase(msgRepo),
+      inject: ['MessageRepository'],
+    },
 
     // ── Infrastructure: Persistence ───────────────────────────────
     {
@@ -85,6 +97,8 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
   exports: [
     'MessageRepository',
     MessagingGateway,
+    SendMessageUseCase,
+    ForwardMessageUseCase,
   ],
 })
 export class MessagingModule {}

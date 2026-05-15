@@ -6,10 +6,10 @@
 |----|--------|------|
 | PR1 — Fixes | ✅ Complete | turbo.json pipeline→tasks. N+1 y void event ya estaban fixeados |
 | PR2 — Groups | ✅ Complete | Domain (Group, GroupMember, GroupRole, errors, events, repo port, tests), Infra (Prisma schema, migration, mapper, repo), App (9 use cases), API (controller + module + app module wiring) |
-| PR3 — Drafts | ⏳ Pending | |
-| PR4 — Forward | ⏳ Pending | |
-| PR5 — Pinned | ⏳ Pending | |
-| PR6 — Export | ⏳ Pending | |
+| PR3 — Drafts | ✅ Complete | Domain (Draft entity, DraftRepository, errors, exports, 12 tests), Infra (Prisma schema, migration, mapper, repo), App (6 use cases), API (controller, module), Web (list page, edit page, route, nav link, save button in Compose) |
+| PR4 — Forward | ✅ Complete | ForwardedContent VO, ForwardMessageUseCase, POST /v1/messages/:id/forward |
+| PR5 — Pinned | ✅ Complete | UserPinnedMessage model, pin/unpin/list use cases, API + Web + DetailPage button |
+| PR6 — Export | ✅ Complete | ExportThreadUseCase, GET /v1/messages/:id/thread/export |
 | PR7 — Mobile | ⏳ Pending | |
 | PR8 — Push | ⏳ Pending | |
 
