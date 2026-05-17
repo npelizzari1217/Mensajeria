@@ -42,14 +42,14 @@ if (Test-Path "$domainDir\dist\index.js") {
 Write-Host "=== 3. Build API ===" -ForegroundColor Cyan
 Set-Location api
 
-# Parchear package.json via here-string (evita que PS interprete @ y $ en el codigo JS)
+# Quitar @mensajeria/domain de dependencias para que npm no intente resolverlo
+# (lo creamos manualmente como junction porque npm file: protocol falla en Windows)
 $patchScript = @'
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 delete pkg.dependencies['@mensajeria/domain'];
-pkg.dependencies['@mensajeria/domain'] = 'file:../packages/domain';
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-console.log('package.json parcheado: @mensajeria/domain = file:../../packages/domain');
+console.log('package.json parcheado: @mensajeria/domain eliminado');
 '@
 $patchScript | Out-File -FilePath "patch-pkg.js" -Encoding utf8
 node patch-pkg.js
@@ -58,15 +58,18 @@ Remove-Item patch-pkg.js
 
 npm install --no-package-lock
 
-# Verificar que el domain package se instalo correctamente
+# Crear junction manual a packages/domain (evita bugs de npm file: en Windows)
+Remove-Item -Recurse -Force "node_modules\@mensajeria\domain" -ErrorAction SilentlyContinue
+$null = New-Item -ItemType Directory -Path "node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
+cmd /c "mklink /J node_modules\@mensajeria\domain C:\Mensajeria\packages\domain"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "    mklink fallo, probando copia directa..." -ForegroundColor Yellow
+    Copy-Item -Recurse "C:\Mensajeria\packages\domain" "node_modules\@mensajeria\domain"
+}
+
+# Verificar que el domain package esta accesible
 if (-not (Test-Path "node_modules\@mensajeria\domain\dist\index.js")) {
-    Write-Host "    ERROR: @mensajeria/domain no se instalo. Contenido:" -ForegroundColor Red
-    if (Test-Path "node_modules\@mensajeria\domain") {
-        Get-ChildItem node_modules\@mensajeria\domain -Recurse -Depth 2 | Select FullName
-    } else {
-        Write-Host "    node_modules\@mensajeria\domain NO EXISTE" -ForegroundColor Red
-    }
-    throw "Domain package no se instalo correctamente"
+    throw "Domain package no esta accesible en node_modules"
 }
 Write-Host "    @mensajeria/domain verificado" -ForegroundColor Green
 
