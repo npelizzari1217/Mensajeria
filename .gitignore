@@ -51,3 +51,10 @@ api/prisma/generated/
 
 # Turbo cache
 node_modules/.cache/
+
+# Expo / React Native (generado)
+mobile/.expo/
+mobile/android/
+
+# Herramientas
+mobile/.atl/
