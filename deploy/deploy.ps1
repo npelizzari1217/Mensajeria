@@ -42,16 +42,29 @@ if (Test-Path "$domainDir\dist\index.js") {
 Write-Host "=== 3. Build API ===" -ForegroundColor Cyan
 Set-Location api
 
-# Parchear package.json: workspace:* → file:../../packages/domain
-$pkg = Get-Content package.json -Raw | ConvertFrom-Json
-$pkg.dependencies.PSObject.Properties.Remove('@mensajeria/domain')
-$pkg.dependencies | Add-Member -Name '@mensajeria/domain' `
-    -Value 'file:../../packages/domain' `
-    -MemberType NoteProperty -Force
-$json = $pkg | ConvertTo-Json -Depth 10
-[System.IO.File]::WriteAllText((Join-Path $PWD.Path "package.json"), $json)
+# Parchear package.json: workspace:* → file:../../packages/domain (usa Node.js, no ConvertTo-Json de PS)
+node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+delete pkg.dependencies['@mensajeria/domain'];
+pkg.dependencies['@mensajeria/domain'] = 'file:../../packages/domain';
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
 
 npm install --no-package-lock
+
+# Verificar que el domain package se instalo correctamente
+if (-not (Test-Path "node_modules\@mensajeria\domain\dist\index.js")) {
+    Write-Host "    ERROR: @mensajeria/domain no se instalo. Contenido:" -ForegroundColor Red
+    if (Test-Path "node_modules\@mensajeria\domain") {
+        Get-ChildItem node_modules\@mensajeria\domain -Recurse -Depth 2 | Select FullName
+    } else {
+        Write-Host "    node_modules\@mensajeria\domain NO EXISTE" -ForegroundColor Red
+    }
+    throw "Domain package no se instalo correctamente"
+}
+Write-Host "    @mensajeria/domain verificado" -ForegroundColor Green
+
 npx nest build
 Assert-LastExit "nest build fallo"
 
