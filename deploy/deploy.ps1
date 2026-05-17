@@ -18,15 +18,25 @@ Remove-Item -Recurse -Force packages\domain\dist -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force api\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Force api\package-lock.json -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\node_modules -ErrorAction SilentlyContinue
-Remove-Item -Force web\dist -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
-# ── 2. Compilar domain package ───────────────────────────────────
-Write-Host "=== 2. Compilando paquete domain ===" -ForegroundColor Cyan
-Push-Location packages\domain
-npm install --no-package-lock
-npx tsc
-Assert-LastExit "Domain tsc fallo"
-Pop-Location
+# ── 2. Domain package (skip compilacion si dist ya existe) ─────
+Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
+$domainDir = "$PSScriptRoot\..\packages\domain"
+if (-not (Test-Path "$domainDir\package.json")) {
+    throw "ERROR: No se encontro $domainDir\package.json. Verifica que el repo esta completo en el VPS."
+}
+
+if (Test-Path "$domainDir\dist\index.js") {
+    Write-Host "    dist/index.js ya existe, salteando compilacion" -ForegroundColor Green
+} else {
+    Write-Host "    Compilando domain..." -ForegroundColor Yellow
+    Set-Location $domainDir
+    npm install --no-package-lock
+    & "$domainDir\node_modules\.bin\tsc.cmd"
+    Assert-LastExit "Domain tsc fallo"
+    Set-Location $PSScriptRoot\..
+}
 
 # ── 3. Instalar deps de api y buildear ──────────────────────────
 Write-Host "=== 3. Build API ===" -ForegroundColor Cyan
