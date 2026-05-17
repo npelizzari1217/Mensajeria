@@ -26,7 +26,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: 'com.mensajeria.app',
   },
   extra: {
+    eas: {
+      projectId: '7509371c-491b-4849-9dc5-e013d48e88b0',
+    },
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
   },
-  plugins: ['expo-secure-store'],
 });

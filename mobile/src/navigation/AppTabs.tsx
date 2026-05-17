@@ -11,7 +11,6 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 import type { AppTabsParamList } from './types';
 import { MessagesStack } from './MessagesStack';
 import ComposeScreen from '../screens/messaging/ComposeScreen';
@@ -19,6 +18,13 @@ import SearchScreen from '../screens/search/SearchScreen';
 import { MoreStack } from './MoreStack';
 
 const Tab = createBottomTabNavigator<AppTabsParamList>();
+
+const TAB_ICONS: Record<string, string> = {
+  Inbox:   '📥',
+  Compose: '✏️',
+  Search:  '🔍',
+  More:    '⋯',
+};
 
 export function AppTabs() {
   return (
@@ -33,16 +39,9 @@ export function AppTabs() {
           borderTopColor: '#e5e7eb',
           backgroundColor: '#ffffff',
         },
-        tabBarIcon: ({ focused, color, size }) => {
-          const iconMap: Record<string, { focused: keyof typeof Ionicons.glyphMap; unfocused: keyof typeof Ionicons.glyphMap }> = {
-            Inbox:   { focused: 'mail',        unfocused: 'mail-outline' },
-            Compose: { focused: 'create',      unfocused: 'create-outline' },
-            Search:  { focused: 'search',       unfocused: 'search-outline' },
-            More:    { focused: 'ellipsis-horizontal', unfocused: 'ellipsis-horizontal-outline' },
-          };
-          const icons = iconMap[route.name] ?? { focused: 'help-circle' as const, unfocused: 'help-circle-outline' as const };
-          return <Ionicons name={focused ? icons.focused : icons.unfocused} size={size} color={color} />;
-        },
+        tabBarIcon: ({ size }) => (
+          <Text style={{ fontSize: size }}>{TAB_ICONS[route.name] ?? '•'}</Text>
+        ),
       })}
     >
       <Tab.Screen
