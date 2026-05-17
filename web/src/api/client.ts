@@ -10,7 +10,7 @@ import axios from 'axios';
  */
 
 const apiClient = axios.create({
-  baseURL: '/v1',
+  baseURL: `${import.meta.env.VITE_API_URL ?? ''}/v1`,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          '/v1/auth/refresh',
+          `${import.meta.env.VITE_API_URL ?? ''}/v1/auth/refresh`,
           {},
           { withCredentials: true },
         );
@@ -81,7 +81,7 @@ apiClient.interceptors.response.use(
         setAccessToken(null);
         pendingRequests.forEach((p) => p.reject(refreshError));
         pendingRequests = [];
-        window.location.href = '/login';
+        window.location.href = `${import.meta.env.BASE_URL}login`;
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

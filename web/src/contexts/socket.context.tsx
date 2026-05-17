@@ -48,7 +48,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     // Build socket with auth as a function so it re-reads the
     // access token on every (re)connection attempt — handles
     // token refreshes transparently.
-    const newSocket = io('http://localhost:3000/messages', {
+    const apiBase = import.meta.env.VITE_API_URL ?? '';
+    const newSocket = io(`${apiBase}/messages`, {
       auth: (cb: (auth: { token: string | null }) => void) => {
         cb({ token: getAccessToken() });
       },
