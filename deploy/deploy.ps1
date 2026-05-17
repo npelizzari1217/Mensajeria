@@ -14,28 +14,23 @@ pm2 delete mensajeria-api -s
 # ── 1. Clean state ───────────────────────────────────────────────
 Write-Host "=== 1. Limpiando builds anteriores ===" -ForegroundColor Cyan
 Remove-Item -Recurse -Force packages\domain\node_modules -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force packages\domain\dist -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force api\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Force api\package-lock.json -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
-# ── 2. Domain package (skip compilacion si dist ya existe) ─────
+# ── 2. Verificar domain package ────────────────────────────────
 Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
-$domainDir = (Resolve-Path "$PSScriptRoot\..\packages\domain").Path
-if (-not (Test-Path "$domainDir\package.json")) {
-    throw "ERROR: No se encontro $domainDir\package.json. Verifica que el repo esta completo en el VPS."
-}
-
-if (Test-Path "$domainDir\dist\index.js") {
-    Write-Host "    dist/index.js ya existe, salteando compilacion" -ForegroundColor Green
-} else {
-    Write-Host "    Compilando domain..." -ForegroundColor Yellow
-    Set-Location $domainDir
+$domainDir = "$PSScriptRoot\..\packages\domain"
+if (-not (Test-Path "$domainDir\dist\index.js")) {
+    Write-Host "    dist/index.js no existe, compilando..." -ForegroundColor Yellow
+    Push-Location $domainDir
     npm install --no-package-lock
     & "$domainDir\node_modules\.bin\tsc.cmd"
     Assert-LastExit "Domain tsc fallo"
-    Set-Location $PSScriptRoot\..
+    Pop-Location
+} else {
+    Write-Host "    dist/index.js OK" -ForegroundColor Green
 }
 
 # ── 3. Instalar deps de api y buildear ──────────────────────────
