@@ -14,6 +14,8 @@ export class StorageError extends DomainError {
 
   constructor(message: string, cause?: unknown) {
     super(message);
-    this.cause = cause instanceof Error ? cause : undefined;
+    if (cause instanceof Error) {
+      (this as Record<string, unknown>).cause = cause;
+    }
   }
 }
