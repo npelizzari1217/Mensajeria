@@ -22,7 +22,7 @@ Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
 # ── 2. Domain package (skip compilacion si dist ya existe) ─────
 Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
-$domainDir = "$PSScriptRoot\..\packages\domain"
+$domainDir = (Resolve-Path "$PSScriptRoot\..\packages\domain").Path
 if (-not (Test-Path "$domainDir\package.json")) {
     throw "ERROR: No se encontro $domainDir\package.json. Verifica que el repo esta completo en el VPS."
 }
@@ -47,7 +47,7 @@ $patchScript = @'
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 delete pkg.dependencies['@mensajeria/domain'];
-pkg.dependencies['@mensajeria/domain'] = 'file:../../packages/domain';
+pkg.dependencies['@mensajeria/domain'] = 'file:../packages/domain';
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 console.log('package.json parcheado: @mensajeria/domain = file:../../packages/domain');
 '@
