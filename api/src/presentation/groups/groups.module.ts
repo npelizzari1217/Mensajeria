@@ -12,9 +12,10 @@ import { ResolveGroupRecipientsUseCase } from '../../application/groups/use-case
 import { PrismaGroupRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-group.repository';
 import { GroupMapper } from '../../infrastructure/persistence/prisma/mappers/group-mapper';
 import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
-import { UserRepository } from '@mensajeria/domain';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
+  imports: [AuthModule],
   controllers: [GroupsController],
   providers: [
     CreateGroupUseCase,

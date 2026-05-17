@@ -13,11 +13,10 @@ import { ForwardMessageUseCase } from '../../application/messaging/use-cases/for
 import { ExportThreadUseCase } from '../../application/messaging/use-cases/export-thread.use-case';
 import { PrismaMessageRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-message.repository';
 import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
-import { PrismaUserRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-user.repository';
-import { AuthGuard } from '../../infrastructure/auth/guards/auth.guard';
-import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
+  imports: [AuthModule],
   controllers: [MessagingController],
   providers: [
     // ── Use Cases ─────────────────────────────────────────────────
@@ -86,13 +85,6 @@ import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
     // ── WebSocket Gateway ─────────────────────────────────────────
     MessagingGateway,
 
-    // ── Infrastructure: Auth ──────────────────────────────────────
-    AuthGuard,
-    JwtAuthPort,
-    {
-      provide: 'AuthPort',
-      useExisting: JwtAuthPort,
-    },
   ],
   exports: [
     'MessageRepository',

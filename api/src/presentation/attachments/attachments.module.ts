@@ -6,6 +6,8 @@ import { DeleteAttachmentUseCase } from '../../application/attachments/use-cases
 import { PrismaAttachmentRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-attachment.repository';
 import { LocalFileStorage } from '../../infrastructure/storage/local-file-storage';
 import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
+import { AuthModule } from '../auth/auth.module';
+import { MessagingModule } from '../messaging/messaging.module';
 
 /**
  * AttachmentsModule — wires the file attachment feature.
@@ -16,6 +18,7 @@ import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.se
  * - PrismaAttachmentRepository (DB persistence)
  */
 @Module({
+  imports: [AuthModule, MessagingModule],
   controllers: [AttachmentsController],
   providers: [
     // ── Use Cases ─────────────────────────────────────────────────

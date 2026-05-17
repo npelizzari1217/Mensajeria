@@ -8,8 +8,8 @@ import { Inject } from '@nestjs/common';
 
 export class CreateGroupUseCase {
   constructor(
-    private readonly groupRepo: GroupRepository,
-    private readonly userRepo: UserRepository,
+    @Inject('GroupRepository') private readonly groupRepo: GroupRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
   async execute(dto: CreateGroupDTO, requesterId: string): Promise<Result<GroupResponse, Error>> {

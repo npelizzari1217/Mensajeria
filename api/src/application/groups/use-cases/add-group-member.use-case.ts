@@ -8,7 +8,7 @@ import { Inject } from '@nestjs/common';
 export class AddGroupMemberUseCase {
   constructor(
     @Inject('GroupRepository') private readonly groupRepo: GroupRepository,
-    private readonly userRepo: UserRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
   async execute(

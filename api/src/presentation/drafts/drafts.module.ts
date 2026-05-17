@@ -10,9 +10,10 @@ import { PrismaDraftRepository } from '../../infrastructure/persistence/prisma/r
 import { DraftMapper } from '../../infrastructure/persistence/prisma/mappers/draft-mapper';
 import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
 import { MessagingModule } from '../messaging/messaging.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [MessagingModule],
+  imports: [MessagingModule, AuthModule],
   controllers: [DraftsController],
   providers: [
     SaveDraftUseCase,

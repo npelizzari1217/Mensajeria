@@ -5,7 +5,7 @@ import { Inject } from '@nestjs/common';
 export class GetGroupDetailUseCase {
   constructor(
     @Inject('GroupRepository') private readonly groupRepo: GroupRepository,
-    private readonly userRepo: UserRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
   async execute(groupId: string, requesterId: string): Promise<Result<GroupDetailResponse, Error>> {

@@ -6,6 +6,7 @@
     "declarationDir": "./dist",
     "module": "commonjs",
     "moduleResolution": "node",
+    "types": ["node"],
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "isolatedModules": false
