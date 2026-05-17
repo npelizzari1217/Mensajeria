@@ -14,32 +14,40 @@ pm2 delete mensajeria-api -s
 # ── 1. Clean state ───────────────────────────────────────────────
 Write-Host "=== 1. Limpiando builds anteriores ===" -ForegroundColor Cyan
 Remove-Item -Recurse -Force packages\domain\node_modules -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force packages\domain\dist -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force api\node_modules -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force api\dist -ErrorAction SilentlyContinue
 Remove-Item -Force api\package-lock.json -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
-# ── 2. Verificar domain package ────────────────────────────────
+# ── 2. Compilar domain package (SIEMPRE, nunca saltear) ─────────
 Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
 $domainDir = "C:\Mensajeria\packages\domain"
+Write-Host "    Compilando domain..." -ForegroundColor Yellow
+Push-Location $domainDir
+npm install --no-package-lock --workspaces=false
+Assert-LastExit "npm install en domain fallo"
+# Buscar tsc (puede ser .cmd o .ps1 segun version de npm/node)
+$tscPath = Get-ChildItem -Path "$domainDir\node_modules\.bin\tsc*" | Select-Object -First 1 -ExpandProperty FullName
+if (-not $tscPath) { throw "No se encontro tsc en node_modules\.bin\" }
+Write-Host "    tsc: $tscPath"
+& $tscPath
+if ($LASTEXITCODE -ne 0) { throw "Domain tsc fallo (exit code: $LASTEXITCODE)" }
+Pop-Location
 if (-not (Test-Path "$domainDir\dist\index.js")) {
-    Write-Host "    Compilando domain..." -ForegroundColor Yellow
-    Push-Location $domainDir
-    npm install --no-package-lock
-    & "$domainDir\node_modules\.bin\tsc.cmd"
-    if ($LASTEXITCODE -ne 0) { throw "Domain tsc fallo (exit code: $LASTEXITCODE)" }
-    Pop-Location
-    Write-Host "    Compilacion OK" -ForegroundColor Green
-} else {
-    Write-Host "    dist/index.js OK" -ForegroundColor Green
+    Write-Host "    ERROR: dist/index.js no fue generado. Contenido de $domainDir\dist:" -ForegroundColor Red
+    Get-ChildItem "$domainDir\dist" -ErrorAction SilentlyContinue | Select Name
+    throw "Domain: tsc no genero dist/index.js"
 }
+Write-Host "    Compilacion OK ($((Get-ChildItem "$domainDir\dist" -Recurse -Filter *.js).Count) archivos JS generados)" -ForegroundColor Green
 
-# ── 3. Instalar deps de api y buildear ──────────────────────────
-Write-Host "=== 3. Build API ===" -ForegroundColor Cyan
+# ── 3. Instalar deps de api y vincular domain ──────────────────
+Write-Host "=== 3. API: dependencias + domain ===" -ForegroundColor Cyan
 Set-Location api
 
 # Quitar @mensajeria/domain de dependencias para que npm no intente resolverlo
-# (lo creamos manualmente como junction porque npm file: protocol falla en Windows)
+# (lo vinculamos manualmente porque npm no entiende workspace:*)
 $patchScript = @'
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -52,34 +60,38 @@ node patch-pkg.js
 Assert-LastExit "patch package.json fallo"
 Remove-Item patch-pkg.js
 
-npm install --no-package-lock
+npm install --no-package-lock --workspaces=false
+Assert-LastExit "npm install en api fallo"
 
-# Crear junction manual a packages/domain (evita bugs de npm file: en Windows)
-Remove-Item -Recurse -Force "node_modules\@mensajeria\domain" -ErrorAction SilentlyContinue
-$null = New-Item -ItemType Directory -Path "node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
-cmd /c "mklink /J node_modules\@mensajeria\domain C:\Mensajeria\packages\domain"
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "    mklink fallo, probando copia directa..." -ForegroundColor Yellow
-    Copy-Item -Recurse "C:\Mensajeria\packages\domain" "node_modules\@mensajeria\domain"
+# Verificar que el domain package compilo correctamente (paso 2)
+if (-not (Test-Path "C:\Mensajeria\packages\domain\dist\index.js")) {
+    throw "ERROR: C:\Mensajeria\packages\domain\dist\index.js no existe. El domain no compilo en paso 2."
 }
 
-# Debug: que hay en el junction?
-Write-Host "    DEBUG: node_modules\@mensajeria\domain existe? $(Test-Path 'node_modules\@mensajeria\domain')"
-Write-Host "    DEBUG: dist\ existe?                 $(Test-Path 'node_modules\@mensajeria\domain\dist')"  
-Write-Host "    DEBUG: dist\index.js existe?         $(Test-Path 'node_modules\@mensajeria\domain\dist\index.js')"
-Get-ChildItem "node_modules\@mensajeria\domain" -ErrorAction SilentlyContinue | Select Name
+Write-Host "    Vinculando @mensajeria/domain..." -ForegroundColor Yellow
+Remove-Item -Recurse -Force "node_modules\@mensajeria\domain" -ErrorAction SilentlyContinue
+$null = New-Item -ItemType Directory -Path "node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
 
-# Verificar que el domain package esta accesible
+# Intentar junction, con fallback a copia
+$linked = $false
+cmd /c "mklink /J node_modules\@mensajeria\domain C:\Mensajeria\packages\domain" 2>$null
+if ($LASTEXITCODE -eq 0) {
+    $linked = $true
+    Write-Host "    Junction creado" -ForegroundColor Green
+} else {
+    Write-Host "    mklink fallo, usando copia directa..." -ForegroundColor Yellow
+    Copy-Item -Recurse "C:\Mensajeria\packages\domain" "node_modules\@mensajeria\domain" -ErrorAction Stop
+    $linked = $true
+}
+if (-not $linked) { throw "No se pudo vincular ni copiar @mensajeria/domain" }
+
 if (-not (Test-Path "node_modules\@mensajeria\domain\dist\index.js")) {
-    throw "Domain package no esta accesible en node_modules"
+    throw "Domain package no esta accesible en node_modules (dist/index.js no encontrado tras vincular)"
 }
 Write-Host "    @mensajeria/domain verificado" -ForegroundColor Green
 
-npx nest build
-Assert-LastExit "nest build fallo"
-
-# ── 4. Prisma: quitar output custom, generate, migrate ───────────
-Write-Host "=== 4. Prisma: generate + migrate ===" -ForegroundColor Cyan
+# ── 4. Prisma generate (ANTES del build — nest usa typeCheck) ────
+Write-Host "=== 4. Prisma: generate ===" -ForegroundColor Cyan
 $schema = Get-Content prisma\schema.prisma -Raw
 $schemaFixed = $schema -replace '  output   = "\.\./\.\./node_modules/\.prisma/client",?', ''
 [System.IO.File]::WriteAllText((Join-Path $PWD.Path "prisma\schema.prisma"), $schemaFixed)
@@ -87,13 +99,20 @@ $schemaFixed = $schema -replace '  output   = "\.\./\.\./node_modules/\.prisma/c
 npx prisma generate
 Assert-LastExit "prisma generate fallo"
 
+# ── 5. Build API (AHORA con tipos de Prisma generados) ───────────
+Write-Host "=== 5. Build API ===" -ForegroundColor Cyan
+npx nest build
+Assert-LastExit "nest build fallo"
+
+# ── 6. Prisma migrate deploy ─────────────────────────────────────
+Write-Host "=== 6. Prisma: migrate deploy ===" -ForegroundColor Cyan
 npx prisma migrate deploy
 Assert-LastExit "prisma migrate deploy fallo"
 
 Set-Location ..
 
-# ── 5. Build web ─────────────────────────────────────────────────
-Write-Host "=== 5. Build Web ===" -ForegroundColor Cyan
+# ── 7. Build web ─────────────────────────────────────────────────
+Write-Host "=== 7. Build Web ===" -ForegroundColor Cyan
 Set-Location web
 npm install --no-package-lock
 npx tsc -b
@@ -101,14 +120,14 @@ npx vite build
 Assert-LastExit "vite build fallo"
 Set-Location ..
 
-# ── 6. Iniciar API con pm2 ───────────────────────────────────────
-Write-Host "=== 6. Iniciando API ===" -ForegroundColor Cyan
+# ── 8. Iniciar API con pm2 ───────────────────────────────────────
+Write-Host "=== 8. Iniciando API ===" -ForegroundColor Cyan
 pm2 start api/dist/src/main.js --name mensajeria-api
 Assert-LastExit "pm2 start fallo"
 pm2 save
 
-# ── 7. Verificar API local ───────────────────────────────────────
-Write-Host "=== 7. Verificando API local ===" -ForegroundColor Cyan
+# ── 9. Verificar API local ───────────────────────────────────────
+Write-Host "=== 9. Verificando API local ===" -ForegroundColor Cyan
 Start-Sleep -Seconds 3
 try {
     $r = Invoke-WebRequest -Uri http://localhost:3000/v1/auth/health -UseBasicParsing -TimeoutSec 5
@@ -118,8 +137,8 @@ try {
     pm2 logs mensajeria-api --lines 10 --nostream
 }
 
-# ── 8. Deploy IIS ────────────────────────────────────────────────
-Write-Host "=== 8. Deploy Web + Proxy IIS ===" -ForegroundColor Cyan
+# ── 10. Deploy IIS ────────────────────────────────────────────────
+Write-Host "=== 10. Deploy Web + Proxy IIS ===" -ForegroundColor Cyan
 
 # Proxy en site root (para /v1/* y /socket.io/*)
 Copy-Item -Force deploy\iis-proxy.web.config C:\inetpub\wwwroot\web.config
@@ -133,8 +152,8 @@ New-WebApplication -Site "Default Web Site" -Name "mensajeria" -PhysicalPath $di
 
 iisreset
 
-# ── 9. Verificar via IIS ─────────────────────────────────────────
-Write-Host "=== 9. Verificando via IIS ===" -ForegroundColor Cyan
+# ── 11. Verificar via IIS ─────────────────────────────────────────
+Write-Host "=== 11. Verificando via IIS ===" -ForegroundColor Cyan
 Start-Sleep -Seconds 5
 try {
     $r = Invoke-WebRequest -Uri https://sesitec.net/mensajeria/ -UseBasicParsing -TimeoutSec 10
