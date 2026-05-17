@@ -42,14 +42,19 @@ if (Test-Path "$domainDir\dist\index.js") {
 Write-Host "=== 3. Build API ===" -ForegroundColor Cyan
 Set-Location api
 
-# Parchear package.json: workspace:* → file:../../packages/domain (usa Node.js, no ConvertTo-Json de PS)
-node -e "
+# Parchear package.json via here-string (evita que PS interprete @ y $ en el codigo JS)
+$patchScript = @'
 const fs = require('fs');
-const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 delete pkg.dependencies['@mensajeria/domain'];
 pkg.dependencies['@mensajeria/domain'] = 'file:../../packages/domain';
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-"
+console.log('package.json parcheado: @mensajeria/domain = file:../../packages/domain');
+'@
+$patchScript | Out-File -FilePath "patch-pkg.js" -Encoding utf8
+node patch-pkg.js
+Assert-LastExit "patch package.json fallo"
+Remove-Item patch-pkg.js
 
 npm install --no-package-lock
 
