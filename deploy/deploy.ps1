@@ -21,14 +21,15 @@ Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
 # ── 2. Verificar domain package ────────────────────────────────
 Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
-$domainDir = "$PSScriptRoot\..\packages\domain"
+$domainDir = "C:\Mensajeria\packages\domain"
 if (-not (Test-Path "$domainDir\dist\index.js")) {
-    Write-Host "    dist/index.js no existe, compilando..." -ForegroundColor Yellow
+    Write-Host "    Compilando domain..." -ForegroundColor Yellow
     Push-Location $domainDir
     npm install --no-package-lock
     & "$domainDir\node_modules\.bin\tsc.cmd"
-    Assert-LastExit "Domain tsc fallo"
+    if ($LASTEXITCODE -ne 0) { throw "Domain tsc fallo (exit code: $LASTEXITCODE)" }
     Pop-Location
+    Write-Host "    Compilacion OK" -ForegroundColor Green
 } else {
     Write-Host "    dist/index.js OK" -ForegroundColor Green
 }
@@ -61,6 +62,12 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "    mklink fallo, probando copia directa..." -ForegroundColor Yellow
     Copy-Item -Recurse "C:\Mensajeria\packages\domain" "node_modules\@mensajeria\domain"
 }
+
+# Debug: que hay en el junction?
+Write-Host "    DEBUG: node_modules\@mensajeria\domain existe? $(Test-Path 'node_modules\@mensajeria\domain')"
+Write-Host "    DEBUG: dist\ existe?                 $(Test-Path 'node_modules\@mensajeria\domain\dist')"  
+Write-Host "    DEBUG: dist\index.js existe?         $(Test-Path 'node_modules\@mensajeria\domain\dist\index.js')"
+Get-ChildItem "node_modules\@mensajeria\domain" -ErrorAction SilentlyContinue | Select Name
 
 # Verificar que el domain package esta accesible
 if (-not (Test-Path "node_modules\@mensajeria\domain\dist\index.js")) {
