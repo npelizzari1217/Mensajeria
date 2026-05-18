@@ -61,12 +61,36 @@ if (-not (Test-Path "$rootDir\packages\domain\dist\index.js")) {
 $jsCount = (Get-ChildItem "$rootDir\packages\domain\dist" -Recurse -Filter *.js).Count
 Write-Host "    Domain compilado ($jsCount JS)" -ForegroundColor Green
 
-# Verificar que node puede resolver el modulo desde api/
+# Verificar que node puede resolver @mensajeria/domain desde api/
 Set-Location $rootDir\api
-$resolved = node -e "console.log(require.resolve('@mensajeria/domain'))" 2>&1
+
+# Diagnostico: que creo pnpm en node_modules/@mensajeria
+Write-Host "    node_modules\@mensajeria:"
+Get-ChildItem "$rootDir\node_modules\@mensajeria" -ErrorAction SilentlyContinue |
+    ForEach-Object { Write-Host "      $($_.Name) [LinkType=$($_.LinkType) Target=$($_.Target)]" }
+
+# Si pnpm no creo el link (bug en pnpm v9 Windows), crear junction manualmente
+$domainLink = "$rootDir\node_modules\@mensajeria\domain"
+if (-not (Test-Path $domainLink)) {
+    Write-Host "    pnpm no creo el symlink — creando junction manual..." -ForegroundColor Yellow
+    $null = New-Item -ItemType Directory -Path "$rootDir\node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
+    cmd /c "mklink /J `"$domainLink`" `"$rootDir\packages\domain`"" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Copy-Item -Recurse "$rootDir\packages\domain" $domainLink -ErrorAction Stop
+        Write-Host "    Copia directa creada" -ForegroundColor Yellow
+    } else {
+        Write-Host "    Junction creado en node_modules\@mensajeria\domain" -ForegroundColor Green
+    }
+}
+
+# Verificacion final via node
+$resolved = node --input-type=module -e "import { createRequire } from 'module'; const r = createRequire('$($rootDir -replace '\\','/')/api/package.json'); console.log(r.resolve('@mensajeria/domain'))" 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "    ERROR: node no resuelve @mensajeria/domain:" -ForegroundColor Red
-    Write-Host "    $resolved" -ForegroundColor Red
+    # Fallback: CJS resolve
+    $resolved = node -e "process.chdir('$($rootDir -replace '\\','\\\\')\\api'); console.log(require.resolve('@mensajeria/domain'))" 2>&1
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "    ERROR: node no resuelve @mensajeria/domain" -ForegroundColor Red
     throw "Domain no resuelve via node desde api/"
 }
 Write-Host "    @mensajeria/domain OK: $resolved" -ForegroundColor Green
