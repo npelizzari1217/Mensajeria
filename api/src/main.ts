@@ -11,13 +11,17 @@ async function bootstrap() {
   app.setGlobalPrefix('v1');
 
   // CORS — accept a comma-separated list of origins from env.
-  // In dev, this typically includes the web frontend, Expo Go (exp://*) and Metro (http://localhost:8081).
+  // Use "*" to allow any origin (reflects the request origin, works with credentials).
   // Example: CORS_ORIGIN=http://localhost:5173,exp://*,http://localhost:8081
   const rawOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
-  const corsOrigins = rawOrigin.includes(',')
-    ? rawOrigin.split(',').map((s) => s.trim())
-    : rawOrigin;
-  app.enableCors({ origin: corsOrigins, credentials: true });
+  const corsOrigin =
+    rawOrigin === '*'
+      ? (origin: string | undefined, cb: (err: Error | null, allow?: boolean | string) => void) =>
+          cb(null, origin ?? true)
+      : rawOrigin.includes(',')
+        ? rawOrigin.split(',').map((s) => s.trim())
+        : rawOrigin;
+  app.enableCors({ origin: corsOrigin, credentials: true });
 
   // Cookie parser for refresh token
   // eslint-disable-next-line @typescript-eslint/no-var-requires
