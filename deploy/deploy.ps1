@@ -77,7 +77,7 @@ if (-not (Test-Path $domainLink)) {
     $domainSource = "$rootDir\packages\domain"
     $batFile = "$env:TEMP\mklink_domain.bat"
     # Concatenar quotes explicitamente (evita here-string + escaping)
-    $q = "`""
+    $q = '"'
     $batContent = "mklink /J " + $q + $domainLink + $q + " " + $q + $domainSource + $q
     $batContent | Out-File -FilePath $batFile -Encoding ascii
     cmd /c $batFile 2>$null
