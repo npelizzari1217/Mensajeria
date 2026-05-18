@@ -28,16 +28,30 @@ Write-Host "    Compilando domain..." -ForegroundColor Yellow
 Push-Location $domainDir
 npm install --no-package-lock --workspaces=false
 Assert-LastExit "npm install en domain fallo"
-# Buscar tsc (puede ser .cmd o .ps1 segun version de npm/node)
-$tscPath = Get-ChildItem -Path "$domainDir\node_modules\.bin\tsc*" | Select-Object -First 1 -ExpandProperty FullName
-if (-not $tscPath) { throw "No se encontro tsc en node_modules\.bin\" }
-Write-Host "    tsc: $tscPath"
-& $tscPath
-if ($LASTEXITCODE -ne 0) { throw "Domain tsc fallo (exit code: $LASTEXITCODE)" }
+
+Write-Host "    pwd: $(Get-Location)"
+
+# Compilar con npx (maneja .cmd vs shell script automaticamente)
+Write-Host "    Ejecutando: npx tsc"
+$tscOutput = npx tsc 2>&1
+$tscExit = $LASTEXITCODE
+Write-Host "    tsc exit code: $tscExit"
+
+if ($tscOutput) {
+    Write-Host "    --- tsc output ---"
+    $tscOutput | ForEach-Object { Write-Host "    $_" }
+    Write-Host "    --- fin tsc ---"
+}
+
+if ($tscExit -ne 0) { throw "Domain tsc fallo (exit code: $tscExit)" }
+
 Pop-Location
 if (-not (Test-Path "$domainDir\dist\index.js")) {
-    Write-Host "    ERROR: dist/index.js no fue generado. Contenido de $domainDir\dist:" -ForegroundColor Red
+    Write-Host "    ERROR: dist/index.js no fue generado." -ForegroundColor Red
+    Write-Host "    Contenido de $domainDir\dist:" -ForegroundColor Red
     Get-ChildItem "$domainDir\dist" -ErrorAction SilentlyContinue | Select Name
+    Write-Host "    Contenido de $domainDir (raiz):" -ForegroundColor Yellow
+    Get-ChildItem "$domainDir" -ErrorAction SilentlyContinue | Select Name
     throw "Domain: tsc no genero dist/index.js"
 }
 Write-Host "    Compilacion OK ($((Get-ChildItem "$domainDir\dist" -Recurse -Filter *.js).Count) archivos JS generados)" -ForegroundColor Green
@@ -114,7 +128,7 @@ Set-Location ..
 # ── 7. Build web ─────────────────────────────────────────────────
 Write-Host "=== 7. Build Web ===" -ForegroundColor Cyan
 Set-Location web
-npm install --no-package-lock
+npm install --no-package-lock --workspaces=false
 npx tsc -b
 npx vite build
 Assert-LastExit "vite build fallo"
