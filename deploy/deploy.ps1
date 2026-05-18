@@ -71,13 +71,21 @@ Set-Location api
 pnpm install
 Assert-LastExit "pnpm install en api fallo"
 
-# pnpm ya vinculo @mensajeria/domain via workspace:* -> no necesita junction
-if (-not (Test-Path "node_modules\@mensajeria\domain\dist\index.js")) {
-    Write-Host "    ERROR: @mensajeria/domain no accesible." -ForegroundColor Red
-    Get-ChildItem "node_modules\@mensajeria" -ErrorAction SilentlyContinue | Select Name
+# Diagnostico: ver que armo pnpm
+Write-Host "    Diagnostico de node_modules/@mensajeria:"
+Get-ChildItem "node_modules\@mensajeria" -ErrorAction SilentlyContinue | ForEach-Object {
+    $type = if ($_.LinkType) { "$($_.LinkType) -> $($_.Target)" } else { "directorio" }
+    Write-Host "      $($_.Name) [$type]"
+}
+
+# Verificar resolucion via node (sigue symlinks/junctions correctamente)
+$resolved = node -e "try { console.log(require.resolve('@mensajeria/domain')) } catch(e) { console.error(e.message); process.exit(1) }" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "    ERROR: node no puede resolver @mensajeria/domain:" -ForegroundColor Red
+    Write-Host "    $resolved" -ForegroundColor Red
     throw "Domain package no esta accesible via pnpm workspace"
 }
-Write-Host "    @mensajeria/domain verificado via pnpm workspace" -ForegroundColor Green
+Write-Host "    @mensajeria/domain resuelto en: $resolved" -ForegroundColor Green
 
 # ── 4. Prisma generate (ANTES del build — nest usa typeCheck) ────
 Write-Host "=== 4. Prisma: generate ===" -ForegroundColor Cyan
