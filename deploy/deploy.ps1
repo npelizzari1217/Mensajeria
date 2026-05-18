@@ -75,9 +75,12 @@ if (-not (Test-Path $domainLink)) {
     Write-Host "    pnpm no creo el symlink — creando junction manual..." -ForegroundColor Yellow
     $null = New-Item -ItemType Directory -Path "$rootDir\node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
     $domainSource = "$rootDir\packages\domain"
-    # Usar script temporal para evitar problemas de escaping en PowerShell
     $batFile = "$env:TEMP\mklink_domain.bat"
-    "mklink /J `"$domainLink`" `"$domainSource`"" | Out-File -FilePath $batFile -Encoding ascii
+    # Usar here-string para evitar problemas de escaping
+    $batContent = @"
+mklink /J "$domainLink" "$domainSource"
+"@
+    $batContent | Out-File -FilePath $batFile -Encoding ascii
     cmd /c $batFile 2>$null
     Remove-Item $batFile -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) {
