@@ -1,4 +1,4 @@
-# deploy.ps1 - Deploy completo de Mensajeria (pnpm workspace edition)
+# deploy.ps1 - Deploy completo de Mensajeria
 # Ejecutar como Administrador en PowerShell desde C:\Mensajeria
 
 $ErrorActionPreference = "Stop"
@@ -14,43 +14,40 @@ Write-Host "=== 0. Deteniendo instancia previa ===" -ForegroundColor Cyan
 pm2 delete mensajeria-api -s
 
 Write-Host "=== 0.5. Verificando pnpm ===" -ForegroundColor Cyan
-$pnpmVersion = pnpm --version 2>$null
+pnpm --version | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "    Instalando pnpm..." -ForegroundColor Yellow
     npm install -g pnpm
     Assert-LastExit "No se pudo instalar pnpm"
-    $pnpmVersion = pnpm --version
 }
-Write-Host "    pnpm $pnpmVersion" -ForegroundColor Green
+Write-Host "    pnpm $(pnpm --version)" -ForegroundColor Green
 
 # ── 1. Clean state ───────────────────────────────────────────────
 Write-Host "=== 1. Limpiando builds anteriores ===" -ForegroundColor Cyan
 Set-Location $rootDir
-Remove-Item -Recurse -Force packages\domain\node_modules -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force packages\domain\dist -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force api\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force api\dist -ErrorAction SilentlyContinue
-Remove-Item -Force api\package-lock.json -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force web\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
-# ── 2. Install workspace deps (desde la raiz, excluyendo mobile) ─
-Write-Host "=== 2. Instalando deps del workspace (sin mobile) ===" -ForegroundColor Cyan
+# ── 2. Install deps (excluye mobile — no se despliega en VPS) ────
+Write-Host "=== 2. Instalando dependencias del workspace ===" -ForegroundColor Cyan
 Set-Location $rootDir
-pnpm install --filter "!mobile" --filter "."
-Assert-LastExit "pnpm install workspace fallo"
 
-# Verificar que pnpm armo los symlinks/junctions
-Write-Host "    Verificando symlink @mensajeria/domain en api..."
-$domainLink = "$rootDir\api\node_modules\@mensajeria\domain"
-if (-not (Test-Path $domainLink)) {
-    Write-Host "    ERROR: $domainLink no existe" -ForegroundColor Red
-    Write-Host "    Contenido de api\node_modules:"
-    Get-ChildItem "$rootDir\api\node_modules" -ErrorAction SilentlyContinue | Select Name -First 20
-    throw "pnpm no creo el symlink de @mensajeria/domain"
+# Sacar mobile del workspace temporalmente para no bajar react-native
+$workspaceYaml = "$rootDir\pnpm-workspace.yaml"
+$workspaceOriginal = Get-Content $workspaceYaml -Raw
+$workspaceFixed = $workspaceOriginal -replace '\s*-\s*"mobile"\r?\n?', ''
+[System.IO.File]::WriteAllText($workspaceYaml, $workspaceFixed)
+
+try {
+    pnpm install
+    Assert-LastExit "pnpm install fallo"
+} finally {
+    # Restaurar pnpm-workspace.yaml siempre, incluso si falla
+    [System.IO.File]::WriteAllText($workspaceYaml, $workspaceOriginal)
+    Write-Host "    pnpm-workspace.yaml restaurado" -ForegroundColor Gray
 }
-$linkInfo = Get-Item $domainLink
-Write-Host "    Link: $($linkInfo.Name) -> $($linkInfo.Target)" -ForegroundColor Green
 
 # ── 3. Build domain ──────────────────────────────────────────────
 Write-Host "=== 3. Build domain ===" -ForegroundColor Cyan
@@ -62,29 +59,23 @@ if (-not (Test-Path "$rootDir\packages\domain\dist\index.js")) {
     throw "Domain dist/index.js no fue generado"
 }
 $jsCount = (Get-ChildItem "$rootDir\packages\domain\dist" -Recurse -Filter *.js).Count
-Write-Host "    Domain compilado ($jsCount archivos JS)" -ForegroundColor Green
+Write-Host "    Domain compilado ($jsCount JS)" -ForegroundColor Green
 
-# Verificar que el symlink ahora ve el dist
-$domainDistViaLink = "$rootDir\api\node_modules\@mensajeria\domain\dist\index.js"
-if (-not (Test-Path $domainDistViaLink)) {
-    Write-Host "    ADVERTENCIA: dist no accesible via symlink en api node_modules" -ForegroundColor Yellow
-}
-
-# Verificacion REAL: que node pueda resolver el modulo
+# Verificar que node puede resolver el modulo desde api/
 Set-Location $rootDir\api
 $resolved = node -e "console.log(require.resolve('@mensajeria/domain'))" 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "    ERROR: node no resuelve @mensajeria/domain desde api/" -ForegroundColor Red
+    Write-Host "    ERROR: node no resuelve @mensajeria/domain:" -ForegroundColor Red
     Write-Host "    $resolved" -ForegroundColor Red
-    throw "Domain no resuelve via node"
+    throw "Domain no resuelve via node desde api/"
 }
-Write-Host "    @mensajeria/domain resuelto: $resolved" -ForegroundColor Green
+Write-Host "    @mensajeria/domain OK: $resolved" -ForegroundColor Green
 
 # ── 4. Prisma generate ───────────────────────────────────────────
 Write-Host "=== 4. Prisma: generate ===" -ForegroundColor Cyan
 Set-Location $rootDir\api
 $schema = Get-Content prisma\schema.prisma -Raw
-$schemaFixed = $schema -replace '  output   = "\.\./\.\./node_modules/\.prisma/client",?', ''
+$schemaFixed = $schema -replace '  output   = "[^"]+",?(\r?\n)?', ''
 [System.IO.File]::WriteAllText((Join-Path $PWD.Path "prisma\schema.prisma"), $schemaFixed)
 
 pnpm exec prisma generate
@@ -95,6 +86,11 @@ Write-Host "=== 5. Build API ===" -ForegroundColor Cyan
 Set-Location $rootDir
 pnpm --filter api run build
 Assert-LastExit "nest build fallo"
+
+if (-not (Test-Path "$rootDir\api\dist\src\main.js")) {
+    throw "api/dist/src/main.js no fue generado"
+}
+Write-Host "    API compilada" -ForegroundColor Green
 
 # ── 6. Prisma migrate deploy ─────────────────────────────────────
 Write-Host "=== 6. Prisma: migrate deploy ===" -ForegroundColor Cyan
@@ -108,10 +104,15 @@ Set-Location $rootDir
 pnpm --filter web run build
 Assert-LastExit "web build fallo"
 
+if (-not (Test-Path "$rootDir\web\dist\index.html")) {
+    throw "web/dist/index.html no fue generado"
+}
+Write-Host "    Web compilada" -ForegroundColor Green
+
 # ── 8. Iniciar API con pm2 ───────────────────────────────────────
 Write-Host "=== 8. Iniciando API ===" -ForegroundColor Cyan
 Set-Location $rootDir
-pm2 start api/dist/src/main.js --name mensajeria-api
+pm2 start api\dist\src\main.js --name mensajeria-api
 Assert-LastExit "pm2 start fallo"
 pm2 save
 
@@ -120,10 +121,10 @@ Write-Host "=== 9. Verificando API local ===" -ForegroundColor Cyan
 Start-Sleep -Seconds 3
 try {
     $r = Invoke-WebRequest -Uri http://localhost:3000/v1/auth/health -UseBasicParsing -TimeoutSec 5
-    Write-Host "    API local responde: $($r.StatusCode)" -ForegroundColor Green
+    Write-Host "    API local: $($r.StatusCode)" -ForegroundColor Green
 } catch {
-    Write-Host "    WARN: API local no responde aun, ver logs" -ForegroundColor Yellow
-    pm2 logs mensajeria-api --lines 10 --nostream
+    Write-Host "    WARN: API local no responde aun" -ForegroundColor Yellow
+    pm2 logs mensajeria-api --lines 15 --nostream
 }
 
 # ── 10. Deploy IIS ────────────────────────────────────────────────
