@@ -83,15 +83,19 @@ if (-not (Test-Path $domainLink)) {
     }
 }
 
-# Verificacion final via node
-$resolved = node --input-type=module -e "import { createRequire } from 'module'; const r = createRequire('$($rootDir -replace '\\','/')/api/package.json'); console.log(r.resolve('@mensajeria/domain'))" 2>&1
-if ($LASTEXITCODE -ne 0) {
-    # Fallback: CJS resolve
-    $resolved = node -e "process.chdir('$($rootDir -replace '\\','\\\\')\\api'); console.log(require.resolve('@mensajeria/domain'))" 2>&1
-}
+# Verificacion final via node (CJS resolve desde directorio api)
+$apiDir = $rootDir.Replace('\', '/') + '/api'
+$nodeScript = "process.chdir('$apiDir'); console.log(require.resolve('@mensajeria/domain'))"
+$resolved = node -e $nodeScript 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "    ERROR: node no resuelve @mensajeria/domain" -ForegroundColor Red
-    throw "Domain no resuelve via node desde api/"
+    Write-Host "    $resolved" -ForegroundColor Red
+    # Ultimo intento: probar require desde la raiz
+    $nodeScript2 = "process.chdir('$($rootDir.Replace('\', '/'))'); console.log(require.resolve('@mensajeria/domain'))"
+    $resolved = node -e $nodeScript2 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "Domain no resuelve via node — revisar junction en node_modules"
+    }
 }
 Write-Host "    @mensajeria/domain OK: $resolved" -ForegroundColor Green
 
