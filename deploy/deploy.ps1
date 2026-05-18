@@ -7,9 +7,48 @@ function Assert-LastExit([string]$msg) {
     if ($LASTEXITCODE -ne 0) { throw $msg }
 }
 
+$script:RootDir = "C:\Mensajeria"
+$script:RootPkgPath = "$RootDir\package.json"
+$script:RootPkgBackup = "$RootDir\package.json.deploy-bak"
+$script:WorkspaceYamlPath = "$RootDir\pnpm-workspace.yaml"
+$script:WorkspaceYamlBackup = "$RootDir\pnpm-workspace.yaml.deploy-bak"
+
+# ── Helper: disable npm workspace detection ─────────────────────
+function Disable-WorkspaceDetection {
+    Write-Host "    Deshabilitando deteccion de workspace de npm..." -ForegroundColor Yellow
+    # Respaldar y eliminar workspaces del root package.json
+    Copy-Item $script:RootPkgPath $script:RootPkgBackup -Force
+    node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('$($script:RootPkgPath -replace '\\','/')','utf8'));delete p.workspaces;fs.writeFileSync('$($script:RootPkgPath -replace '\\','/')',JSON.stringify(p,null,2))"
+    if ($LASTEXITCODE -ne 0) { throw "No se pudo parchear root package.json" }
+    # Renombrar pnpm-workspace.yaml si existe
+    if (Test-Path $script:WorkspaceYamlPath) {
+        Rename-Item $script:WorkspaceYamlPath $script:WorkspaceYamlBackup -Force
+    }
+    Write-Host "    Workspace detection disabled" -ForegroundColor Green
+}
+
+# ── Helper: restore npm workspace detection ────────────────────
+function Restore-WorkspaceDetection {
+    Write-Host "    Restaurando config de workspace..." -ForegroundColor Yellow
+    if (Test-Path $script:RootPkgBackup) {
+        Copy-Item $script:RootPkgBackup $script:RootPkgPath -Force
+        Remove-Item $script:RootPkgBackup -Force
+    }
+    if (Test-Path $script:WorkspaceYamlBackup) {
+        Rename-Item $script:WorkspaceYamlBackup $script:WorkspaceYamlPath -Force
+    }
+    Write-Host "    Workspace detection restaurado" -ForegroundColor Green
+}
+
 # ── 0. Detener instancia previa ──────────────────────────────────
 Write-Host "=== 0. Deteniendo instancia previa ===" -ForegroundColor Cyan
 pm2 delete mensajeria-api -s
+
+# ── 0.5. Deshabilitar workspace detection ─────────────────────────
+Write-Host "=== 0.5. Preparando npm ===" -ForegroundColor Cyan
+Disable-WorkspaceDetection
+
+try {
 
 # ── 1. Clean state ───────────────────────────────────────────────
 Write-Host "=== 1. Limpiando builds anteriores ===" -ForegroundColor Cyan
@@ -26,7 +65,7 @@ Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
 $domainDir = "C:\Mensajeria\packages\domain"
 Write-Host "    Compilando domain..." -ForegroundColor Yellow
 Push-Location $domainDir
-npm install --no-package-lock --workspaces=false
+npm install --no-package-lock
 Assert-LastExit "npm install en domain fallo"
 
 Write-Host "    pwd: $(Get-Location)"
@@ -74,7 +113,7 @@ node patch-pkg.js
 Assert-LastExit "patch package.json fallo"
 Remove-Item patch-pkg.js
 
-npm install --no-package-lock --workspaces=false
+npm install --no-package-lock
 Assert-LastExit "npm install en api fallo"
 
 # Verificar que el domain package compilo correctamente (paso 2)
@@ -128,7 +167,7 @@ Set-Location ..
 # ── 7. Build web ─────────────────────────────────────────────────
 Write-Host "=== 7. Build Web ===" -ForegroundColor Cyan
 Set-Location web
-npm install --no-package-lock --workspaces=false
+npm install --no-package-lock
 npx tsc -b
 npx vite build
 Assert-LastExit "vite build fallo"
@@ -188,3 +227,7 @@ Write-Host "Frontend: https://sesitec.net/mensajeria/"
 Write-Host "API:      https://sesitec.net/v1/"
 Write-Host "Logs:     pm2 logs mensajeria-api"
 pm2 status
+
+} finally {
+    Restore-WorkspaceDetection
+}
