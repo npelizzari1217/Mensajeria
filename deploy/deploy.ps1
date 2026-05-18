@@ -74,12 +74,17 @@ $domainLink = "$rootDir\node_modules\@mensajeria\domain"
 if (-not (Test-Path $domainLink)) {
     Write-Host "    pnpm no creo el symlink — creando junction manual..." -ForegroundColor Yellow
     $null = New-Item -ItemType Directory -Path "$rootDir\node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
-    cmd /c "mklink /J `"$domainLink`" `"$rootDir\packages\domain`"" 2>$null
+    $domainSource = "$rootDir\packages\domain"
+    # Usar script temporal para evitar problemas de escaping en PowerShell
+    $batFile = "$env:TEMP\mklink_domain.bat"
+    "mklink /J `"$domainLink`" `"$domainSource`"" | Out-File -FilePath $batFile -Encoding ascii
+    cmd /c $batFile 2>$null
+    Remove-Item $batFile -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) {
         Copy-Item -Recurse "$rootDir\packages\domain" $domainLink -ErrorAction Stop
-        Write-Host "    Copia directa creada" -ForegroundColor Yellow
+        Write-Host "    Junction fallo, copia directa creada" -ForegroundColor Yellow
     } else {
-        Write-Host "    Junction creado en node_modules\@mensajeria\domain" -ForegroundColor Green
+        Write-Host "    Junction creado" -ForegroundColor Green
     }
 }
 
