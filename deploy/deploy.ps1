@@ -76,10 +76,9 @@ if (-not (Test-Path $domainLink)) {
     $null = New-Item -ItemType Directory -Path "$rootDir\node_modules\@mensajeria" -Force -ErrorAction SilentlyContinue
     $domainSource = "$rootDir\packages\domain"
     $batFile = "$env:TEMP\mklink_domain.bat"
-    # Usar here-string para evitar problemas de escaping
-    $batContent = @"
-mklink /J "$domainLink" "$domainSource"
-"@
+    # Concatenar quotes explicitamente (evita here-string + escaping)
+    $q = "`""
+    $batContent = "mklink /J " + $q + $domainLink + $q + " " + $q + $domainSource + $q
     $batContent | Out-File -FilePath $batFile -Encoding ascii
     cmd /c $batFile 2>$null
     Remove-Item $batFile -ErrorAction SilentlyContinue
