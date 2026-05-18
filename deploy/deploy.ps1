@@ -1,4 +1,4 @@
-# deploy.ps1 - Deploy completo de Mensajeria (pnpm edition)
+# deploy.ps1 - Deploy completo de Mensajeria (pnpm workspace edition)
 # Ejecutar como Administrador en PowerShell desde C:\Mensajeria
 
 $ErrorActionPreference = "Stop"
@@ -6,6 +6,8 @@ $ErrorActionPreference = "Stop"
 function Assert-LastExit([string]$msg) {
     if ($LASTEXITCODE -ne 0) { throw $msg }
 }
+
+$rootDir = "C:\Mensajeria"
 
 # ── 0. Detener instancia previa + verificar pnpm ──────────────────
 Write-Host "=== 0. Deteniendo instancia previa ===" -ForegroundColor Cyan
@@ -23,72 +25,64 @@ Write-Host "    pnpm $pnpmVersion" -ForegroundColor Green
 
 # ── 1. Clean state ───────────────────────────────────────────────
 Write-Host "=== 1. Limpiando builds anteriores ===" -ForegroundColor Cyan
+Set-Location $rootDir
 Remove-Item -Recurse -Force packages\domain\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force packages\domain\dist -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force api\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force api\dist -ErrorAction SilentlyContinue
 Remove-Item -Force api\package-lock.json -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force api\pnpm-lock.yaml -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\node_modules -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force web\dist -ErrorAction SilentlyContinue
 
-# ── 2. Compilar domain package (SIEMPRE, nunca saltear) ─────────
-Write-Host "=== 2. Domain package ===" -ForegroundColor Cyan
-$domainDir = "C:\Mensajeria\packages\domain"
-Write-Host "    Compilando domain..." -ForegroundColor Yellow
-Push-Location $domainDir
-pnpm install
-Assert-LastExit "pnpm install en domain fallo"
+# ── 2. Install workspace deps (desde la raiz, excluyendo mobile) ─
+Write-Host "=== 2. Instalando deps del workspace (sin mobile) ===" -ForegroundColor Cyan
+Set-Location $rootDir
+pnpm install --filter "!mobile" --filter "."
+Assert-LastExit "pnpm install workspace fallo"
 
-Write-Host "    pwd: $(Get-Location)"
-Write-Host "    Ejecutando: pnpm run build"
-$tscOutput = pnpm run build 2>&1
-$tscExit = $LASTEXITCODE
-Write-Host "    tsc exit code: $tscExit"
+# Verificar que pnpm armo los symlinks/junctions
+Write-Host "    Verificando symlink @mensajeria/domain en api..."
+$domainLink = "$rootDir\api\node_modules\@mensajeria\domain"
+if (-not (Test-Path $domainLink)) {
+    Write-Host "    ERROR: $domainLink no existe" -ForegroundColor Red
+    Write-Host "    Contenido de api\node_modules:"
+    Get-ChildItem "$rootDir\api\node_modules" -ErrorAction SilentlyContinue | Select Name -First 20
+    throw "pnpm no creo el symlink de @mensajeria/domain"
+}
+$linkInfo = Get-Item $domainLink
+Write-Host "    Link: $($linkInfo.Name) -> $($linkInfo.Target)" -ForegroundColor Green
 
-if ($tscOutput) {
-    Write-Host "    --- build output ---"
-    $tscOutput | ForEach-Object { Write-Host "    $_" }
-    Write-Host "    --- fin build ---"
+# ── 3. Build domain ──────────────────────────────────────────────
+Write-Host "=== 3. Build domain ===" -ForegroundColor Cyan
+Set-Location $rootDir
+pnpm --filter "@mensajeria/domain" run build
+Assert-LastExit "domain build fallo"
+
+if (-not (Test-Path "$rootDir\packages\domain\dist\index.js")) {
+    throw "Domain dist/index.js no fue generado"
+}
+$jsCount = (Get-ChildItem "$rootDir\packages\domain\dist" -Recurse -Filter *.js).Count
+Write-Host "    Domain compilado ($jsCount archivos JS)" -ForegroundColor Green
+
+# Verificar que el symlink ahora ve el dist
+$domainDistViaLink = "$rootDir\api\node_modules\@mensajeria\domain\dist\index.js"
+if (-not (Test-Path $domainDistViaLink)) {
+    Write-Host "    ADVERTENCIA: dist no accesible via symlink en api node_modules" -ForegroundColor Yellow
 }
 
-if ($tscExit -ne 0) { throw "Domain build fallo (exit code: $tscExit)" }
-Pop-Location
-
-if (-not (Test-Path "$domainDir\dist\index.js")) {
-    Write-Host "    ERROR: dist/index.js no fue generado." -ForegroundColor Red
-    Write-Host "    Contenido de $domainDir\dist:" -ForegroundColor Red
-    Get-ChildItem "$domainDir\dist" -ErrorAction SilentlyContinue | Select Name
-    Write-Host "    Contenido de $domainDir (raiz):" -ForegroundColor Yellow
-    Get-ChildItem "$domainDir" -ErrorAction SilentlyContinue | Select Name
-    throw "Domain: build no genero dist/index.js"
-}
-Write-Host "    Compilacion OK ($((Get-ChildItem "$domainDir\dist" -Recurse -Filter *.js).Count) archivos JS generados)" -ForegroundColor Green
-
-# ── 3. Instalar deps de API (pnpm resuelve workspace:* nativamente) ──
-Write-Host "=== 3. API: dependencias ===" -ForegroundColor Cyan
-Set-Location api
-pnpm install
-Assert-LastExit "pnpm install en api fallo"
-
-# Diagnostico: ver que armo pnpm
-Write-Host "    Diagnostico de node_modules/@mensajeria:"
-Get-ChildItem "node_modules\@mensajeria" -ErrorAction SilentlyContinue | ForEach-Object {
-    $type = if ($_.LinkType) { "$($_.LinkType) -> $($_.Target)" } else { "directorio" }
-    Write-Host "      $($_.Name) [$type]"
-}
-
-# Verificar resolucion via node (sigue symlinks/junctions correctamente)
-$resolved = node -e "try { console.log(require.resolve('@mensajeria/domain')) } catch(e) { console.error(e.message); process.exit(1) }" 2>&1
+# Verificacion REAL: que node pueda resolver el modulo
+Set-Location $rootDir\api
+$resolved = node -e "console.log(require.resolve('@mensajeria/domain'))" 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "    ERROR: node no puede resolver @mensajeria/domain:" -ForegroundColor Red
+    Write-Host "    ERROR: node no resuelve @mensajeria/domain desde api/" -ForegroundColor Red
     Write-Host "    $resolved" -ForegroundColor Red
-    throw "Domain package no esta accesible via pnpm workspace"
+    throw "Domain no resuelve via node"
 }
-Write-Host "    @mensajeria/domain resuelto en: $resolved" -ForegroundColor Green
+Write-Host "    @mensajeria/domain resuelto: $resolved" -ForegroundColor Green
 
-# ── 4. Prisma generate (ANTES del build — nest usa typeCheck) ────
+# ── 4. Prisma generate ───────────────────────────────────────────
 Write-Host "=== 4. Prisma: generate ===" -ForegroundColor Cyan
+Set-Location $rootDir\api
 $schema = Get-Content prisma\schema.prisma -Raw
 $schemaFixed = $schema -replace '  output   = "\.\./\.\./node_modules/\.prisma/client",?', ''
 [System.IO.File]::WriteAllText((Join-Path $PWD.Path "prisma\schema.prisma"), $schemaFixed)
@@ -96,29 +90,27 @@ $schemaFixed = $schema -replace '  output   = "\.\./\.\./node_modules/\.prisma/c
 pnpm exec prisma generate
 Assert-LastExit "prisma generate fallo"
 
-# ── 5. Build API (AHORA con tipos de Prisma generados) ───────────
+# ── 5. Build API ─────────────────────────────────────────────────
 Write-Host "=== 5. Build API ===" -ForegroundColor Cyan
-pnpm run build
+Set-Location $rootDir
+pnpm --filter api run build
 Assert-LastExit "nest build fallo"
 
 # ── 6. Prisma migrate deploy ─────────────────────────────────────
 Write-Host "=== 6. Prisma: migrate deploy ===" -ForegroundColor Cyan
+Set-Location $rootDir\api
 pnpm exec prisma migrate deploy
 Assert-LastExit "prisma migrate deploy fallo"
 
-Set-Location ..
-
 # ── 7. Build web ─────────────────────────────────────────────────
 Write-Host "=== 7. Build Web ===" -ForegroundColor Cyan
-Set-Location web
-pnpm install
-Assert-LastExit "pnpm install en web fallo"
-pnpm run build
-Assert-LastExit "vite build fallo"
-Set-Location ..
+Set-Location $rootDir
+pnpm --filter web run build
+Assert-LastExit "web build fallo"
 
 # ── 8. Iniciar API con pm2 ───────────────────────────────────────
 Write-Host "=== 8. Iniciando API ===" -ForegroundColor Cyan
+Set-Location $rootDir
 pm2 start api/dist/src/main.js --name mensajeria-api
 Assert-LastExit "pm2 start fallo"
 pm2 save
@@ -136,11 +128,10 @@ try {
 
 # ── 10. Deploy IIS ────────────────────────────────────────────────
 Write-Host "=== 10. Deploy Web + Proxy IIS ===" -ForegroundColor Cyan
+Set-Location $rootDir
 
-# Proxy en site root (para /v1/* y /socket.io/*)
 Copy-Item -Force deploy\iis-proxy.web.config C:\inetpub\wwwroot\web.config
 
-# Web app en /mensajeria
 $distPath = "C:\inetpub\wwwroot\mensajeria"
 if (Test-Path $distPath) { Remove-Item -Recurse -Force $distPath }
 Copy-Item -Recurse web\dist $distPath
