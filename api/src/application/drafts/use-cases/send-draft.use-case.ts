@@ -11,7 +11,8 @@ import { SendMessageUseCase } from '../../messaging/use-cases/send-message.use-c
 
 export class SendDraftUseCase {
   constructor(
-    private readonly draftRepo: DraftRepository,
+    @Inject('DraftRepository') private readonly draftRepo: DraftRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
     private readonly sendMessage: SendMessageUseCase,
   ) {}
 
@@ -33,10 +34,21 @@ export class SendDraftUseCase {
       return err(new Error('Draft must have at least one recipient or a group to be sent'));
     }
 
-    // 4. Send via existing send message use case
+    // 4. Resolve recipient IDs to emails
+    const recipientEmails: string[] = [];
+    for (const id of draft.getRecipientIds()) {
+      const uidResult = UserId.create(id);
+      if (uidResult.isErr()) continue;
+      const userResult = await this.userRepo.findById(uidResult.unwrap());
+      if (userResult.isOk()) {
+        recipientEmails.push(userResult.unwrap().getEmail().get());
+      }
+    }
+
+    // 5. Send via existing send message use case
     const sendDto: SendMessageDTO = {
       senderId: userId,
-      recipientIds: [...draft.getRecipientIds()],
+      recipientEmails,
       subject: draft.getSubject() ?? '',
       body: draft.getBody(),
     };
@@ -44,7 +56,7 @@ export class SendDraftUseCase {
     const sendResult = await this.sendMessage.execute(sendDto);
     if (sendResult.isErr()) return err(sendResult.unwrapErr());
 
-    // 5. Delete the draft
+    // 6. Delete the draft
     const deleteResult = await this.draftRepo.delete(draftId);
     if (deleteResult.isErr()) return err(deleteResult.unwrapErr());
 

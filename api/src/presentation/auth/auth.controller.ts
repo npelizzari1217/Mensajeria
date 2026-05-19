@@ -2,7 +2,10 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Delete,
   Body,
+  Param,
   Req,
   UseGuards,
   HttpCode,
@@ -15,6 +18,9 @@ import { LoginUseCase } from '../../application/auth/use-cases/login.use-case';
 import { RefreshTokenUseCase } from '../../application/auth/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../../application/auth/use-cases/logout.use-case';
 import { GetCurrentUserUseCase } from '../../application/auth/use-cases/get-current-user.use-case';
+import { ListUsersUseCase } from '../../application/auth/use-cases/list-users.use-case';
+import { UpdateUserUseCase } from '../../application/auth/use-cases/update-user.use-case';
+import { DeleteUserUseCase } from '../../application/auth/use-cases/delete-user.use-case';
 import { AuthGuard } from '../../infrastructure/auth/guards/auth.guard';
 import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
 import { RegisterRequest } from './dto/register.request';
@@ -34,6 +40,9 @@ export class AuthController {
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly getCurrentUserUseCase: GetCurrentUserUseCase,
+    private readonly listUsersUseCase: ListUsersUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
   ) {}
 
   @Post('register')
@@ -134,5 +143,37 @@ export class AuthController {
       throw result.unwrapErr();
     }
     return { data: result.unwrap() };
+  }
+
+  @Get('contacts')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async listContacts() {
+    const result = await this.listUsersUseCase.execute();
+    if (result.isErr()) {
+      throw result.unwrapErr();
+    }
+    return { data: result.unwrap() };
+  }
+
+  @Patch('users/:id')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async updateUser(@Param('id') id: string, @Body() body: { name?: string; email?: string; role?: string }) {
+    const result = await this.updateUserUseCase.execute(id, body);
+    if (result.isErr()) {
+      throw result.unwrapErr();
+    }
+    return { data: result.unwrap() };
+  }
+
+  @Delete('users/:id')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteUser(@Param('id') id: string) {
+    const result = await this.deleteUserUseCase.execute(id);
+    if (result.isErr()) {
+      throw result.unwrapErr();
+    }
   }
 }

@@ -23,7 +23,7 @@ export default function DraftEditPage() {
       .then((draft) => {
         setSubject(draft.subject ?? '');
         setBody(draft.body);
-        setRecipientIdsText(draft.recipientIds.join(', '));
+        setRecipientIdsText(draft.recipientEmails.join(', '));
       })
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
@@ -36,7 +36,7 @@ export default function DraftEditPage() {
     setError(null);
 
     try {
-      const recipientIds = recipientIdsText
+      const recipientEmails = recipientIdsText
         .split(',')
         .map((r) => r.trim())
         .filter((r) => r.length > 0);
@@ -44,7 +44,7 @@ export default function DraftEditPage() {
       await updateDraft(id, {
         subject: subject.trim() || null,
         body: body.trim(),
-        recipientIds,
+        recipientEmails,
       });
       navigate('/drafts', { replace: true });
     } catch (err) {

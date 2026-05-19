@@ -59,11 +59,11 @@ export async function deactivateGroup(id: string): Promise<void> {
 
 export async function addGroupMember(
   groupId: string,
-  userId: string,
+  email: string,
   role?: string,
 ): Promise<GroupMemberResponse> {
   const { data } = await apiClient.post(`/groups/${groupId}/members`, {
-    userId,
+    email,
     role,
   });
   return data.data;
@@ -71,19 +71,19 @@ export async function addGroupMember(
 
 export async function removeGroupMember(
   groupId: string,
-  userId: string,
+  email: string,
 ): Promise<void> {
-  await apiClient.delete(`/groups/${groupId}/members/${userId}`);
+  await apiClient.delete(`/groups/${groupId}/members`, { data: { email } });
 }
 
 export async function changeMemberRole(
   groupId: string,
-  userId: string,
+  email: string,
   role: string,
 ): Promise<GroupMemberResponse> {
   const { data } = await apiClient.patch(
-    `/groups/${groupId}/members/${userId}`,
-    { role },
+    `/groups/${groupId}/members`,
+    { email, role },
   );
   return data.data;
 }

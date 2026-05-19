@@ -2,6 +2,7 @@ import {
   Message,
   MessageId,
   UserId,
+  Email,
   Subject,
   MessageBody,
   UserRepository,
@@ -12,6 +13,7 @@ import {
   ok,
   err,
   EventBus,
+  User,
 } from '@mensajeria/domain';
 import { Inject } from '@nestjs/common';
 import { SendMessageDTO } from '../dtos/send-message.dto';
@@ -45,26 +47,27 @@ export class SendMessageUseCase {
     }
     const sender = senderResult.unwrap();
 
-    // 3. Validate recipientIds and check all recipients exist
-    if (!dto.recipientIds || dto.recipientIds.length === 0) {
+    // 3. Validate recipientEmails and resolve to UserIds
+    if (!dto.recipientEmails || dto.recipientEmails.length === 0) {
       return err(new Error('Message must have at least one recipient'));
     }
 
-    const recipientIds: UserId[] = [];
-    for (const rawId of dto.recipientIds) {
-      const idResult = UserId.create(rawId);
-      if (idResult.isErr()) {
-        return err(idResult.unwrapErr());
+    const recipients: User[] = [];
+    for (const rawEmail of dto.recipientEmails) {
+      const emailResult = Email.create(rawEmail);
+      if (emailResult.isErr()) {
+        return err(emailResult.unwrapErr());
       }
-      const userId = idResult.unwrap();
 
-      const userResult = await this.userRepo.findById(userId);
+      const userResult = await this.userRepo.findByEmail(emailResult.unwrap());
       if (userResult.isErr()) {
-        return err(new NotFoundError('Recipient', rawId));
+        return err(new NotFoundError('Recipient', rawEmail));
       }
 
-      recipientIds.push(userId);
+      recipients.push(userResult.unwrap());
     }
+
+    const recipientIds = recipients.map((u) => u.getId());
 
     // 4. Validate subject
     const subjectResult = Subject.create(dto.subject);

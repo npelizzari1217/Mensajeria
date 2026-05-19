@@ -163,6 +163,14 @@ export class User {
   }
 
   /**
+   * Updates the user's email.
+   */
+  changeEmail(newEmail: Email): void {
+    this.email = newEmail;
+    this.updatedAt = Timestamp.now();
+  }
+
+  /**
    * Returns the user's public identity for authorization context.
    */
   getIdentity(): { userId: UserId; role: RoleVO } {

@@ -709,3 +709,52 @@ a:hover {
 .text-muted {
   color: #9ca3af;
 }
+
+/* ── Recipient Selector ──────────────────────────────────────────── */
+
+.recipient-selector {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.recipient-selector select {
+  flex: 1;
+}
+
+.recipient-selector .btn {
+  white-space: nowrap;
+}
+
+.recipient-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recipient-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.recipient-tag .btn-remove {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 1.125rem;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  line-height: 1;
+}
+
+.recipient-tag .btn-remove:hover {
+  color: #dc2626;
+}

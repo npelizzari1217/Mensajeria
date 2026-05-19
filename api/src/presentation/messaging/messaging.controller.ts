@@ -60,7 +60,7 @@ export class MessagingController {
   ) {
     const result = await this.sendMessageUseCase.execute({
       senderId: user.userId,
-      recipientIds: body.recipientIds,
+      recipientEmails: body.recipientEmails,
       subject: body.subject,
       body: body.body,
     });
@@ -205,13 +205,13 @@ export class MessagingController {
   @HttpCode(HttpStatus.CREATED)
   async forward(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { recipientIds: string[]; comment?: string },
+    @Body() body: { recipientEmails: string[]; comment?: string },
     @CurrentUser() user: { userId: string; role: string },
   ) {
     const result = await this.forwardMessageUseCase.execute({
       senderId: user.userId,
       originalMessageId: id,
-      recipientIds: body.recipientIds,
+      recipientEmails: body.recipientEmails,
       comment: body.comment,
     });
 

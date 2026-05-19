@@ -7,7 +7,7 @@ export interface DraftResponse {
   userId: string;
   subject: string | null;
   body: string;
-  recipientIds: string[];
+  recipientEmails: string[];
   groupId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -18,7 +18,7 @@ export interface DraftResponse {
 export async function saveDraft(payload: {
   subject?: string;
   body: string;
-  recipientIds?: string[];
+  recipientEmails?: string[];
   groupId?: string;
 }): Promise<DraftResponse> {
   const { data } = await apiClient.post('/drafts', payload);
@@ -40,7 +40,7 @@ export async function updateDraft(
   payload: {
     subject?: string | null;
     body?: string;
-    recipientIds?: string[];
+    recipientEmails?: string[];
     groupId?: string | null;
   },
 ): Promise<DraftResponse> {

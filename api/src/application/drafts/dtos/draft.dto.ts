@@ -5,7 +5,7 @@ export interface SaveDraftDTO {
   userId: string;
   subject?: string;
   body: string;
-  recipientIds?: string[];
+  recipientEmails?: string[];
   groupId?: string;
 }
 
@@ -15,7 +15,7 @@ export interface SaveDraftDTO {
 export interface UpdateDraftDTO {
   subject?: string | null;
   body?: string;
-  recipientIds?: string[];
+  recipientEmails?: string[];
   groupId?: string | null;
 }
 
@@ -27,7 +27,7 @@ export interface DraftResponse {
   userId: string;
   subject: string | null;
   body: string;
-  recipientIds: string[];
+  recipientEmails: string[];
   groupId: string | null;
   createdAt: string;
   updatedAt: string;

@@ -4,17 +4,17 @@ import apiClient, { getErrorMessage } from '../api/client';
 import { listGroups, type GroupResponse } from '../api/groups';
 import { saveDraft } from '../api/drafts';
 
-/**
- * ComposePage — form to send a new message.
- *
- * Supports multiple recipients via comma-separated UUIDs in a textarea,
- * OR selecting a group to send to all its members.
- * On success → redirects to /sent.
- */
+interface Contact {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export default function ComposePage() {
   const navigate = useNavigate();
 
-  const [recipientIdsText, setRecipientIdsText] = useState('');
+  const [recipientEmails, setRecipientEmails] = useState<string[]>([]);
+  const [selectedContact, setSelectedContact] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -22,39 +22,46 @@ export default function ComposePage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
-    recipientIds?: string;
+    recipients?: string;
     subject?: string;
     body?: string;
   }>({});
 
   const [groups, setGroups] = useState<GroupResponse[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
 
-  // Fetch groups for the selector
   useEffect(() => {
     listGroups()
       .then(setGroups)
-      .catch(() => {}); // Silently fail — groups are optional
+      .catch(() => {});
   }, []);
 
-  /**
-   * Parses the comma-separated recipient IDs textarea value
-   * into an array of trimmed non-empty strings.
-   */
-  function parseRecipientIds(): string[] {
-    return recipientIdsText
-      .split(',')
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
+  useEffect(() => {
+    apiClient
+      .get('/auth/contacts')
+      .then(({ data }) => setContacts(data.data ?? []))
+      .catch(() => {});
+  }, []);
+
+  function addRecipient() {
+    if (!selectedContact) return;
+    if (recipientEmails.includes(selectedContact)) return;
+    setRecipientEmails([...recipientEmails, selectedContact]);
+    setSelectedContact('');
+    if (selectedGroupId) setSelectedGroupId('');
+  }
+
+  function removeRecipient(email: string) {
+    setRecipientEmails(recipientEmails.filter((e) => e !== email));
   }
 
   function validate(): boolean {
     const errors: typeof fieldErrors = {};
-    const ids = parseRecipientIds();
     const hasGroup = selectedGroupId !== '';
-    const hasManualIds = ids.length > 0;
+    const hasRecipients = recipientEmails.length > 0;
 
-    if (!hasGroup && !hasManualIds) {
-      errors.recipientIds = 'Debes especificar destinatarios o seleccionar un grupo';
+    if (!hasGroup && !hasRecipients) {
+      errors.recipients = 'Debes agregar al menos un destinatario o seleccionar un grupo';
     }
     if (!subject.trim()) {
       errors.subject = 'El asunto es requerido';
@@ -74,11 +81,10 @@ export default function ComposePage() {
     setError(null);
 
     try {
-      const recipientIds = parseRecipientIds();
       await saveDraft({
         subject: subject.trim() || undefined,
         body: body.trim(),
-        recipientIds: recipientIds.length > 0 ? recipientIds : undefined,
+        recipientEmails: recipientEmails.length > 0 ? recipientEmails : undefined,
         groupId: selectedGroupId || undefined,
       });
       navigate('/drafts', { replace: true });
@@ -105,7 +111,7 @@ export default function ComposePage() {
       if (selectedGroupId) {
         payload.groupId = selectedGroupId;
       } else {
-        payload.recipientIds = parseRecipientIds();
+        payload.recipientEmails = recipientEmails;
       }
 
       await apiClient.post('/messages', payload);
@@ -138,7 +144,7 @@ export default function ComposePage() {
               onChange={(e) => {
                 setSelectedGroupId(e.target.value);
                 if (e.target.value) {
-                  setRecipientIdsText('');
+                  setRecipientEmails([]);
                 }
               }}
             >
@@ -157,29 +163,66 @@ export default function ComposePage() {
           </div>
         )}
 
-        <div className="form-group">
-          <label htmlFor="recipientIds">
-            Destinatarios manuales (IDs separados por coma)
-            {groups.length > 0 && ' — o usa el grupo de arriba'}
-          </label>
-          <textarea
-            id="recipientIds"
-            rows={3}
-            value={recipientIdsText}
-            onChange={(e) => {
-              setRecipientIdsText(e.target.value);
-              if (e.target.value) {
-                setSelectedGroupId('');
-              }
-            }}
-            className={fieldErrors.recipientIds ? 'input-error' : ''}
-            placeholder="UUIDs de los destinatarios, separados por coma"
-            disabled={!!selectedGroupId}
-          />
-          {fieldErrors.recipientIds && (
-            <span className="field-error">{fieldErrors.recipientIds}</span>
-          )}
-        </div>
+        {/* Contact selector + add button */}
+        {!selectedGroupId && (
+          <div className="form-group">
+            <label htmlFor="contactSelect">
+              Destinatarios
+              {groups.length > 0 && ' — o usa el grupo de arriba'}
+            </label>
+            <div className="recipient-selector">
+              <select
+                id="contactSelect"
+                value={selectedContact}
+                onChange={(e) => setSelectedContact(e.target.value)}
+                className={fieldErrors.recipients ? 'input-error' : ''}
+              >
+                <option value="">-- Seleccionar contacto --</option>
+                {contacts
+                  .filter((c) => !recipientEmails.includes(c.email))
+                  .map((c) => (
+                    <option key={c.id} value={c.email}>
+                      {c.name} ({c.email})
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={addRecipient}
+                disabled={!selectedContact}
+              >
+                Agregar
+              </button>
+            </div>
+
+            {/* Recipient list */}
+            {recipientEmails.length > 0 && (
+              <ul className="recipient-list">
+                {recipientEmails.map((email) => {
+                  const contact = contacts.find((c) => c.email === email);
+                  return (
+                    <li key={email} className="recipient-tag">
+                      <span>{contact ? `${contact.name} (${email})` : email}</span>
+                      <button
+                        type="button"
+                        className="btn-remove"
+                        onClick={() => removeRecipient(email)}
+                        title="Quitar destinatario"
+                      >
+                        &times;
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {fieldErrors.recipients && (
+              <span className="field-error">{fieldErrors.recipients}</span>
+            )}
+          </div>
+        )}
 
         <div className="form-group">
           <label htmlFor="subject">Asunto</label>

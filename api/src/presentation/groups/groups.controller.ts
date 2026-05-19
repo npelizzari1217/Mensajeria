@@ -11,7 +11,7 @@ import { RemoveGroupMemberUseCase } from '../../application/groups/use-cases/rem
 import { ChangeMemberRoleUseCase } from '../../application/groups/use-cases/change-member-role.use-case';
 import { ListUserGroupsUseCase } from '../../application/groups/use-cases/list-user-groups.use-case';
 import { GetGroupDetailUseCase } from '../../application/groups/use-cases/get-group-detail.use-case';
-import { CreateGroupDTO, UpdateGroupDTO, AddGroupMemberDTO, ChangeMemberRoleDTO } from '../../application/groups/dtos/create-group.dto';
+import { CreateGroupDTO, UpdateGroupDTO, AddGroupMemberDTO, RemoveGroupMemberDTO, ChangeMemberRoleDTO } from '../../application/groups/dtos/create-group.dto';
 
 @Controller('groups')
 @UseGuards(AuthGuard)
@@ -71,21 +71,20 @@ export class GroupsController {
     return { data: result.unwrap() };
   }
 
-  @Delete(':id/members/:userId')
+  @Delete(':id/members')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeMemberRoute(@Param('id') id: string, @Param('userId') userId: string, @Req() req: any) {
-    const result = await this.removeMember.execute(id, userId, req.user.userId);
+  async removeMemberRoute(@Param('id') id: string, @Body() dto: RemoveGroupMemberDTO, @Req() req: any) {
+    const result = await this.removeMember.execute(id, dto.email, req.user.userId);
     if (result.isErr()) throw result.unwrapErr();
   }
 
-  @Patch(':id/members/:userId')
+  @Patch(':id/members')
   async changeMemberRoleRoute(
     @Param('id') id: string,
-    @Param('userId') userId: string,
     @Body() dto: ChangeMemberRoleDTO,
     @Req() req: any,
   ) {
-    const result = await this.changeMemberRole.execute(id, userId, dto, req.user.userId);
+    const result = await this.changeMemberRole.execute(id, dto, req.user.userId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }

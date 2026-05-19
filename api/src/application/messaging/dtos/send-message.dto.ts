@@ -3,7 +3,7 @@
  */
 export interface SendMessageDTO {
   senderId: string;
-  recipientIds: string[];
+  recipientEmails: string[];
   subject: string;
   body: string;
 }

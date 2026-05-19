@@ -4,6 +4,6 @@
 export interface ForwardMessageDTO {
   senderId: string;
   originalMessageId: string;
-  recipientIds: string[];
+  recipientEmails: string[];
   comment?: string;
 }

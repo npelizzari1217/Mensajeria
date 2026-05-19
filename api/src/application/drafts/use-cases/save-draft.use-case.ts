@@ -1,11 +1,13 @@
+import { Inject } from '@nestjs/common';
 import {
-  Draft, DraftRepository, UserId, Result, ok, err,
+  Draft, DraftRepository, UserRepository, UserId, Email, Result, ok, err,
 } from '@mensajeria/domain';
 import { SaveDraftDTO, DraftResponse } from '../dtos/draft.dto';
 
 export class SaveDraftUseCase {
   constructor(
-    private readonly draftRepo: DraftRepository,
+    @Inject('DraftRepository') private readonly draftRepo: DraftRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
   async execute(dto: SaveDraftDTO): Promise<Result<DraftResponse, Error>> {
@@ -16,11 +18,24 @@ export class SaveDraftUseCase {
       return err(new Error('Draft body is required'));
     }
 
+    // Resolve recipient emails to IDs for storage
+    const recipientIds: string[] = [];
+    if (dto.recipientEmails) {
+      for (const rawEmail of dto.recipientEmails) {
+        const emailResult = Email.create(rawEmail);
+        if (emailResult.isErr()) continue;
+        const userResult = await this.userRepo.findByEmail(emailResult.unwrap());
+        if (userResult.isOk()) {
+          recipientIds.push(userResult.unwrap().getId().get());
+        }
+      }
+    }
+
     const draftResult = Draft.create({
       userId: userIdResult.unwrap(),
       subject: dto.subject ?? null,
       body: dto.body,
-      recipientIds: dto.recipientIds ?? [],
+      recipientIds,
       groupId: dto.groupId ?? null,
     });
 
@@ -30,16 +45,27 @@ export class SaveDraftUseCase {
     const saveResult = await this.draftRepo.save(draft);
     if (saveResult.isErr()) return err(saveResult.unwrapErr());
 
-    return ok(this.toResponse(draft));
+    return ok(await this.toResponse(draft));
   }
 
-  private toResponse(draft: Draft): DraftResponse {
+  async toResponse(draft: Draft): Promise<DraftResponse> {
+    // Resolve stored recipient IDs back to emails for the response
+    const recipientEmails: string[] = [];
+    for (const id of draft.getRecipientIds()) {
+      const uidResult = UserId.create(id);
+      if (uidResult.isErr()) continue;
+      const userResult = await this.userRepo.findById(uidResult.unwrap());
+      if (userResult.isOk()) {
+        recipientEmails.push(userResult.unwrap().getEmail().get());
+      }
+    }
+
     return {
       id: draft.getId(),
       userId: draft.getUserId().get(),
       subject: draft.getSubject(),
       body: draft.getBody(),
-      recipientIds: [...draft.getRecipientIds()],
+      recipientEmails,
       groupId: draft.getGroupId(),
       createdAt: draft.getCreatedAt().toString(),
       updatedAt: draft.getUpdatedAt().toString(),

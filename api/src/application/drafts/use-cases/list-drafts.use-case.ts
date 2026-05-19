@@ -1,3 +1,4 @@
+import { Inject } from '@nestjs/common';
 import {
   DraftRepository, Result, ok, err,
 } from '@mensajeria/domain';
@@ -6,7 +7,7 @@ import { SaveDraftUseCase } from './save-draft.use-case';
 
 export class ListDraftsUseCase {
   constructor(
-    private readonly draftRepo: DraftRepository,
+    @Inject('DraftRepository') private readonly draftRepo: DraftRepository,
     private readonly saveDraftResponse: SaveDraftUseCase,
   ) {}
 
@@ -15,6 +16,9 @@ export class ListDraftsUseCase {
     if (draftsResult.isErr()) return err(draftsResult.unwrapErr());
 
     const drafts = draftsResult.unwrap();
-    return ok(drafts.map((d) => this.saveDraftResponse['toResponse'](d)));
+    const responses = await Promise.all(
+      drafts.map((d) => this.saveDraftResponse.toResponse(d)),
+    );
+    return ok(responses);
   }
 }

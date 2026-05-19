@@ -53,7 +53,7 @@ model RefreshToken {
 model Message {
   id              String              @id @default(uuid()) @map("message_id")
   senderId        String              @map("sender_id")
-  sender          User                @relation("sender", fields: [senderId], references: [id])
+  sender          User                @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
   threadId        String?             @map("thread_id")
   thread          ConversationThread? @relation(fields: [threadId], references: [id])
   parentMessageId String?             @map("parent_message_id")
@@ -78,7 +78,7 @@ model MessageRecipient {
   messageId   String        @map("message_id")
   message     Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
   recipientId String        @map("recipient_id")
-  recipient   User          @relation(fields: [recipientId], references: [id])
+  recipient   User          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   status      MessageStatus @default(PENDING)
   readAt      DateTime?     @map("read_at")
   createdAt   DateTime      @default(now()) @map("created_at")

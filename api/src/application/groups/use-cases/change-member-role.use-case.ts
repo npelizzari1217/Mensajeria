@@ -1,6 +1,6 @@
 import {
-  GroupRepository, GroupRole, UserId,
-  Result, ok, err, GroupNotFoundError, NotGroupAdminError,
+  GroupRepository, UserRepository, UserId, Email, GroupRole,
+  Result, ok, err, GroupNotFoundError, NotGroupAdminError, NotFoundError,
 } from '@mensajeria/domain';
 import { ChangeMemberRoleDTO, GroupMemberResponse } from '../dtos/create-group.dto';
 import { Inject } from '@nestjs/common';
@@ -8,11 +8,11 @@ import { Inject } from '@nestjs/common';
 export class ChangeMemberRoleUseCase {
   constructor(
     @Inject('GroupRepository') private readonly groupRepo: GroupRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
   async execute(
     groupId: string,
-    targetUserId: string,
     dto: ChangeMemberRoleDTO,
     requesterId: string,
   ): Promise<Result<GroupMemberResponse, Error>> {
@@ -25,12 +25,16 @@ export class ChangeMemberRoleUseCase {
     const group = groupResult.unwrap();
     if (!group) return err(new GroupNotFoundError(groupId));
 
-    const targetUid = UserId.create(targetUserId);
-    if (targetUid.isErr()) return err(targetUid.unwrapErr());
+    const emailResult = Email.create(dto.email);
+    if (emailResult.isErr()) return err(emailResult.unwrapErr());
+
+    const userResult = await this.userRepo.findByEmail(emailResult.unwrap());
+    if (userResult.isErr()) return err(new NotFoundError('User', dto.email));
+    const user = userResult.unwrap();
 
     const newRole = GroupRole.create(dto.role);
 
-    const changeResult = group.changeMemberRole(targetUid.unwrap(), newRole, uid);
+    const changeResult = group.changeMemberRole(user.getId(), newRole, uid);
     if (changeResult.isErr()) return err(changeResult.unwrapErr());
 
     const saveResult = await this.groupRepo.update(group);
@@ -40,7 +44,7 @@ export class ChangeMemberRoleUseCase {
     return ok({
       id: member.getId(),
       userId: member.getUserId().get(),
-      name: '',
+      name: user.getName(),
       role: member.getRole().get(),
       joinedAt: member.getJoinedAt().toString(),
     });

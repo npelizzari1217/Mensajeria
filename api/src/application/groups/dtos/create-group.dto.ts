@@ -9,11 +9,16 @@ export class UpdateGroupDTO {
 }
 
 export class AddGroupMemberDTO {
-  userId!: string;
+  email!: string;
   role?: string;
 }
 
+export class RemoveGroupMemberDTO {
+  email!: string;
+}
+
 export class ChangeMemberRoleDTO {
+  email!: string;
   role!: string;
 }
 

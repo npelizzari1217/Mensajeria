@@ -1,5 +1,6 @@
+import { Inject } from '@nestjs/common';
 import {
-  DraftRepository, DraftNotFoundError,
+  DraftRepository, DraftNotFoundError, UserRepository, UserId, Email,
   Result, ok, err,
 } from '@mensajeria/domain';
 import { UpdateDraftDTO, DraftResponse } from '../dtos/draft.dto';
@@ -7,7 +8,8 @@ import { SaveDraftUseCase } from './save-draft.use-case';
 
 export class UpdateDraftUseCase {
   constructor(
-    private readonly draftRepo: DraftRepository,
+    @Inject('DraftRepository') private readonly draftRepo: DraftRepository,
+    @Inject('UserRepository') private readonly userRepo: UserRepository,
     private readonly saveDraftResponse: SaveDraftUseCase,
   ) {}
 
@@ -22,21 +24,35 @@ export class UpdateDraftUseCase {
     const draft = findResult.unwrap();
     if (!draft) return err(new DraftNotFoundError(id));
 
-    // Ownership check
     if (draft.getUserId().get() !== userId) {
       return err(new Error('Not authorized to update this draft'));
+    }
+
+    // Resolve recipient emails to IDs
+    let recipientIds: string[] = [];
+    if (dto.recipientEmails !== undefined) {
+      for (const rawEmail of dto.recipientEmails) {
+        const emailResult = Email.create(rawEmail);
+        if (emailResult.isErr()) continue;
+        const userResult = await this.userRepo.findByEmail(emailResult.unwrap());
+        if (userResult.isOk()) {
+          recipientIds.push(userResult.unwrap().getId().get());
+        }
+      }
+    } else {
+      recipientIds = [...draft.getRecipientIds()];
     }
 
     const updated = draft.update({
       subject: dto.subject !== undefined ? dto.subject : draft.getSubject(),
       body: dto.body ?? draft.getBody(),
-      recipientIds: dto.recipientIds ?? [...draft.getRecipientIds()],
+      recipientIds,
       groupId: dto.groupId !== undefined ? dto.groupId : draft.getGroupId(),
     });
 
     const saveResult = await this.draftRepo.update(updated);
     if (saveResult.isErr()) return err(saveResult.unwrapErr());
 
-    return ok(this.saveDraftResponse['toResponse'](updated));
+    return ok(await this.saveDraftResponse.toResponse(updated));
   }
 }

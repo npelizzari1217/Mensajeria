@@ -7,6 +7,8 @@ import {
   MessageNotFoundError, NotFoundError,
   Result, ok, err,
   EventBus,
+  Email,
+  User,
 } from '@mensajeria/domain';
 import { Inject } from '@nestjs/common';
 import { ForwardMessageDTO } from '../dtos/forward-message.dto';
@@ -49,20 +51,22 @@ export class ForwardMessageUseCase {
       return err(new UnauthorizedMessageAccessError(dto.senderId, dto.originalMessageId));
     }
 
-    // 4. Validate recipientIds
-    if (!dto.recipientIds || dto.recipientIds.length === 0) {
+    // 4. Validate recipientEmails and resolve to UserIds
+    if (!dto.recipientEmails || dto.recipientEmails.length === 0) {
       return err(new Error('Forward message must have at least one recipient'));
     }
 
-    const recipientIds: UserId[] = [];
-    for (const rawId of dto.recipientIds) {
-      const idResult = UserId.create(rawId);
-      if (idResult.isErr()) return err(idResult.unwrapErr());
+    const recipients: User[] = [];
+    for (const rawEmail of dto.recipientEmails) {
+      const emailResult = Email.create(rawEmail);
+      if (emailResult.isErr()) return err(emailResult.unwrapErr());
 
-      const userResult = await this.userRepo.findById(idResult.unwrap());
-      if (userResult.isErr()) return err(new NotFoundError('Recipient', rawId));
-      recipientIds.push(idResult.unwrap());
+      const userResult = await this.userRepo.findByEmail(emailResult.unwrap());
+      if (userResult.isErr()) return err(new NotFoundError('Recipient', rawEmail));
+      recipients.push(userResult.unwrap());
     }
+
+    const recipientIds = recipients.map((u) => u.getId());
 
     // 5. Build forwarded content
     const forwardedContent = ForwardedContent.create({

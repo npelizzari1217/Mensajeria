@@ -34,4 +34,14 @@ export interface UserRepository {
    * Checks if a user with the given email already exists.
    */
   existsByEmail(email: Email): Promise<boolean>;
+
+  /**
+   * Returns all users (for contact lists).
+   */
+  findAll(): Promise<Result<User[], DomainError>>;
+
+  /**
+   * Deletes a user by ID.
+   */
+  delete(id: UserId): Promise<Result<void, DomainError>>;
 }

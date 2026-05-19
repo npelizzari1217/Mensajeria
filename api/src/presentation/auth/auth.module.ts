@@ -5,6 +5,9 @@ import { LoginUseCase } from '../../application/auth/use-cases/login.use-case';
 import { RefreshTokenUseCase } from '../../application/auth/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../../application/auth/use-cases/logout.use-case';
 import { GetCurrentUserUseCase } from '../../application/auth/use-cases/get-current-user.use-case';
+import { ListUsersUseCase } from '../../application/auth/use-cases/list-users.use-case';
+import { UpdateUserUseCase } from '../../application/auth/use-cases/update-user.use-case';
+import { DeleteUserUseCase } from '../../application/auth/use-cases/delete-user.use-case';
 import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
 import { BcryptPasswordHasher } from '../../infrastructure/auth/bcrypt-password-hasher';
 import { PrismaUserRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-user.repository';
@@ -44,6 +47,21 @@ const env = loadEnvConfig();
     {
       provide: GetCurrentUserUseCase,
       useFactory: (repo) => new GetCurrentUserUseCase(repo),
+      inject: ['UserRepository'],
+    },
+    {
+      provide: ListUsersUseCase,
+      useFactory: (repo) => new ListUsersUseCase(repo),
+      inject: ['UserRepository'],
+    },
+    {
+      provide: UpdateUserUseCase,
+      useFactory: (repo) => new UpdateUserUseCase(repo),
+      inject: ['UserRepository'],
+    },
+    {
+      provide: DeleteUserUseCase,
+      useFactory: (repo) => new DeleteUserUseCase(repo),
       inject: ['UserRepository'],
     },
 

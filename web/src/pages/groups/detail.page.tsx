@@ -9,8 +9,14 @@ import {
   type GroupDetailResponse,
   type GroupMemberResponse,
 } from '../../api/groups';
-import { getErrorMessage } from '../../api/client';
+import apiClient, { getErrorMessage } from '../../api/client';
 import { useAuth } from '../../contexts/auth.context';
+
+interface Contact {
+  id: string;
+  email: string;
+  name: string;
+}
 
 export default function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,11 +27,17 @@ export default function GroupDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Add member form
-  const [showAdd, setShowAdd] = useState(false);
-  const [newMemberId, setNewMemberId] = useState('');
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContact, setSelectedContact] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('MEMBER');
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    apiClient
+      .get('/auth/contacts')
+      .then(({ data }) => setContacts(data.data ?? []))
+      .catch(() => {});
+  }, []);
 
   const fetchGroup = useCallback(async () => {
     if (!id) return;
@@ -47,12 +59,11 @@ export default function GroupDetailPage() {
 
   async function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!id || !newMemberId.trim()) return;
+    if (!id || !selectedContact) return;
     setAdding(true);
     try {
-      await addGroupMember(id, newMemberId.trim(), newMemberRole);
-      setNewMemberId('');
-      setShowAdd(false);
+      await addGroupMember(id, selectedContact, newMemberRole);
+      setSelectedContact('');
       await fetchGroup();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -61,10 +72,10 @@ export default function GroupDetailPage() {
     }
   }
 
-  async function handleRemoveMember(memberId: string) {
-    if (!id || !confirm('¿Eliminar este miembro del grupo?')) return;
+  async function handleRemoveMember(memberEmail: string) {
+    if (!id || !confirm('Eliminar este miembro del grupo?')) return;
     try {
-      await removeGroupMember(id, memberId);
+      await removeGroupMember(id, memberEmail);
       await fetchGroup();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -73,9 +84,11 @@ export default function GroupDetailPage() {
 
   async function handleToggleRole(member: GroupMemberResponse) {
     if (!id) return;
+    const contactByUserId = contacts.find((c) => c.id === member.userId);
+    if (!contactByUserId) return;
     const newRole = member.role === 'ADMIN' ? 'MEMBER' : 'ADMIN';
     try {
-      await changeMemberRole(id, member.userId, newRole);
+      await changeMemberRole(id, contactByUserId.email, newRole);
       await fetchGroup();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -83,7 +96,7 @@ export default function GroupDetailPage() {
   }
 
   async function handleDeactivate() {
-    if (!id || !confirm('¿Desactivar este grupo? Los miembros no podran enviar mensajes a traves de el.'))
+    if (!id || !confirm('Desactivar este grupo? Los miembros no podran enviar mensajes a traves de el.'))
       return;
     try {
       await deactivateGroup(id);
@@ -101,6 +114,9 @@ export default function GroupDetailPage() {
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!group) return <div className="empty-state"><p>Grupo no encontrado</p></div>;
 
+  const memberIds = group.members.map((m) => m.userId);
+  const availableContacts = contacts.filter((c) => !memberIds.includes(c.id));
+
   return (
     <div className="page">
       <div className="page-header">
@@ -110,7 +126,7 @@ export default function GroupDetailPage() {
             <p className="text-muted">{group.description}</p>
           )}
           <small className="text-muted">
-            {group.memberCount} miembro{group.memberCount !== 1 ? 's' : ''} • Creado el{' '}
+            {group.memberCount} miembro{group.memberCount !== 1 ? 's' : ''} - Creado el{' '}
             {new Date(group.createdAt).toLocaleDateString('es-AR')}
           </small>
         </div>
@@ -134,42 +150,35 @@ export default function GroupDetailPage() {
         </div>
       </div>
 
-      {/* Members section */}
       <div className="card">
         <div className="card-header">
           <h2>Miembros ({group.members.length})</h2>
-          {isAdmin && (
-            <button
-              type="button"
-              className="btn btn-sm btn-primary"
-              onClick={() => setShowAdd(!showAdd)}
-            >
-              {showAdd ? 'Cancelar' : 'Agregar Miembro'}
-            </button>
-          )}
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        {/* Add member form */}
-        {showAdd && isAdmin && (
+        {isAdmin && (
           <form onSubmit={handleAddMember} className="p-1">
             <div className="form-row">
               <div className="form-group flex-1">
-                <label htmlFor="memberId">ID de Usuario</label>
-                <input
-                  id="memberId"
-                  type="text"
-                  value={newMemberId}
-                  onChange={(e) => setNewMemberId(e.target.value)}
-                  placeholder="UUID del usuario"
-                  required
-                />
+                <label htmlFor="contactSelect">Contacto</label>
+                <select
+                  id="contactSelect"
+                  value={selectedContact}
+                  onChange={(e) => setSelectedContact(e.target.value)}
+                >
+                  <option value="">-- Seleccionar contacto --</option>
+                  {availableContacts.map((c) => (
+                    <option key={c.id} value={c.email}>
+                      {c.name} ({c.email})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
-                <label htmlFor="memberRole">Rol</label>
+                <label htmlFor="memberRoleSelect">Rol</label>
                 <select
-                  id="memberRole"
+                  id="memberRoleSelect"
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
                 >
@@ -181,7 +190,7 @@ export default function GroupDetailPage() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={adding || !newMemberId.trim()}
+                  disabled={adding || !selectedContact}
                 >
                   {adding ? 'Agregando...' : 'Agregar'}
                 </button>
@@ -190,7 +199,6 @@ export default function GroupDetailPage() {
           </form>
         )}
 
-        {/* Members table */}
         {group.members.length > 0 ? (
           <table className="message-table">
             <thead>
@@ -198,7 +206,7 @@ export default function GroupDetailPage() {
                 <th>Usuario</th>
                 <th>Rol</th>
                 <th>Ingreso</th>
-                {isAdmin && <th>Acciones</th>}
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -220,31 +228,31 @@ export default function GroupDetailPage() {
                   <td>
                     {new Date(m.joinedAt).toLocaleDateString('es-AR')}
                   </td>
-                  {isAdmin && m.userId !== user?.id && (
-                    <td>
-                      <div className="flex gap-05">
+                  <td>
+                    <div className="flex gap-05">
+                      {isAdmin && (
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary"
                           onClick={() => handleToggleRole(m)}
-                          title={
-                            m.role === 'ADMIN'
-                              ? 'Degradar a Miembro'
-                              : 'Ascender a Admin'
-                          }
                         >
                           {m.role === 'ADMIN' ? 'Degradar' : 'Ascender'}
                         </button>
+                      )}
+                      {isAdmin && m.userId !== user?.id && (
                         <button
                           type="button"
                           className="btn btn-sm btn-danger"
-                          onClick={() => handleRemoveMember(m.userId)}
+                          onClick={() => {
+                            const c = contacts.find((ct) => ct.id === m.userId);
+                            if (c) handleRemoveMember(c.email);
+                          }}
                         >
                           Quitar
                         </button>
-                      </div>
-                    </td>
-                  )}
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -22,6 +22,7 @@ export default function Layout() {
     { to: '/groups', label: 'Grupos' },
     { to: '/drafts', label: 'Borradores' },
     { to: '/pinned', label: 'Fijados' },
+    { to: '/admin/users', label: 'Usuarios' },
   ];
 
   return (

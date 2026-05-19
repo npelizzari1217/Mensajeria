@@ -1,10 +1,11 @@
+import { Inject } from '@nestjs/common';
 import {
   DraftRepository, DraftNotFoundError, Result, ok, err,
 } from '@mensajeria/domain';
 
 export class DeleteDraftUseCase {
   constructor(
-    private readonly draftRepo: DraftRepository,
+    @Inject('DraftRepository') private readonly draftRepo: DraftRepository,
   ) {}
 
   async execute(id: string, userId: string): Promise<Result<void, Error>> {

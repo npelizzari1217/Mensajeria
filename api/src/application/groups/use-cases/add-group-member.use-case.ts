@@ -1,6 +1,6 @@
 import {
-  GroupRepository, UserRepository, UserId, GroupRole,
-  Result, ok, err, GroupNotFoundError, NotGroupAdminError,
+  GroupRepository, UserRepository, UserId, Email, GroupRole,
+  Result, ok, err, GroupNotFoundError, NotGroupAdminError, NotFoundError,
 } from '@mensajeria/domain';
 import { AddGroupMemberDTO, GroupMemberResponse } from '../dtos/create-group.dto';
 import { Inject } from '@nestjs/common';
@@ -25,12 +25,16 @@ export class AddGroupMemberUseCase {
     const group = groupResult.unwrap();
     if (!group) return err(new GroupNotFoundError(groupId));
 
-    const targetUid = UserId.create(dto.userId);
-    if (targetUid.isErr()) return err(targetUid.unwrapErr());
+    const emailResult = Email.create(dto.email);
+    if (emailResult.isErr()) return err(emailResult.unwrapErr());
+
+    const userResult = await this.userRepo.findByEmail(emailResult.unwrap());
+    if (userResult.isErr()) return err(new NotFoundError('User', dto.email));
+    const user = userResult.unwrap();
 
     const role = dto.role ? GroupRole.create(dto.role) : GroupRole.MEMBER;
 
-    const addResult = group.addMember(targetUid.unwrap(), role, uid);
+    const addResult = group.addMember(user.getId(), role, uid);
     if (addResult.isErr()) return err(addResult.unwrapErr());
 
     const saveResult = await this.groupRepo.update(group);
@@ -40,7 +44,7 @@ export class AddGroupMemberUseCase {
     return ok({
       id: member.getId(),
       userId: member.getUserId().get(),
-      name: '',
+      name: user.getName(),
       role: member.getRole().get(),
       joinedAt: member.getJoinedAt().toString(),
     });

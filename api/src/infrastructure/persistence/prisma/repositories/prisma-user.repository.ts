@@ -62,4 +62,18 @@ export class PrismaUserRepository implements UserRepository {
     });
     return count > 0;
   }
+
+  async findAll(): Promise<Result<User[], DomainError>> {
+    const rows = await this.prisma.user.findMany({
+      orderBy: { name: 'asc' },
+    });
+    return ok(rows.map((row) => UserMapper.toDomain(row)));
+  }
+
+  async delete(id: UserId): Promise<Result<void, DomainError>> {
+    await this.prisma.user.delete({
+      where: { id: id.get() },
+    });
+    return ok(undefined);
+  }
 }

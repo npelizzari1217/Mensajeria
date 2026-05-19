@@ -104,9 +104,9 @@ export default function DraftsListPage() {
                   : draft.body}
               </p>
               <div className="draft-meta">
-                {draft.recipientIds.length > 0 && (
+                {draft.recipientEmails.length > 0 && (
                   <span className="badge">
-                    {draft.recipientIds.length} destinatario{draft.recipientIds.length !== 1 ? 's' : ''}
+                    {draft.recipientEmails.length} destinatario{draft.recipientEmails.length !== 1 ? 's' : ''}
                   </span>
                 )}
                 {draft.groupId && <span className="badge">Grupo</span>}
@@ -122,9 +122,9 @@ export default function DraftsListPage() {
                   type="button"
                   className="btn btn-sm btn-primary"
                   onClick={() => handleSend(draft.id)}
-                  disabled={draft.recipientIds.length === 0 && !draft.groupId}
+                  disabled={draft.recipientEmails.length === 0 && !draft.groupId}
                   title={
-                    draft.recipientIds.length === 0 && !draft.groupId
+                    draft.recipientEmails.length === 0 && !draft.groupId
                       ? 'Agrega destinatarios antes de enviar'
                       : 'Enviar mensaje'
                   }
