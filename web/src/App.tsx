@@ -16,6 +16,7 @@ import DraftEditPage from './pages/drafts/edit.page';
 import PinnedPage from './pages/pinned.page';
 import UsersAdminPage from './pages/users-admin.page';
 import EmpresasAdminPage from './pages/empresas-admin.page';
+import { ADMIN_ROLES, MANAGE_USERS_ROLES } from './constants/roles';
 
 export default function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -44,7 +45,7 @@ export default function App() {
         }
       />
 
-      {/* Protected routes */}
+      {/* Protected routes — general access */}
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/inbox" element={<InboxPage />} />
@@ -57,7 +58,19 @@ export default function App() {
           <Route path="/drafts" element={<DraftsListPage />} />
           <Route path="/drafts/:id" element={<DraftEditPage />} />
           <Route path="/pinned" element={<PinnedPage />} />
+        </Route>
+      </Route>
+
+      {/* Admin: Users — requires Admin or Supervisor role */}
+      <Route element={<ProtectedRoute requiredRoles={MANAGE_USERS_ROLES} />}>
+        <Route element={<Layout />}>
           <Route path="/admin/users" element={<UsersAdminPage />} />
+        </Route>
+      </Route>
+
+      {/* Admin: Empresas — requires Admin role only */}
+      <Route element={<ProtectedRoute requiredRoles={ADMIN_ROLES} />}>
+        <Route element={<Layout />}>
           <Route path="/admin/empresas" element={<EmpresasAdminPage />} />
         </Route>
       </Route>

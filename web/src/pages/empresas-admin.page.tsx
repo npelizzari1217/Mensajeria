@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth.context';
 import { getErrorMessage, getEmpresas, createEmpresa, updateEmpresa, deleteEmpresa } from '../api/client';
+import { isAdmin } from '../constants/roles';
 
 interface EmpresaProfile {
   id: string;
@@ -26,7 +27,7 @@ export default function EmpresasAdminPage() {
 
   // Redirect non-admin users
   useEffect(() => {
-    if (user && user.role !== 'ADMIN') {
+    if (user && !isAdmin(user.role)) {
       navigate('/inbox', { replace: true });
     }
   }, [user, navigate]);
@@ -93,7 +94,7 @@ export default function EmpresasAdminPage() {
   }
 
   // Don't render anything while redirecting
-  if (user && user.role !== 'ADMIN') return null;
+  if (user && !isAdmin(user.role)) return null;
   if (loading) return <p className="text-muted">Cargando empresas...</p>;
 
   return (

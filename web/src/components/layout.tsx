@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/auth.context';
+import { canManageUsers, isAdmin } from '../constants/roles';
 
 /**
  * Application shell — sidebar navigation + top bar header + content area.
@@ -14,8 +15,6 @@ export default function Layout() {
     navigate('/login', { replace: true });
   };
 
-  const isAdmin = user?.role === 'ADMIN';
-
   const navLinks = [
     { to: '/inbox', label: 'Recibidos' },
     { to: '/sent', label: 'Enviados' },
@@ -24,8 +23,8 @@ export default function Layout() {
     { to: '/groups', label: 'Grupos' },
     { to: '/drafts', label: 'Borradores' },
     { to: '/pinned', label: 'Fijados' },
-    { to: '/admin/users', label: 'Usuarios' },
-    ...(isAdmin ? [{ to: '/admin/empresas' as const, label: 'Empresas' }] : []),
+    ...(canManageUsers(user?.role) ? [{ to: '/admin/users' as const, label: 'Usuarios' }] : []),
+    ...(isAdmin(user?.role) ? [{ to: '/admin/empresas' as const, label: 'Empresas' }] : []),
   ];
 
   return (

@@ -758,3 +758,278 @@ a:hover {
 .recipient-tag .btn-remove:hover {
   color: #dc2626;
 }
+
+/* ── Premium UI ──────────────────────────────────────────────────── */
+/*
+ * Additive-only block — zero existing selectors modified above.
+ * Rollback: delete this entire block.
+ */
+
+/* === Transitions === */
+.btn,
+.nav-link,
+.card,
+.form-group input,
+.form-group textarea,
+.form-group select,
+.message-table tbody tr,
+.search-input,
+.badge {
+  transition: all 0.2s ease;
+}
+
+/* === Typography === */
+.page-header h1,
+.login-card h1,
+.sidebar-header h2 {
+  letter-spacing: -0.02em;
+}
+
+.page-header h1 {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+
+/* === Cards === */
+.card {
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.card:hover {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* === Buttons === */
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+}
+
+.btn-secondary {
+  border-radius: 8px;
+}
+
+.btn-sm {
+  border-radius: 6px;
+}
+
+.logout-btn {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  transform: scale(1.02);
+}
+
+/* === Sidebar === */
+.sidebar {
+  background: linear-gradient(180deg, #1a3352 0%, #1e3a5f 100%);
+}
+
+.sidebar-header h2 {
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-link {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+.nav-link.active {
+  border-left-color: #3b82f6;
+  box-shadow: inset -2px 0 8px rgba(59, 130, 246, 0.15);
+}
+
+/* === Topbar === */
+.topbar {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+/* === Form Inputs === */
+.form-group input,
+.form-group textarea,
+.form-group select {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 12px rgba(59, 130, 246, 0.08);
+}
+
+/* === Tables === */
+.message-table {
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.message-table th {
+  background: linear-gradient(180deg, #f0f4ff 0%, #f9fafb 100%);
+  color: #374151;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.message-table tbody tr {
+  transition: all 0.15s ease;
+}
+
+.message-table tbody tr:hover {
+  background: #f0f7ff;
+  transform: translateX(2px);
+}
+
+/* === Login Page === */
+.login-page {
+  background:
+    linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #7c3aed 100%);
+  animation: loginBgPulse 8s ease-in-out infinite;
+}
+
+@keyframes loginBgPulse {
+  0%,
+  100% {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #7c3aed 100%);
+  }
+  50% {
+    background: linear-gradient(135deg, #1a3352 0%, #3b82f6 50%, #8b5cf6 100%);
+  }
+}
+
+.login-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.15),
+    0 8px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.login-card h1 {
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === Badges === */
+.badge {
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  letter-spacing: 0.02em;
+}
+
+.badge-unread {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+}
+
+.badge-read {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.badge-pending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+/* === Badge variants for roles === */
+.badge-primary {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+}
+
+.badge-default {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #374151;
+}
+
+/* === Compose & Detail Cards === */
+.compose-form,
+.message-detail-header,
+.message-body,
+.reply-section,
+.thread-section {
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* === Group Cards === */
+.group-card {
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.group-card:hover {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+/* === Alerts === */
+.alert {
+  border-radius: 8px;
+}

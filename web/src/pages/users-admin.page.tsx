@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient, { getErrorMessage } from '../api/client';
 import { useAuth } from '../contexts/auth.context';
+import { isAdmin, isSupervisor } from '../constants/roles';
 
 interface UserProfile {
   id: string;
@@ -17,8 +19,16 @@ interface Empresa {
 
 export default function UsersAdminPage() {
   const { user, empresaId: currentEmpresaId } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
-  const isSupervisor = user?.role === 'SUPERVISOR';
+  const navigate = useNavigate();
+  const userIsAdmin = isAdmin(user?.role);
+  const userIsSupervisor = isSupervisor(user?.role);
+
+  // Redirect non-admin/non-supervisor users
+  useEffect(() => {
+    if (user && !userIsAdmin && !userIsSupervisor) {
+      navigate('/inbox', { replace: true });
+    }
+  }, [user, userIsAdmin, userIsSupervisor, navigate]);
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +40,7 @@ export default function UsersAdminPage() {
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
-  const [formRole, setFormRole] = useState('USUARIO');
+  const [formRole, setFormRole] = useState('Usuario');
   const [formEmpresaId, setFormEmpresaId] = useState('');
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [saving, setSaving] = useState(false);
@@ -54,19 +64,19 @@ export default function UsersAdminPage() {
 
   // Load empresas list for ADMIN — used in the new-user form
   useEffect(() => {
-    if (isAdmin) {
+    if (userIsAdmin) {
       apiClient
         .get('/empresas')
         .then((r) => setEmpresas(r.data.data ?? []))
         .catch(() => {}); // silent — not critical
     }
-  }, [isAdmin]);
+  }, [userIsAdmin]);
 
   function resetForm() {
     setFormName('');
     setFormEmail('');
     setFormPassword('');
-    setFormRole('USUARIO');
+    setFormRole('Usuario');
     setFormEmpresaId('');
     setEditingId(null);
     setShowCreate(false);
@@ -97,7 +107,7 @@ export default function UsersAdminPage() {
           role: formRole,
         });
       } else {
-        const empresaId = isAdmin ? formEmpresaId : currentEmpresaId;
+        const empresaId = userIsAdmin ? formEmpresaId : currentEmpresaId;
         await apiClient.post('/auth/register', {
           name: formName.trim(),
           email: formEmail.trim(),
@@ -125,6 +135,8 @@ export default function UsersAdminPage() {
     }
   }
 
+  // Don't render anything while redirecting
+  if (user && !userIsAdmin && !userIsSupervisor) return null;
   if (loading) return <p className="text-muted">Cargando usuarios...</p>;
 
   return (
@@ -191,13 +203,13 @@ export default function UsersAdminPage() {
                 value={formRole}
                 onChange={(e) => setFormRole(e.target.value)}
               >
-                <option value="USUARIO">Usuario</option>
-                <option value="TECNICO">Tecnico</option>
-                <option value="SUPERVISOR">Supervisor</option>
-                {isAdmin && <option value="ADMIN">Admin</option>}
+                <option value="Usuario">Usuario</option>
+                <option value="Tecnico">Tecnico</option>
+                <option value="Supervisor">Supervisor</option>
+                {userIsAdmin && <option value="Admin">Admin</option>}
               </select>
             </div>
-            {!editingId && isAdmin && (
+            {!editingId && userIsAdmin && (
               <div className="form-group">
                 <label htmlFor="uempresa">Empresa</label>
                 <select
@@ -247,7 +259,7 @@ export default function UsersAdminPage() {
                 <td>{u.name}</td>
                 <td>{u.email}</td>
                 <td>
-                  <span className={`badge ${u.role === 'ADMIN' ? 'badge-primary' : 'badge-default'}`}>
+                  <span className={`badge ${isAdmin(u.role) ? 'badge-primary' : 'badge-default'}`}>
                     {u.role}
                   </span>
                 </td>
