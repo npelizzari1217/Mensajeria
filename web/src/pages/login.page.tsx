@@ -8,13 +8,14 @@ import { getErrorMessage } from '../api/client';
  * loading state, and backend error display.
  */
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, selectEmpresa, pendingEmpresaSelection, empresas, error: authError } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showEmpresaSelector, setShowEmpresaSelector] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
@@ -45,13 +46,60 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await login(email.trim(), password);
+      const empresasData = await login(email.trim(), password);
+      if (empresasData.length > 1) {
+        setShowEmpresaSelector(true);
+      } else {
+        navigate('/inbox', { replace: true });
+      }
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSelectEmpresa(empresaId: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      await selectEmpresa(empresaId);
       navigate('/inbox', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
+  }
+
+  if (showEmpresaSelector) {
+    return (
+      <div className="login-page">
+        <div className="login-card">
+          <h1>Seleccionar Empresa</h1>
+          <p className="login-subtitle">Elegi la empresa para continuar</p>
+          {error && <div className="alert alert-error">{error}</div>}
+          <div className="empresa-list">
+            {empresas.map((emp) => (
+              <button
+                key={emp.id}
+                className="btn btn-secondary btn-block empresa-btn"
+                onClick={() => handleSelectEmpresa(emp.id)}
+                disabled={loading}
+              >
+                <span className="empresa-nombre">{emp.nombre}</span>
+                <span className="empresa-role">{emp.role}</span>
+              </button>
+            ))}
+          </div>
+          <p className="login-footer">
+            <button className="btn-link" onClick={() => { setShowEmpresaSelector(false); setError(null); }}>
+              Volver al login
+            </button>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

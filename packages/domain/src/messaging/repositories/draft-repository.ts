@@ -1,4 +1,5 @@
 import { Result } from '../../shared/result';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { Draft } from '../entities/draft';
 
 /**
@@ -9,8 +10,8 @@ import { Draft } from '../entities/draft';
  */
 export interface DraftRepository {
   save(draft: Draft): Promise<Result<void, Error>>;
-  findById(id: string): Promise<Result<Draft | null, Error>>;
-  findByUserId(userId: string): Promise<Result<Draft[], Error>>;
+  findById(id: string, empresaId: EmpresaId): Promise<Result<Draft | null, Error>>;
+  findByUserId(userId: string, empresaId: EmpresaId): Promise<Result<Draft[], Error>>;
   update(draft: Draft): Promise<Result<void, Error>>;
   delete(id: string): Promise<Result<void, Error>>;
 }

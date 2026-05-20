@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiClient, { getErrorMessage } from '../api/client';
+import { useAuth } from '../contexts/auth.context';
 
 interface UserProfile {
   id: string;
@@ -9,7 +10,16 @@ interface UserProfile {
   createdAt: string;
 }
 
+interface Empresa {
+  id: string;
+  nombre: string;
+}
+
 export default function UsersAdminPage() {
+  const { user, empresaId: currentEmpresaId } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+  const isSupervisor = user?.role === 'SUPERVISOR';
+
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +31,8 @@ export default function UsersAdminPage() {
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formRole, setFormRole] = useState('USUARIO');
+  const [formEmpresaId, setFormEmpresaId] = useState('');
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [saving, setSaving] = useState(false);
 
   const fetchUsers = useCallback(async () => {
@@ -40,11 +52,22 @@ export default function UsersAdminPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Load empresas list for ADMIN — used in the new-user form
+  useEffect(() => {
+    if (isAdmin) {
+      apiClient
+        .get('/empresas')
+        .then((r) => setEmpresas(r.data.data ?? []))
+        .catch(() => {}); // silent — not critical
+    }
+  }, [isAdmin]);
+
   function resetForm() {
     setFormName('');
     setFormEmail('');
     setFormPassword('');
     setFormRole('USUARIO');
+    setFormEmpresaId('');
     setEditingId(null);
     setShowCreate(false);
   }
@@ -74,11 +97,13 @@ export default function UsersAdminPage() {
           role: formRole,
         });
       } else {
+        const empresaId = isAdmin ? formEmpresaId : currentEmpresaId;
         await apiClient.post('/auth/register', {
           name: formName.trim(),
           email: formEmail.trim(),
           password: formPassword,
           role: formRole,
+          empresaId,
         });
       }
       resetForm();
@@ -169,9 +194,25 @@ export default function UsersAdminPage() {
                 <option value="USUARIO">Usuario</option>
                 <option value="TECNICO">Tecnico</option>
                 <option value="SUPERVISOR">Supervisor</option>
-                <option value="ADMIN">Admin</option>
+                {isAdmin && <option value="ADMIN">Admin</option>}
               </select>
             </div>
+            {!editingId && isAdmin && (
+              <div className="form-group">
+                <label htmlFor="uempresa">Empresa</label>
+                <select
+                  id="uempresa"
+                  value={formEmpresaId}
+                  onChange={(e) => setFormEmpresaId(e.target.value)}
+                  required
+                >
+                  <option value="">Seleccionar empresa</option>
+                  {empresas.map((e) => (
+                    <option key={e.id} value={e.id}>{e.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="form-group" style={{ alignSelf: 'flex-end' }}>
               <button
                 type="submit"

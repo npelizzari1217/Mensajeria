@@ -1,4 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Result, ok, err } from '../../shared/result';
 import { GroupMember } from './group-member';
@@ -17,6 +18,7 @@ export class Group {
     private readonly name: string,
     private readonly description: string | null,
     private readonly createdBy: UserId,
+    private readonly empresaId: EmpresaId,
     private readonly members: GroupMember[],
     private isActive: boolean,
     private readonly createdAt: Timestamp,
@@ -30,6 +32,7 @@ export class Group {
     name: string,
     description: string | null,
     createdBy: UserId,
+    empresaId: EmpresaId,
   ): Result<Group, Error> {
     if (!name || name.trim().length === 0) {
       return err(new Error('Group name is required'));
@@ -44,7 +47,7 @@ export class Group {
     const adminMember = GroupMember.create(id, createdBy, GroupRole.ADMIN);
 
     return ok(
-      new Group(id, name.trim(), description, createdBy, [adminMember], true, now, now),
+      new Group(id, name.trim(), description, createdBy, empresaId, [adminMember], true, now, now),
     );
   }
 
@@ -57,6 +60,7 @@ export class Group {
       props.name,
       props.description,
       props.createdBy,
+      props.empresaId,
       props.members,
       props.isActive,
       props.createdAt,
@@ -80,6 +84,10 @@ export class Group {
 
   getCreatedBy(): UserId {
     return this.createdBy;
+  }
+
+  getEmpresaId(): EmpresaId {
+    return this.empresaId;
   }
 
   getMembers(): readonly GroupMember[] {
@@ -238,6 +246,7 @@ export interface GroupProps {
   name: string;
   description: string | null;
   createdBy: UserId;
+  empresaId: EmpresaId;
   members: GroupMember[];
   isActive: boolean;
   createdAt: Timestamp;

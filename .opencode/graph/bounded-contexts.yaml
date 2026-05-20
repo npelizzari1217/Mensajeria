@@ -1,0 +1,66 @@
+# =============================================================================
+# Knowledge Graph — Bounded Contexts (Domain Boundaries)
+# =============================================================================
+# Each bounded context is a self-contained domain with its own ubiquitous language.
+# Cross-context communication happens via well-defined contracts only.
+
+bounded_contexts:
+  shared-kernel:
+    description: "Value objects and types shared across all contexts"
+    owns: [Email, UserId, MessageId, Subject, MessageBody, RoleVO, MessageStatusVO, Timestamp, Result, DomainError]
+    contracts: []
+
+  auth:
+    description: "User identity, authentication, authorization, role management"
+    owns: [User, Password, UserRepository, RefreshToken, AuthPort, PasswordHasher]
+    contracts:
+      - name: user-identity
+        provides: [userId, email, name, role]
+        consumed_by: [messaging]
+      - name: auth-token
+        provides: [accessToken (JWT), refreshToken]
+        consumed_by: [web-frontend, mobile-app]
+
+  messaging:
+    description: "Message creation, delivery, status tracking, threads, groups, drafts"
+    owns: [Message, MessageRecipient, Group, Draft, Attachment]
+    contracts:
+      - name: send-message
+        provides: [POST /v1/messages {recipientEmails, subject, body}]
+      - name: message-inbox
+        provides: [GET /v1/messages/inbox {data, total, page}]
+      - name: group-management
+        provides: [CRUD groups, add/remove members by email]
+
+  web-frontend:
+    description: "React SPA for messaging UI"
+    owns: [compose, inbox, sent, groups, drafts, admin]
+    contracts:
+      - name: auth-flow
+        consumes: [POST /v1/auth/login, POST /v1/auth/refresh, GET /v1/auth/me]
+
+  mobile-app:
+    description: "Expo React Native mobile client"
+    owns: [auth screens, inbox, compose]
+    contracts:
+      - name: auth-flow
+        consumes: [POST /v1/auth/login, POST /v1/auth/refresh]
+
+# =============================================================================
+# Context Mapping
+# =============================================================================
+context_mappings:
+  - from: messaging
+    to: auth
+    pattern: shared-kernel
+    description: "Messaging references UserId from auth context via shared kernel"
+
+  - from: web-frontend
+    to: auth
+    pattern: open-host-service
+    description: "Web consumes auth REST API as defined by auth contracts"
+
+  - from: web-frontend
+    to: messaging
+    pattern: open-host-service
+    description: "Web consumes messaging REST API + WebSocket events"

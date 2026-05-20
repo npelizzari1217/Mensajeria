@@ -81,7 +81,9 @@ apiClient.interceptors.response.use(
         setAccessToken(null);
         pendingRequests.forEach((p) => p.reject(refreshError));
         pendingRequests = [];
-        window.location.href = `${import.meta.env.BASE_URL}login`;
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = `${import.meta.env.BASE_URL}login`;
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -131,6 +133,32 @@ export async function searchMessages(
     params: { q, page, pageSize },
   });
   return data.data; // { data: SearchResult[], total, page, pageSize }
+}
+
+// ── Empresas ─────────────────────────────────────────────────────────
+
+export async function getEmpresas() {
+  const { data } = await apiClient.get('/empresas');
+  return data.data;
+}
+
+export async function createEmpresa(nombre: string) {
+  const { data } = await apiClient.post('/empresas', { nombre });
+  return data.data;
+}
+
+export async function updateEmpresa(id: string, nombre: string) {
+  const { data } = await apiClient.patch(`/empresas/${id}`, { nombre });
+  return data.data;
+}
+
+export async function deleteEmpresa(id: string) {
+  await apiClient.delete(`/empresas/${id}`);
+}
+
+export async function assignUserToEmpresa(empresaId: string, userId: string, role?: string) {
+  const { data } = await apiClient.post(`/empresas/${empresaId}/users`, { userId, role });
+  return data.data;
 }
 
 export default apiClient;

@@ -1,6 +1,7 @@
 import {
   MessageId,
   UserId,
+  EmpresaId,
   MessageRepository,
   IFileStorage,
   Attachment,
@@ -51,6 +52,7 @@ export class UploadAttachmentUseCase {
     dto: UploadAttachmentDTO,
     buffer: Buffer,
     userId: string,
+    empresaId: EmpresaId,
   ): Promise<Result<AttachmentResponse, DomainError>> {
     // 1. Validate file size
     if (dto.size > MAX_FILE_SIZE) {
@@ -77,7 +79,7 @@ export class UploadAttachmentUseCase {
     const uid = uidResult.unwrap();
 
     // 5. Verify message exists
-    const msgResult = await this.messageRepo.findById(messageId);
+    const msgResult = await this.messageRepo.findById(messageId, empresaId);
     if (msgResult.isErr()) {
       return err(new NotFoundError('Message', dto.messageId));
     }

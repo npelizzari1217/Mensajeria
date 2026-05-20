@@ -2,6 +2,7 @@ import {
   Message,
   MessageId,
   UserId,
+  EmpresaId,
   Subject,
   MessageBody,
   UserRepository,
@@ -32,7 +33,7 @@ export class ReplyToMessageUseCase {
     @Inject('EventBus') private readonly eventBus: EventBus,
   ) {}
 
-  async execute(dto: ReplyMessageDTO): Promise<Result<MessageResponse, Error>> {
+  async execute(dto: ReplyMessageDTO, empresaId: EmpresaId): Promise<Result<MessageResponse, Error>> {
     // 1. Validate senderId
     const senderIdResult = UserId.create(dto.senderId);
     if (senderIdResult.isErr()) {
@@ -52,7 +53,7 @@ export class ReplyToMessageUseCase {
     if (parentIdResult.isErr()) {
       return err(parentIdResult.unwrapErr());
     }
-    const parentMsgResult = await this.messageRepo.findById(parentIdResult.unwrap());
+    const parentMsgResult = await this.messageRepo.findById(parentIdResult.unwrap(), empresaId);
     if (parentMsgResult.isErr()) {
       return err(new MessageNotFoundError(dto.parentMessageId));
     }
@@ -109,6 +110,7 @@ export class ReplyToMessageUseCase {
     // 8. Create reply message
     const messageResult = Message.create(
       senderId,
+      empresaId,
       subject,
       body,
       allRecipientIds,

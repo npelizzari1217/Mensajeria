@@ -1,0 +1,133 @@
+# =============================================================================
+# Governance Gates — Enterprise Quality Control
+# =============================================================================
+# Every gate must PASS before the pipeline can advance.
+# Gates are evaluated by the orchestrator and specialized agents.
+# Results are persisted to .opencode/state/{change-id}/approvals/
+
+gates:
+  # ── Gate 1: Specification Approved ──────────────────────────────────
+  spec_approved:
+    phase: spec
+    evaluator: orchestrator
+    criteria:
+      - All requirements use RFC 2119 keywords (MUST/SHOULD/MAY)
+      - Every requirement has at least one scenario (Given/When/Then)
+      - Happy paths AND edge cases covered
+      - Delta specs reference existing specs correctly
+      - No implementation details leak into specs
+    block_on_fail: true
+    auto_approve: false
+
+  # ── Gate 2: Design Approved ─────────────────────────────────────────
+  design_approved:
+    phase: design
+    evaluator: orchestrator
+    criteria:
+      - Every architecture decision has rationale and alternatives
+      - File changes list is concrete (not abstract)
+      - Testing strategy covers all spec scenarios
+      - Data flow diagram is coherent
+      - Migration/rollout plan exists (or explicit "No migration required")
+    block_on_fail: true
+    auto_approve: false
+
+  # ── Gate 3: Architecture Guardian ───────────────────────────────────
+  architecture_guardian:
+    phase: apply-plan
+    evaluator: architecture-guardian (sub-agent)
+    criteria:
+      - No circular dependencies introduced
+      - Domain layer has zero infrastructure imports
+      - New code follows existing patterns (no pattern drift)
+      - Bounded context boundaries respected
+      - No duplicate logic across modules
+      - Value Objects used for domain primitives (no string/Int primitives)
+      - Repository interfaces defined in domain, implemented in infrastructure
+      - NestJS modules structured as wiring (not layers)
+    block_on_fail: true
+    auto_approve: false
+    violations:
+      - Store at: .opencode/governance/violations/{change-id}.yaml
+
+  # ── Gate 4: Contracts Intact ────────────────────────────────────────
+  contracts_intact:
+    phase: apply
+    evaluator: orchestrator
+    criteria:
+      - No breaking changes to existing API contracts (without spec delta)
+      - Interface signatures unchanged (unless spec explicitly modifies)
+      - Database migrations are backward-compatible
+      - No removed columns/tables without deprecation notice
+    block_on_fail: true
+    auto_approve: false
+
+  # ── Gate 5: Verify Passed ───────────────────────────────────────────
+  verify_passed:
+    phase: verify
+    evaluator: sdd-verify (sub-agent)
+    criteria:
+      - All spec scenarios have corresponding tests
+      - Tests pass (0 failures)
+      - TypeScript compilation clean (0 errors)
+      - Linter passes (if configured)
+      - No console.error or debugger statements in production code
+      - Apply-progress shows all tasks completed
+    block_on_fail: true
+    auto_approve: false
+
+  # ── Gate 6: No Critical Risks ───────────────────────────────────────
+  no_critical_risks:
+    phase: production-review
+    evaluator: production-reviewer (sub-agent)
+    criteria:
+      - No security vulnerabilities (OWASP Top 10)
+      - No performance regressions visible
+      - No hardcoded secrets or credentials
+      - Rollback plan validated
+      - Migration tested (if applicable)
+      - Observability: logs and errors handled
+    block_on_fail: true
+    auto_approve: false
+
+  # ── Gate 7: Production Review ───────────────────────────────────────
+  production_review:
+    phase: production-review
+    evaluator: production-reviewer (sub-agent)
+    criteria:
+      - Deployment readiness confirmed
+      - Environment variables documented
+      - Health check endpoint functional
+      - Graceful shutdown handled
+      - Memory/CPU profile acceptable
+    block_on_fail: false  # soft gate — warns but doesn't block
+    auto_approve: true    # auto-approve if no violations
+
+# =============================================================================
+# Gate Evaluation Protocol
+# =============================================================================
+#
+# The orchestrator evaluates gates AFTER each phase completes.
+#
+# Flow:
+#   1. Phase completes → sub-agent returns envelope
+#   2. Orchestrator checks gates.yaml for gates bound to this phase
+#   3. For each gate:
+#      a. If auto_approve: mark passed automatically
+#      b. If evaluator is orchestrator: evaluate criteria inline
+#      c. If evaluator is sub-agent: delegate to specialized agent
+#   4. If all gates pass → advance to next phase
+#   5. If any gate fails → STOP, log blocker, report to user
+#   6. Persist gate results to .opencode/state/{change-id}/approvals/
+
+violations:
+  storage: .opencode/governance/violations/
+  format: yaml
+  tracking:
+    - violation_id
+    - gate
+    - severity (critical|high|medium|low)
+    - file_path
+    - description
+    - recommendation
+    - status (open|accepted|fixed|wont_fix)

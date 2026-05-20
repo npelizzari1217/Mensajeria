@@ -83,6 +83,10 @@ export declare class User {
      */
     changeRole(newRole: RoleVO): void;
     /**
+     * Updates the user's email.
+     */
+    changeEmail(newEmail: Email): void;
+    /**
      * Returns the user's public identity for authorization context.
      */
     getIdentity(): {

@@ -4,8 +4,9 @@ import { Role } from '@mensajeria/domain';
  * Payload stored inside the JWT token.
  */
 export interface TokenPayload {
-  sub: string;   // userId
+  sub: string;
   role: Role;
+  empresaId?: string;
 }
 
 /**

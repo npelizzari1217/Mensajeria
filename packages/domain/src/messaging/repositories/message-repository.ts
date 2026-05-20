@@ -2,6 +2,7 @@ import { Message } from '../entities/message';
 import { MessageRecipient } from '../entities/message-recipient';
 import { MessageId } from '../../shared/value-objects/message-id';
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { MessageStatusVO } from '../../shared/value-objects/message-status';
 import { Result } from '../../shared/result';
 import { DomainError } from '../../shared/errors/domain-error';
@@ -37,7 +38,7 @@ export interface MessageRepository {
    * Finds a message by its unique ID.
    * Returns MessageNotFoundError if not found.
    */
-  findById(id: MessageId): Promise<Result<Message, DomainError>>;
+  findById(id: MessageId, empresaId: EmpresaId): Promise<Result<Message, DomainError>>;
 
   /**
    * Finds messages where the given user is a recipient.
@@ -45,6 +46,7 @@ export interface MessageRepository {
    */
   findByRecipient(
     userId: UserId,
+    empresaId: EmpresaId,
     status?: MessageStatusVO,
     pagination?: PaginationParams,
   ): Promise<Result<PaginatedResult<Message>, DomainError>>;
@@ -55,6 +57,7 @@ export interface MessageRepository {
    */
   findBySender(
     userId: UserId,
+    empresaId: EmpresaId,
     pagination?: PaginationParams,
   ): Promise<Result<PaginatedResult<Message>, DomainError>>;
 
@@ -84,6 +87,7 @@ export interface MessageRepository {
    */
   search(
     userId: UserId,
+    empresaId: EmpresaId,
     query: string,
     pagination: PaginationParams,
   ): Promise<Result<PaginatedResult<Message>, DomainError>>;

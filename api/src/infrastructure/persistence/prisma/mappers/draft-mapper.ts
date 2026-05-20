@@ -1,4 +1,4 @@
-import { Draft, UserId, Timestamp } from '@mensajeria/domain';
+import { Draft, EmpresaId, UserId, Timestamp } from '@mensajeria/domain';
 
 export class DraftMapper {
   toDomain(prismaDraft: PrismaDraft): Draft {
@@ -7,6 +7,7 @@ export class DraftMapper {
     return Draft.reconstruct({
       id: prismaDraft.id,
       userId: UserId.reconstruct(prismaDraft.userId),
+      empresaId: EmpresaId.reconstruct(prismaDraft.empresaId),
       subject: prismaDraft.subject,
       body: prismaDraft.body,
       recipientIds,
@@ -19,6 +20,7 @@ export class DraftMapper {
   toPrisma(draft: Draft): PrismaDraftCreateInput {
     return {
       id: draft.getId(),
+      empresaId: draft.getEmpresaId().get(),
       userId: draft.getUserId().get(),
       subject: draft.getSubject(),
       body: draft.getBody(),
@@ -33,6 +35,7 @@ export class DraftMapper {
 interface PrismaDraft {
   id: string;
   userId: string;
+  empresaId: string;
   subject: string | null;
   body: string;
   recipientIds: unknown;
@@ -43,6 +46,7 @@ interface PrismaDraft {
 
 interface PrismaDraftCreateInput {
   id: string;
+  empresaId: string;
   userId: string;
   subject: string | null;
   body: string;

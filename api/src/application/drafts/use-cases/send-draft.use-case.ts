@@ -1,5 +1,5 @@
 import {
-  DraftRepository, UserRepository, DraftNotFoundError,
+  DraftRepository, UserRepository, EmpresaId, DraftNotFoundError,
   Message, UserId, Subject, MessageBody,
   MessageRepository, MessageSent, NotFoundError,
   EventBus, Result, ok, err,
@@ -16,9 +16,12 @@ export class SendDraftUseCase {
     private readonly sendMessage: SendMessageUseCase,
   ) {}
 
-  async execute(draftId: string, userId: string): Promise<Result<MessageResponse, Error>> {
+  async execute(draftId: string, userId: string, empresaId: string): Promise<Result<MessageResponse, Error>> {
     // 1. Find the draft
-    const findResult = await this.draftRepo.findById(draftId);
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
+
+    const findResult = await this.draftRepo.findById(draftId, eid.unwrap());
     if (findResult.isErr()) return err(findResult.unwrapErr());
 
     const draft = findResult.unwrap();
@@ -53,7 +56,7 @@ export class SendDraftUseCase {
       body: draft.getBody(),
     };
 
-    const sendResult = await this.sendMessage.execute(sendDto);
+    const sendResult = await this.sendMessage.execute(sendDto, eid.unwrap());
     if (sendResult.isErr()) return err(sendResult.unwrapErr());
 
     // 6. Delete the draft

@@ -18,7 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { FileId } from '@mensajeria/domain';
+import { FileId, EmpresaId } from '@mensajeria/domain';
 import { AuthGuard } from '../../infrastructure/auth/guards/auth.guard';
 import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
 import { UploadAttachmentUseCase } from '../../application/attachments/use-cases/upload-attachment.use-case';
@@ -64,12 +64,13 @@ export class AttachmentsController {
   async upload(
     @Param('messageId', ParseUUIDPipe) messageId: string,
     @UploadedFile() file: UploadedFile | undefined,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
 
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
     const result = await this.uploadAttachmentUseCase.execute(
       {
         messageId,
@@ -79,6 +80,7 @@ export class AttachmentsController {
       },
       file.buffer,
       user.userId,
+      empresaId,
     );
 
     if (result.isErr()) {
@@ -94,11 +96,12 @@ export class AttachmentsController {
   @HttpCode(HttpStatus.OK)
   async download(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
     @Res() res: Response,
   ) {
     // 1. Verify access and get attachment metadata
-    const result = await this.getAttachmentUseCase.execute(id, user.userId);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
+    const result = await this.getAttachmentUseCase.execute(id, user.userId, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -136,9 +139,10 @@ export class AttachmentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ): Promise<void> {
-    const result = await this.deleteAttachmentUseCase.execute(id, user.userId);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
+    const result = await this.deleteAttachmentUseCase.execute(id, user.userId, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();

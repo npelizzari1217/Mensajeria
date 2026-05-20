@@ -1,6 +1,7 @@
 import {
   MessageId,
   UserId,
+  EmpresaId,
   MessageRepository,
   UnauthorizedMessageAccessError,
   MessageNotFoundError,
@@ -27,6 +28,7 @@ export class GetThreadUseCase {
   async execute(
     messageId: string,
     userId: string,
+    empresaId: EmpresaId,
   ): Promise<Result<{
     messages: MessageResponse[];
   }, Error>> {
@@ -44,7 +46,7 @@ export class GetThreadUseCase {
     const uid = uidResult.unwrap();
 
     // 2. Find root message
-    const rootResult = await this.messageRepo.findById(msgId);
+    const rootResult = await this.messageRepo.findById(msgId, empresaId);
     if (rootResult.isErr()) {
       return err(new MessageNotFoundError(messageId));
     }

@@ -1,5 +1,5 @@
 import {
-  GroupRepository, Result, ok, err, GroupNotFoundError, NotGroupAdminError,
+  GroupRepository, EmpresaId, Result, ok, err, GroupNotFoundError, NotGroupAdminError,
 } from '@mensajeria/domain';
 import { UpdateGroupDTO, GroupResponse } from '../dtos/create-group.dto';
 import { Inject } from '@nestjs/common';
@@ -13,8 +13,12 @@ export class UpdateGroupUseCase {
     groupId: string,
     dto: UpdateGroupDTO,
     requesterId: string,
+    empresaId: string,
   ): Promise<Result<GroupResponse, Error>> {
-    const groupResult = await this.groupRepo.findById(groupId);
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
+
+    const groupResult = await this.groupRepo.findById(groupId, eid.unwrap());
     if (groupResult.isErr()) return err(groupResult.unwrapErr());
 
     const group = groupResult.unwrap();

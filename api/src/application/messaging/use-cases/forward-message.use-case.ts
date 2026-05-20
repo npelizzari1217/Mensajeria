@@ -1,6 +1,7 @@
 import {
   UserId, UserRepository,
   Message, MessageId, MessageRepository,
+  EmpresaId,
   Subject, MessageBody,
   MessageSent, ForwardedContent,
   UnauthorizedMessageAccessError,
@@ -28,7 +29,7 @@ export class ForwardMessageUseCase {
     @Inject('EventBus') private readonly eventBus: EventBus,
   ) {}
 
-  async execute(dto: ForwardMessageDTO): Promise<Result<MessageResponse, Error>> {
+  async execute(dto: ForwardMessageDTO, empresaId: EmpresaId): Promise<Result<MessageResponse, Error>> {
     // 1. Validate sender
     const senderIdResult = UserId.create(dto.senderId);
     if (senderIdResult.isErr()) return err(senderIdResult.unwrapErr());
@@ -42,7 +43,7 @@ export class ForwardMessageUseCase {
     const originalIdResult = MessageId.create(dto.originalMessageId);
     if (originalIdResult.isErr()) return err(originalIdResult.unwrapErr());
 
-    const originalResult = await this.messageRepo.findById(originalIdResult.unwrap());
+    const originalResult = await this.messageRepo.findById(originalIdResult.unwrap(), empresaId);
     if (originalResult.isErr()) return err(new MessageNotFoundError(dto.originalMessageId));
     const originalMessage = originalResult.unwrap();
 
@@ -88,6 +89,7 @@ export class ForwardMessageUseCase {
     // 8. Create new message
     const messageResult = Message.create(
       senderId,
+      empresaId,
       subjectResult.unwrap(),
       bodyResult.unwrap(),
       recipientIds,

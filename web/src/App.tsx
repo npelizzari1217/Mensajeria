@@ -15,6 +15,7 @@ import DraftsListPage from './pages/drafts/index.page';
 import DraftEditPage from './pages/drafts/edit.page';
 import PinnedPage from './pages/pinned.page';
 import UsersAdminPage from './pages/users-admin.page';
+import EmpresasAdminPage from './pages/empresas-admin.page';
 
 export default function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/drafts/:id" element={<DraftEditPage />} />
           <Route path="/pinned" element={<PinnedPage />} />
           <Route path="/admin/users" element={<UsersAdminPage />} />
+          <Route path="/admin/empresas" element={<EmpresasAdminPage />} />
         </Route>
       </Route>
 

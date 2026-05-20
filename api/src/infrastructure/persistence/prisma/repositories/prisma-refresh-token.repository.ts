@@ -21,6 +21,7 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
         token: record.token,
         userId: record.userId,
         expiresAt: record.expiresAt,
+        empresaId: '00000000-0000-0000-0000-000000000001',
       },
     });
   }

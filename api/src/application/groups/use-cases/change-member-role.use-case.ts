@@ -1,5 +1,5 @@
 import {
-  GroupRepository, UserRepository, UserId, Email, GroupRole,
+  GroupRepository, UserRepository, UserId, EmpresaId, Email, GroupRole,
   Result, ok, err, GroupNotFoundError, NotGroupAdminError, NotFoundError,
 } from '@mensajeria/domain';
 import { ChangeMemberRoleDTO, GroupMemberResponse } from '../dtos/create-group.dto';
@@ -15,12 +15,16 @@ export class ChangeMemberRoleUseCase {
     groupId: string,
     dto: ChangeMemberRoleDTO,
     requesterId: string,
+    empresaId: string,
   ): Promise<Result<GroupMemberResponse, Error>> {
     const uidResult = UserId.create(requesterId);
     if (uidResult.isErr()) return err(uidResult.unwrapErr());
     const uid = uidResult.unwrap();
 
-    const groupResult = await this.groupRepo.findById(groupId);
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
+
+    const groupResult = await this.groupRepo.findById(groupId, eid.unwrap());
     if (groupResult.isErr()) return err(groupResult.unwrapErr());
     const group = groupResult.unwrap();
     if (!group) return err(new GroupNotFoundError(groupId));

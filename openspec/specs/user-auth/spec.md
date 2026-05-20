@@ -21,33 +21,34 @@ Autenticación y autorización de usuarios con JWT y roles RBAC. Base de segurid
 ## Requirements
 
 ### Requirement: User Registration
-El sistema MUST permitir registrar usuarios con email + password + name + role.
+El sistema MUST permitir registrar usuarios con email + password + name + role, pero ahora bajo caller context. El endpoint MUST requerir AuthGuard + RolesGuard + `@Roles(Admin, Supervisor)`.
 
 | Regla | Valor |
 |-------|-------|
 | Email | único, formato válido, case-insensitive |
 | Password | mínimo 8 caracteres |
-| Role | por defecto: `Usuario`. Solo Admin puede asignar otros roles en registro. |
+| Role | por defecto: `Usuario`. Admin puede asignar cualquier rol; Supervisor NO puede asignar `Admin`. |
+| Empresa | Admin puede indicar cualquier `empresaId`; Supervisor solo la propia empresa |
 
-#### Scenario: Registro exitoso como Usuario
-- GIVEN email no existe, password válido, role omitido
-- WHEN POST /auth/register
-- THEN 201, user creado con role=Usuario, password NO retornado
+#### Scenario: Admin registra usuario en cualquier empresa
+- GIVEN solicitante Admin, datos válidos y `empresaId` arbitrario
+- WHEN POST `/auth/register`
+- THEN 201 y usuario creado
 
-#### Scenario: Admin crea usuario con rol específico
-- GIVEN solicitante es Admin, datos válidos, role=Supervisor
-- WHEN POST /auth/register
-- THEN 201, user creado con role=Supervisor
+#### Scenario: Supervisor registra usuario en su empresa
+- GIVEN solicitante Supervisor, datos válidos y `empresaId` igual a su empresa
+- WHEN POST `/auth/register`
+- THEN 201 y usuario creado
 
-#### Scenario: Email duplicado → error
-- GIVEN email ya registrado
-- WHEN POST /auth/register
-- THEN 409 Conflict
+#### Scenario: Supervisor intenta registrar fuera de su empresa o con rol Admin
+- GIVEN solicitante Supervisor
+- WHEN POST `/auth/register` con otra `empresaId` o role `Admin`
+- THEN 403 Forbidden
 
-#### Scenario: Password muy corto → error
-- GIVEN password de 7 caracteres
-- WHEN POST /auth/register
-- THEN 400 Bad Request
+#### Scenario: Otro rol intenta registrar
+- GIVEN solicitante con rol distinto de Admin o Supervisor
+- WHEN POST `/auth/register`
+- THEN 403 Forbidden
 
 ---
 
@@ -122,6 +123,31 @@ El sistema MUST permitir renovar access_token usando refresh_token.
 - GIVEN refresh_token eliminado de DB
 - WHEN POST /auth/refresh
 - THEN 401 Unauthorized
+
+---
+
+### Requirement: Scoped User Administration
+El sistema MUST aplicar scope por empresa en list, edit y delete de usuarios. Admin MAY operar sobre cualquier usuario; Supervisor MUST limitarse a usuarios de su propia empresa y MUST NOT cambiar `empresaId`.
+
+#### Scenario: Admin lista todos los usuarios
+- GIVEN solicitante Admin autenticado
+- WHEN GET `/auth/contacts`
+- THEN 200 con todos los usuarios
+
+#### Scenario: Supervisor lista solo su empresa
+- GIVEN solicitante Supervisor autenticado
+- WHEN GET `/auth/contacts`
+- THEN 200 con usuarios de su `empresaId`
+
+#### Scenario: Supervisor edita usuario de otra empresa
+- GIVEN solicitante Supervisor autenticado
+- WHEN PATCH `/auth/users/:id` para un usuario fuera de su empresa
+- THEN 403 Forbidden
+
+#### Scenario: Supervisor borra usuario dentro de su empresa
+- GIVEN solicitante Supervisor autenticado y usuario perteneciente a su empresa
+- WHEN DELETE `/auth/users/:id`
+- THEN 204 No Content
 
 ---
 

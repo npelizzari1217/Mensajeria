@@ -1,4 +1,4 @@
-import { Group, GroupMember, GroupRole, UserId, Timestamp } from '@mensajeria/domain';
+import { Group, GroupMember, GroupRole, EmpresaId, UserId, Timestamp } from '@mensajeria/domain';
 
 export class GroupMapper {
   toDomain(prismaGroup: PrismaGroup): Group {
@@ -17,6 +17,7 @@ export class GroupMapper {
       name: prismaGroup.name,
       description: prismaGroup.description,
       createdBy: UserId.reconstruct(prismaGroup.createdBy),
+      empresaId: EmpresaId.reconstruct(prismaGroup.empresaId),
       members,
       isActive: prismaGroup.isActive,
       createdAt: Timestamp.reconstruct(prismaGroup.createdAt.toISOString()),
@@ -27,6 +28,7 @@ export class GroupMapper {
   toPrisma(group: Group): PrismaGroupCreateInput {
     return {
       id: group.getId(),
+      empresaId: group.getEmpresaId().get(),
       name: group.getName(),
       description: group.getDescription(),
       createdBy: group.getCreatedBy().get(),
@@ -42,6 +44,7 @@ interface PrismaGroup {
   name: string;
   description: string | null;
   createdBy: string;
+  empresaId: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +61,7 @@ interface PrismaGroupMember {
 
 interface PrismaGroupCreateInput {
   id: string;
+  empresaId: string;
   name: string;
   description: string | null;
   createdBy: string;

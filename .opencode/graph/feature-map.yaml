@@ -1,0 +1,165 @@
+# =============================================================================
+# Knowledge Graph — Feature Map
+# =============================================================================
+# Maps all features across the Mensajeria project.
+# Each feature links to its spec, modules, contracts, and status.
+# Updated by graph-manager agent when features are added or changed.
+
+features:
+  # ── Authentication & Authorization ────────────────────────────────────
+  - id: user-auth
+    name: "Autenticación y Autorización"
+    bounded_context: auth
+    status: completed
+    spec: openspec/specs/user-auth/spec.md
+    modules: [domain-auth, app-auth, infra-auth, pres-auth]
+    contracts: [auth-login, auth-register, auth-me, auth-refresh, auth-contacts, auth-users-crud]
+    dependencies: []
+    completed_in: [mensajeria-core]
+    description: "JWT auth con roles RBAC (Admin, Supervisor, Técnico, Usuario). Login, register, refresh token, user CRUD, contactos."
+
+  # ── Messaging Core ────────────────────────────────────────────────────
+  - id: messaging-core
+    name: "Mensajería Core"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/messaging-core/spec.md
+    modules: [domain-messaging, app-messaging, infra-persistence, pres-messaging]
+    contracts: [msg-send, msg-inbox, msg-sent, msg-detail, msg-mark-read, msg-reply]
+    dependencies: [user-auth]
+    completed_in: [mensajeria-core, entrega-3-websockets-search]
+    description: "Enviar, recibir, responder, marcar como leído. Mensajes por email. Bandejas inbox/sent."
+
+  # ── Real-time Notifications ───────────────────────────────────────────
+  - id: realtime-notifications
+    name: "Notificaciones en Tiempo Real"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/realtime-notifications/spec.md
+    modules: [pres-messaging]
+    contracts: [ws-events]
+    dependencies: [messaging-core, user-auth]
+    completed_in: [entrega-3-websockets-search]
+    description: "WebSocket (Socket.io) con autenticación JWT en handshake. Eventos message:new y message:read en tiempo real."
+
+  # ── Message Search ────────────────────────────────────────────────────
+  - id: message-search
+    name: "Búsqueda de Mensajes"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/message-search/spec.md
+    modules: [app-messaging]
+    contracts: [msg-search]
+    dependencies: [messaging-core]
+    completed_in: [entrega-3-websockets-search]
+    description: "Full-text search PostgreSQL tsvector con config Spanish. Busca en subject y body."
+
+  # ── Groups ────────────────────────────────────────────────────────────
+  - id: groups
+    name: "Grupos y Departamentos"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/groups/spec.md
+    modules: [domain-messaging, app-groups, infra-persistence]
+    contracts: [groups-crud, groups-members]
+    dependencies: [messaging-core, user-auth]
+    completed_in: [entrega-4-final]
+    description: "CRUD de grupos. Miembros por email. Roles Admin/Member. Enviar a grupo = resolver a miembros."
+
+  # ── Drafts ────────────────────────────────────────────────────────────
+  - id: drafts
+    name: "Borradores"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/drafts/spec.md
+    modules: [domain-messaging, app-drafts, infra-persistence]
+    contracts: [drafts-crud]
+    dependencies: [messaging-core, groups]
+    completed_in: [entrega-4-final]
+    description: "Guardar, editar, listar, enviar, y descartar borradores de mensajes."
+
+  # ── Forward ───────────────────────────────────────────────────────────
+  - id: forward
+    name: "Reenvío de Mensajes"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/forward/spec.md
+    modules: [app-messaging]
+    contracts: [msg-forward]
+    dependencies: [messaging-core]
+    completed_in: [entrega-4-final]
+    description: "Reenviar mensaje a uno o más destinatarios con comentario opcional."
+
+  # ── Pinned Messages ───────────────────────────────────────────────────
+  - id: pinned-messages
+    name: "Mensajes Fijados"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/pinned-messages/spec.md
+    modules: [app-messaging, infra-persistence]
+    contracts: [msg-pin]
+    dependencies: [messaging-core]
+    completed_in: [entrega-4-final]
+    description: "Fijar/desfijar mensajes en bandeja. Listar fijados."
+
+  # ── Data Export ───────────────────────────────────────────────────────
+  - id: data-export
+    name: "Exportación de Datos"
+    bounded_context: messaging
+    status: completed
+    spec: openspec/specs/data-export/spec.md
+    modules: [app-messaging, infra-persistence]
+    contracts: [msg-export]
+    dependencies: [messaging-core]
+    completed_in: [entrega-4-final]
+    description: "Exportar mensajes a CSV/JSON con filtros por rango de fechas, destinatario, grupo."
+
+  # ── Mobile App ────────────────────────────────────────────────────────
+  - id: mobile-app
+    name: "App Mobile (Expo/React Native)"
+    bounded_context: mobile-app
+    status: spec_ready
+    spec: openspec/specs/mobile-app/spec.md
+    modules: [mobile]
+    contracts: [auth-login, auth-refresh, msg-inbox, msg-send, ws-events]
+    dependencies: [user-auth, messaging-core, realtime-notifications]
+    completed_in: []
+    description: "App mobile con Expo. Auth, inbox, compose. Consume API REST + WebSocket existente."
+
+  # ── Push Notifications ────────────────────────────────────────────────
+  - id: push-notifications
+    name: "Notificaciones Push"
+    bounded_context: messaging
+    status: spec_ready
+    spec: openspec/specs/push-notifications/spec.md
+    modules: [pres-messaging]
+    contracts: [push-register, push-send]
+    dependencies: [messaging-core, mobile-app]
+    completed_in: []
+    description: "Push notifications nativas (FCM/APNs) cuando la app mobile está en background."
+
+# =============================================================================
+# Feature Status Lifecycle
+# =============================================================================
+# proposed     — Idea stage, no spec yet
+# spec_ready   — Spec written, not implemented
+# in_progress  — Being implemented in active change
+# completed    — Implemented and verified
+# deprecated   — No longer supported
+
+# =============================================================================
+# Feature Dependencies Graph (ASCII)
+# =============================================================================
+#
+#   user-auth ─────────────────────────────────┐
+#       │                                       │
+#       ↓                                       │
+#   messaging-core ──→ realtime-notifications ──┤
+#       │                 │                     │
+#       ├─→ message-search                      │
+#       ├─→ groups ──→ drafts                   │
+#       ├─→ forward                             │
+#       ├─→ pinned-messages                     │
+#       ├─→ data-export                         │
+#       │                                       │
+#       └─→ mobile-app ──→ push-notifications ──┘

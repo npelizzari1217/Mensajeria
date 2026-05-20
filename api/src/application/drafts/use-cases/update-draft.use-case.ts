@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import {
-  DraftRepository, DraftNotFoundError, UserRepository, UserId, Email,
+  DraftRepository, EmpresaId, DraftNotFoundError, UserRepository, UserId, Email,
   Result, ok, err,
 } from '@mensajeria/domain';
 import { UpdateDraftDTO, DraftResponse } from '../dtos/draft.dto';
@@ -17,8 +17,12 @@ export class UpdateDraftUseCase {
     id: string,
     userId: string,
     dto: UpdateDraftDTO,
+    empresaId: string,
   ): Promise<Result<DraftResponse, Error>> {
-    const findResult = await this.draftRepo.findById(id);
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
+
+    const findResult = await this.draftRepo.findById(id, eid.unwrap());
     if (findResult.isErr()) return err(findResult.unwrapErr());
 
     const draft = findResult.unwrap();

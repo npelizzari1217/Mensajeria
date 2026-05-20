@@ -1,0 +1,72 @@
+# =============================================================================
+# SDD Enterprise Config — Mensajeria Project
+# =============================================================================
+# Source of truth: filesystem (.git versioned) + Engram (cognitive engine).
+# Engram is NOT the primary store. Every artifact exists in both places.
+
+project:
+  name: mensajeria
+  repository: npelizzari1217/Mensajeria
+  type: monorepo
+
+stack:
+  profile: nestjs-enterprise  # primary
+  secondary: [react-spa, expo-mobile]
+  language: typescript
+  runtime: node
+  package_manager: pnpm
+  monorepo_tool: pnpm-workspace
+  database: postgresql
+  orm: prisma
+
+architecture:
+  pattern: clean-architecture
+  layers: [domain, application, infrastructure, presentation]
+  packages:
+    domain: packages/domain
+    api: api
+    web: web
+    mobile: mobile
+
+persistence:
+  mode: hybrid  # filesystem + engram
+  source_of_truth: filesystem
+  engram_project: mensajeria
+
+workflows:
+  sdd_pipeline:
+    phases:
+      - explore
+      - propose
+      - spec
+      - design
+      - tasks
+      - apply-plan
+      - apply
+      - verify
+      - production-review
+      - archive
+    parallel_groups:
+      - [spec, design]  # can run in parallel
+
+governance:
+  hard_gates:
+    - spec_approved
+    - design_approved
+    - architecture_guardian
+    - verify_passed
+    - contracts_intact
+    - no_critical_risks
+  soft_gates:
+    - production_review
+    - performance_check
+
+compaction:
+  auto: true
+  tail_turns: 3
+  state_protection: true  # DAG state survives compaction
+
+recovery:
+  primary: filesystem      # read .opencode/state/{change}/dag.json
+  secondary: engram        # mem_search + mem_get_observation
+  strategy: hybrid-fallback

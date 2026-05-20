@@ -16,15 +16,17 @@ const crypto_1 = __importDefault(require("crypto"));
 class Draft {
     id;
     userId;
+    empresaId;
     subject;
     body;
     recipientIds;
     groupId;
     createdAt;
     updatedAt;
-    constructor(id, userId, subject, body, recipientIds, groupId, createdAt, updatedAt) {
+    constructor(id, userId, empresaId, subject, body, recipientIds, groupId, createdAt, updatedAt) {
         this.id = id;
         this.userId = userId;
+        this.empresaId = empresaId;
         this.subject = subject;
         this.body = body;
         this.recipientIds = recipientIds;
@@ -41,13 +43,13 @@ class Draft {
         }
         const id = crypto_1.default.randomUUID();
         const now = timestamp_1.Timestamp.now();
-        return (0, result_1.ok)(new Draft(id, props.userId, props.subject ?? null, props.body.trim(), props.recipientIds ?? [], props.groupId ?? null, now, now));
+        return (0, result_1.ok)(new Draft(id, props.userId, props.empresaId, props.subject ?? null, props.body.trim(), props.recipientIds ?? [], props.groupId ?? null, now, now));
     }
     /**
      * Reconstruction from persistence.
      */
     static reconstruct(props) {
-        return new Draft(props.id, props.userId, props.subject, props.body, props.recipientIds, props.groupId, props.createdAt, props.updatedAt);
+        return new Draft(props.id, props.userId, props.empresaId, props.subject, props.body, props.recipientIds, props.groupId, props.createdAt, props.updatedAt);
     }
     // --- Identity ---
     getId() {
@@ -55,6 +57,9 @@ class Draft {
     }
     getUserId() {
         return this.userId;
+    }
+    getEmpresaId() {
+        return this.empresaId;
     }
     getSubject() {
         return this.subject;
@@ -80,7 +85,7 @@ class Draft {
      * The original draft is not mutated (immutable).
      */
     update(props) {
-        return new Draft(this.id, this.userId, props.subject !== undefined ? props.subject : this.subject, props.body !== undefined ? props.body : this.body, props.recipientIds !== undefined ? props.recipientIds : [...this.recipientIds], props.groupId !== undefined ? props.groupId : this.groupId, this.createdAt, timestamp_1.Timestamp.now());
+        return new Draft(this.id, this.userId, this.empresaId, props.subject !== undefined ? props.subject : this.subject, props.body !== undefined ? props.body : this.body, props.recipientIds !== undefined ? props.recipientIds : [...this.recipientIds], props.groupId !== undefined ? props.groupId : this.groupId, this.createdAt, timestamp_1.Timestamp.now());
     }
     /**
      * Returns true if this draft has all required fields to be sent.

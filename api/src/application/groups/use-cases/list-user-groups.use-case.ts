@@ -1,4 +1,4 @@
-import { GroupRepository, UserId, Result, ok, err } from '@mensajeria/domain';
+import { GroupRepository, UserId, EmpresaId, Result, ok, err } from '@mensajeria/domain';
 import { GroupResponse } from '../dtos/create-group.dto';
 import { Inject } from '@nestjs/common';
 
@@ -7,12 +7,15 @@ export class ListUserGroupsUseCase {
     @Inject('GroupRepository') private readonly groupRepo: GroupRepository,
   ) {}
 
-  async execute(userId: string): Promise<Result<GroupResponse[], Error>> {
+  async execute(userId: string, empresaId: string): Promise<Result<GroupResponse[], Error>> {
     const uidResult = UserId.create(userId);
     if (uidResult.isErr()) return err(uidResult.unwrapErr());
     const uid = uidResult.unwrap();
 
-    const groupsResult = await this.groupRepo.findByUser(uid);
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
+
+    const groupsResult = await this.groupRepo.findByUser(uid, eid.unwrap());
     if (groupsResult.isErr()) return err(groupsResult.unwrapErr());
 
     const groups = groupsResult.unwrap();

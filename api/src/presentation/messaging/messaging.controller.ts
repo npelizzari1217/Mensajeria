@@ -11,6 +11,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { EmpresaId } from '@mensajeria/domain';
 import { AuthGuard } from '../../infrastructure/auth/guards/auth.guard';
 import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
 import { SendMessageUseCase } from '../../application/messaging/use-cases/send-message.use-case';
@@ -56,14 +57,15 @@ export class MessagingController {
   @HttpCode(HttpStatus.CREATED)
   async send(
     @Body() body: SendMessageRequest,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
     const result = await this.sendMessageUseCase.execute({
       senderId: user.userId,
       recipientEmails: body.recipientEmails,
       subject: body.subject,
       body: body.body,
-    });
+    }, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -78,17 +80,18 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async inbox(
     @Query() query: PaginationQuery,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
     const page = parseInt(query.page ?? '1', 10);
     const pageSize = parseInt(query.pageSize ?? '20', 10);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
 
     const result = await this.getInboxUseCase.execute({
       userId: user.userId,
       filter: query.status as 'unread' | 'read' | undefined,
       page,
       pageSize,
-    });
+    }, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -103,16 +106,17 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async sent(
     @Query() query: PaginationQuery,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
     const page = parseInt(query.page ?? '1', 10);
     const pageSize = parseInt(query.pageSize ?? '20', 10);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
 
     const result = await this.getSentUseCase.execute({
       userId: user.userId,
       page,
       pageSize,
-    });
+    }, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -127,9 +131,10 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async detail(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
-    const result = await this.getMessageUseCase.execute(id, user.userId);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
+    const result = await this.getMessageUseCase.execute(id, user.userId, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -144,9 +149,10 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async markRead(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
-    const result = await this.markAsReadUseCase.execute(id, user.userId);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
+    const result = await this.markAsReadUseCase.execute(id, user.userId, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -162,13 +168,14 @@ export class MessagingController {
   async reply(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { body: string },
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
     const result = await this.replyToMessageUseCase.execute({
       senderId: user.userId,
       parentMessageId: id,
       body: body.body,
-    });
+    }, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -183,12 +190,14 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async exportThread(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
     @Query('format') format?: string,
   ) {
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
     const result = await this.exportThreadUseCase.execute(
       id,
       user.userId,
+      empresaId,
       format ?? 'json',
     );
 
@@ -206,14 +215,15 @@ export class MessagingController {
   async forward(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { recipientEmails: string[]; comment?: string },
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
     const result = await this.forwardMessageUseCase.execute({
       senderId: user.userId,
       originalMessageId: id,
       recipientEmails: body.recipientEmails,
       comment: body.comment,
-    });
+    }, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -228,17 +238,18 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async search(
     @Query() query: SearchQueryDTO,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
     const page = parseInt(query.page ?? '1', 10);
     const pageSize = parseInt(query.pageSize ?? '20', 10);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
 
     const result = await this.searchMessagesUseCase.execute({
       userId: user.userId,
       query: query.q,
       page,
       pageSize,
-    });
+    }, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();
@@ -253,9 +264,10 @@ export class MessagingController {
   @HttpCode(HttpStatus.OK)
   async thread(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string; role: string },
+    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
   ) {
-    const result = await this.getThreadUseCase.execute(id, user.userId);
+    const empresaId = EmpresaId.reconstruct(user.empresaId ?? '00000000-0000-0000-0000-000000000001');
+    const result = await this.getThreadUseCase.execute(id, user.userId, empresaId);
 
     if (result.isErr()) {
       throw result.unwrapErr();

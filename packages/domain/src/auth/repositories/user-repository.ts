@@ -1,6 +1,7 @@
 import { User } from '../entities/user';
 import { UserId } from '../../shared/value-objects/user-id';
 import { Email } from '../../shared/value-objects/email';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { Result } from '../../shared/result';
 import { DomainError } from '../../shared/errors/domain-error';
 
@@ -44,4 +45,22 @@ export interface UserRepository {
    * Deletes a user by ID.
    */
   delete(id: UserId): Promise<Result<void, DomainError>>;
+
+  getEmpresas(userId: UserId): Promise<Result<EmpresaMembership[], DomainError>>;
+
+  isMemberOf(userId: UserId, empresaId: EmpresaId): Promise<boolean>;
+
+  addToEmpresa(userId: UserId, empresaId: EmpresaId, role: string): Promise<Result<void, DomainError>>;
+
+  /**
+   * Finds all users that belong to a given empresa.
+   */
+  findAllByEmpresaId(empresaId: EmpresaId): Promise<Result<User[], DomainError>>;
+}
+
+export interface EmpresaMembership {
+  empresaId: EmpresaId;
+  nombre: string;
+  role: string;
+  isActive: boolean;
 }

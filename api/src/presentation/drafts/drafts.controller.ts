@@ -27,28 +27,32 @@ export class DraftsController {
   @HttpCode(HttpStatus.CREATED)
   async save(@Body() dto: SaveDraftDTO, @Req() req: any) {
     dto.userId = req.user.userId;
-    const result = await this.saveDraft.execute(dto);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.saveDraft.execute(dto, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
 
   @Get()
   async list(@Req() req: any) {
-    const result = await this.listDrafts.execute(req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.listDrafts.execute(req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
 
   @Get(':id')
   async get(@Param('id') id: string, @Req() req: any) {
-    const result = await this.getDraft.execute(id, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.getDraft.execute(id, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateDraftDTO, @Req() req: any) {
-    const result = await this.updateDraft.execute(id, req.user.userId, dto);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.updateDraft.execute(id, req.user.userId, dto, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
@@ -56,7 +60,8 @@ export class DraftsController {
   @Post(':id/send')
   @HttpCode(HttpStatus.CREATED)
   async send(@Param('id') id: string, @Req() req: any) {
-    const result = await this.sendDraft.execute(id, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.sendDraft.execute(id, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
@@ -64,7 +69,8 @@ export class DraftsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string, @Req() req: any) {
-    const result = await this.deleteDraft.execute(id, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.deleteDraft.execute(id, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
   }
 }

@@ -17,17 +17,23 @@ export { Subject } from './shared/value-objects/subject';
 export { MessageBody } from './shared/value-objects/message-body';
 export { MessageStatus, MessageStatusVO } from './shared/value-objects/message-status';
 export { Timestamp } from './shared/value-objects/timestamp';
+export { EmpresaId } from './shared/value-objects/empresa-id';
 
 // Auth
 export { Password } from './auth/value-objects/password';
 export { UserIdentity } from './auth/value-objects/user-identity';
 export { User } from './auth/entities/user';
+export { Empresa } from './auth/entities/empresa';
+export type { EmpresaProps } from './auth/entities/empresa';
 export { UserRegistered } from './auth/events/user-registered';
 export { UserRepository } from './auth/repositories/user-repository';
+export type { EmpresaMembership } from './auth/repositories/user-repository';
+export { EmpresaRepository } from './auth/repositories/empresa-repository';
 export { RefreshTokenRepository, RefreshTokenRecord } from './auth/repositories/refresh-token-repository';
 
 // Auth Errors
 export { UserNotFoundError, EmailAlreadyExistsError, InvalidCredentialsError } from './auth/errors/user.errors';
+export { EmpresaNotFoundError, EmpresaNameAlreadyExistsError, ForbiddenDomainError } from './auth/errors/empresa.errors';
 
 // Messaging Value Objects
 export { ThreadId } from './messaging/value-objects/thread-id';

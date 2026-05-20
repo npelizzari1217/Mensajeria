@@ -14,18 +14,23 @@ export class JwtAuthPort implements AuthPort {
   ) {}
 
   sign(payload: TokenPayload, options?: SignOptions): string {
+    const jwtPayload: any = { sub: payload.sub, role: payload.role };
+    if (payload.empresaId) {
+      jwtPayload.empresaId = payload.empresaId;
+    }
     return jwt.sign(
-      { sub: payload.sub, role: payload.role },
+      jwtPayload,
       this.secret,
       { expiresIn: options?.expiresIn ?? this.defaultExpiresIn } as jwt.SignOptions,
     );
   }
 
   verify(token: string): TokenPayload {
-    const decoded = jwt.verify(token, this.secret) as jwt.JwtPayload & { role: string };
+    const decoded = jwt.verify(token, this.secret) as jwt.JwtPayload & { role: string; empresaId?: string };
     return {
       sub: decoded.sub as string,
       role: decoded.role as any,
+      empresaId: decoded.empresaId,
     };
   }
 }

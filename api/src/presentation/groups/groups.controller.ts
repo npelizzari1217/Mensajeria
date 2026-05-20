@@ -2,6 +2,7 @@ import {
   Controller, Get, Post, Patch, Delete, Body, Param, HttpCode, HttpStatus,
   UseGuards, Req,
 } from '@nestjs/common';
+import { EmpresaId } from '@mensajeria/domain';
 import { AuthGuard } from '../../infrastructure/auth/guards/auth.guard';
 import { CreateGroupUseCase } from '../../application/groups/use-cases/create-group.use-case';
 import { UpdateGroupUseCase } from '../../application/groups/use-cases/update-group.use-case';
@@ -30,28 +31,32 @@ export class GroupsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateGroupDTO, @Req() req: any) {
-    const result = await this.createGroup.execute(dto, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.createGroup.execute(dto, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
 
   @Get()
   async list(@Req() req: any) {
-    const result = await this.listGroups.execute(req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.listGroups.execute(req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
 
   @Get(':id')
   async get(@Param('id') id: string, @Req() req: any) {
-    const result = await this.getDetail.execute(id, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.getDetail.execute(id, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateGroupDTO, @Req() req: any) {
-    const result = await this.updateGroup.execute(id, dto, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.updateGroup.execute(id, dto, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
@@ -59,14 +64,16 @@ export class GroupsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deactivate(@Param('id') id: string, @Req() req: any) {
-    const result = await this.deactivateGroup.execute(id, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.deactivateGroup.execute(id, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
   }
 
   @Post(':id/members')
   @HttpCode(HttpStatus.CREATED)
   async addMemberRoute(@Param('id') id: string, @Body() dto: AddGroupMemberDTO, @Req() req: any) {
-    const result = await this.addMember.execute(id, dto, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.addMember.execute(id, dto, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }
@@ -74,7 +81,8 @@ export class GroupsController {
   @Delete(':id/members')
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeMemberRoute(@Param('id') id: string, @Body() dto: RemoveGroupMemberDTO, @Req() req: any) {
-    const result = await this.removeMember.execute(id, dto.email, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.removeMember.execute(id, dto.email, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
   }
 
@@ -84,7 +92,8 @@ export class GroupsController {
     @Body() dto: ChangeMemberRoleDTO,
     @Req() req: any,
   ) {
-    const result = await this.changeMemberRole.execute(id, dto, req.user.userId);
+    const empresaId = req.user.empresaId ?? '00000000-0000-0000-0000-000000000001';
+    const result = await this.changeMemberRole.execute(id, dto, req.user.userId, empresaId);
     if (result.isErr()) throw result.unwrapErr();
     return { data: result.unwrap() };
   }

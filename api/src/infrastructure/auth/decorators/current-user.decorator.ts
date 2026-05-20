@@ -6,7 +6,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  *
  * Usage:
  *   @Get('me')
- *   getProfile(@CurrentUser() user: { userId: string; role: string }) {
+ *   getProfile(@CurrentUser() user: { userId: string; role: string; empresaId?: string }) {
  *     return user;
  *   }
  */

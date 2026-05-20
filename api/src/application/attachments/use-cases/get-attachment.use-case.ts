@@ -1,6 +1,7 @@
 import {
   FileId,
   UserId,
+  EmpresaId,
   MessageRepository,
   AttachmentRepository,
   UnauthorizedMessageAccessError,
@@ -27,6 +28,7 @@ export class GetAttachmentUseCase {
   async execute(
     attachmentId: string,
     userId: string,
+    empresaId: EmpresaId,
   ): Promise<Result<AttachmentResponse, DomainError>> {
     // 1. Validate attachmentId
     const fileIdResult = FileId.createFrom(attachmentId);
@@ -51,6 +53,7 @@ export class GetAttachmentUseCase {
     // 4. Find parent message to verify access
     const msgResult = await this.messageRepo.findById(
       attachment.getMessageId(),
+      empresaId,
     );
     if (msgResult.isErr()) {
       return err(new NotFoundError('Message', attachment.getMessageId().get()));

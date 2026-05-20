@@ -1,6 +1,7 @@
 import {
   MessageId,
   UserId,
+  EmpresaId,
   MessageRepository,
   MessageRead,
   UnauthorizedMessageAccessError,
@@ -28,6 +29,7 @@ export class MarkAsReadUseCase {
   async execute(
     messageId: string,
     userId: string,
+    empresaId: EmpresaId,
   ): Promise<Result<{
     status: string;
     readAt: string | null;
@@ -46,7 +48,7 @@ export class MarkAsReadUseCase {
     const uid = uidResult.unwrap();
 
     // 2. Find message
-    const msgResult = await this.messageRepo.findById(msgId);
+    const msgResult = await this.messageRepo.findById(msgId, empresaId);
     if (msgResult.isErr()) {
       return err(new MessageNotFoundError(messageId));
     }

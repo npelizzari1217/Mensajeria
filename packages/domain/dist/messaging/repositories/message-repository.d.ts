@@ -2,6 +2,7 @@ import { Message } from '../entities/message';
 import { MessageRecipient } from '../entities/message-recipient';
 import { MessageId } from '../../shared/value-objects/message-id';
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { MessageStatusVO } from '../../shared/value-objects/message-status';
 import { Result } from '../../shared/result';
 import { DomainError } from '../../shared/errors/domain-error';
@@ -34,17 +35,17 @@ export interface MessageRepository {
      * Finds a message by its unique ID.
      * Returns MessageNotFoundError if not found.
      */
-    findById(id: MessageId): Promise<Result<Message, DomainError>>;
+    findById(id: MessageId, empresaId: EmpresaId): Promise<Result<Message, DomainError>>;
     /**
      * Finds messages where the given user is a recipient.
      * Supports optional status filter and pagination.
      */
-    findByRecipient(userId: UserId, status?: MessageStatusVO, pagination?: PaginationParams): Promise<Result<PaginatedResult<Message>, DomainError>>;
+    findByRecipient(userId: UserId, empresaId: EmpresaId, status?: MessageStatusVO, pagination?: PaginationParams): Promise<Result<PaginatedResult<Message>, DomainError>>;
     /**
      * Finds messages sent by the given user.
      * Supports optional pagination.
      */
-    findBySender(userId: UserId, pagination?: PaginationParams): Promise<Result<PaginatedResult<Message>, DomainError>>;
+    findBySender(userId: UserId, empresaId: EmpresaId, pagination?: PaginationParams): Promise<Result<PaginatedResult<Message>, DomainError>>;
     /**
      * Persists a message (create or update) along with its recipients.
      */
@@ -66,6 +67,6 @@ export interface MessageRepository {
      * Results are paginated and ordered by sentAt descending.
      * Only returns messages where the user is sender or recipient.
      */
-    search(userId: UserId, query: string, pagination: PaginationParams): Promise<Result<PaginatedResult<Message>, DomainError>>;
+    search(userId: UserId, empresaId: EmpresaId, query: string, pagination: PaginationParams): Promise<Result<PaginatedResult<Message>, DomainError>>;
 }
 //# sourceMappingURL=message-repository.d.ts.map

@@ -1,4 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { MessageId } from '../../shared/value-objects/message-id';
 import { Subject } from '../../shared/value-objects/subject';
 import { MessageBody } from '../../shared/value-objects/message-body';
@@ -21,6 +22,7 @@ export class Message {
   private constructor(
     private readonly id: MessageId,
     private readonly senderId: UserId,
+    private readonly empresaId: EmpresaId,
     private subject: Subject,
     private body: MessageBody,
     private readonly parentMessageId: MessageId | null,
@@ -35,6 +37,7 @@ export class Message {
    */
   static create(
     senderId: UserId,
+    empresaId: EmpresaId,
     subject: Subject,
     body: MessageBody,
     recipientIds: UserId[],
@@ -68,6 +71,7 @@ export class Message {
       new Message(
         id,
         senderId,
+        empresaId,
         subject,
         body,
         parentMessageId ?? null,
@@ -85,6 +89,7 @@ export class Message {
     return new Message(
       props.id,
       props.senderId,
+      props.empresaId,
       props.subject,
       props.body,
       props.parentMessageId,
@@ -102,6 +107,10 @@ export class Message {
 
   getSenderId(): UserId {
     return this.senderId;
+  }
+
+  getEmpresaId(): EmpresaId {
+    return this.empresaId;
   }
 
   /**
@@ -196,6 +205,7 @@ export class Message {
 export interface MessageProps {
   id: MessageId;
   senderId: UserId;
+  empresaId: EmpresaId;
   subject: Subject;
   body: MessageBody;
   parentMessageId: MessageId | null;

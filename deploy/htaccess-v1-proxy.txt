@@ -1,0 +1,11 @@
+# =============================================================================
+# Proxy /v1/* → API en 86.48.23.197 via PHP
+# Agregar esto AL INICIO del .htaccess en public_html/ (raiz de sesitec.net)
+# =============================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Redirigir /v1/* a v1/index.php (proxy PHP)
+  RewriteRule ^v1/(.*) /v1/index.php?_v1_path=$1 [L,QSA]
+</IfModule>

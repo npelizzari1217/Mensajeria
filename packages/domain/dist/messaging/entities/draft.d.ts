@@ -1,4 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Result } from '../../shared/result';
 /**
@@ -10,6 +11,7 @@ import { Result } from '../../shared/result';
 export declare class Draft {
     private readonly id;
     private readonly userId;
+    private readonly empresaId;
     private subject;
     private body;
     private readonly recipientIds;
@@ -27,6 +29,7 @@ export declare class Draft {
     static reconstruct(props: DraftProps): Draft;
     getId(): string;
     getUserId(): UserId;
+    getEmpresaId(): EmpresaId;
     getSubject(): string | null;
     getBody(): string;
     getRecipientIds(): readonly string[];
@@ -46,6 +49,7 @@ export declare class Draft {
 }
 export interface DraftCreateProps {
     userId: UserId;
+    empresaId: EmpresaId;
     subject?: string | null;
     body: string;
     recipientIds?: string[];
@@ -60,6 +64,7 @@ export interface DraftUpdateProps {
 export interface DraftProps {
     id: string;
     userId: UserId;
+    empresaId: EmpresaId;
     subject: string | null;
     body: string;
     recipientIds: string[];

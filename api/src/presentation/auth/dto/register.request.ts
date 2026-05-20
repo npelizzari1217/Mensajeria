@@ -6,4 +6,5 @@ export interface RegisterRequest {
   password: string;
   name: string;
   role?: string;
+  empresaId?: string;
 }

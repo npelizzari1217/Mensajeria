@@ -1,4 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { MessageId } from '../../shared/value-objects/message-id';
 import { Subject } from '../../shared/value-objects/subject';
 import { MessageBody } from '../../shared/value-objects/message-body';
@@ -19,6 +20,7 @@ import { MessageRecipient } from './message-recipient';
 export declare class Message {
     private readonly id;
     private readonly senderId;
+    private readonly empresaId;
     private subject;
     private body;
     private readonly parentMessageId;
@@ -30,7 +32,7 @@ export declare class Message {
      * Factory for NEW messages.
      * Creates the message and initial MessageRecipient entries.
      */
-    static create(senderId: UserId, subject: Subject, body: MessageBody, recipientIds: UserId[], parentMessageId?: MessageId): Result<Message, Error>;
+    static create(senderId: UserId, empresaId: EmpresaId, subject: Subject, body: MessageBody, recipientIds: UserId[], parentMessageId?: MessageId): Result<Message, Error>;
     /**
      * Reconstruction from persistence — skips runtime validation.
      * Use ONLY when restoring from a trusted source (DB).
@@ -38,6 +40,7 @@ export declare class Message {
     static reconstruct(props: MessageProps): Message;
     getId(): MessageId;
     getSenderId(): UserId;
+    getEmpresaId(): EmpresaId;
     /**
      * Returns the display name of the sender user.
      * Transient — populated by the mapper from Prisma joins, not persisted.
@@ -79,6 +82,7 @@ export declare class Message {
 export interface MessageProps {
     id: MessageId;
     senderId: UserId;
+    empresaId: EmpresaId;
     subject: Subject;
     body: MessageBody;
     parentMessageId: MessageId | null;

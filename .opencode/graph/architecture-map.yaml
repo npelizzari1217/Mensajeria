@@ -1,0 +1,83 @@
+# =============================================================================
+# Architecture Map — Topology View
+# =============================================================================
+# High-level architecture diagram showing system topology.
+
+# Mensajeria System Architecture
+#
+#                   ┌─────────────────────────────┐
+#                   │       Hostinger (Apache)     │
+#                   │  https://sesitec.net         │
+#                   │                             │
+#                   │  /mensajeria/ → dist/ (SPA)  │
+#                   │  /v1/* → PHP proxy → VPS     │
+#                   └─────────────┬───────────────┘
+#                                 │ HTTPS
+#                                 ↓
+#                   ┌─────────────────────────────┐
+#                   │    VPS Windows (IIS + pm2)   │
+#                   │  86.48.23.197                │
+#                   │                             │
+#                   │  IIS (port 80/443)           │
+#                   │    ├── /v1/* → localhost:3000│
+#                   │    └── web.config rewrite    │
+#                   │                             │
+#                   │  pm2: mensajeria-api         │
+#                   │    └── NestJS (port 3000)    │
+#                   │         ├── Prisma ORM       │
+#                   │         └── Socket.io        │
+#                   └─────────────┬───────────────┘
+#                                 │ TCP
+#                                 ↓
+#                   ┌─────────────────────────────┐
+#                   │    PostgreSQL (port 5432)     │
+#                   │    Database: mensajeria       │
+#                   └─────────────────────────────┘
+
+# Layer Dependency Flow (Clean Architecture)
+#
+#   ┌──────────┐     ┌──────────┐     ┌──────────┐
+#   │   WEB    │     │  MOBILE  │     │ EXTERNAL │
+#   │ (React)  │     │  (Expo)  │     │ (Postman)│
+#   └────┬─────┘     └────┬─────┘     └────┬─────┘
+#        │                │                │
+#        └────────────────┼────────────────┘
+#                         │ HTTP/WS
+#                         ↓
+#              ┌──────────────────────┐
+#              │   PRESENTATION       │  ← controllers, gateways, DTOs
+#              │   (REST + WS)        │
+#              └──────────┬───────────┘
+#                         │
+#                         ↓
+#              ┌──────────────────────┐
+#              │   APPLICATION        │  ← use cases (orchestration)
+#              │   (Use Cases)        │
+#              └──────────┬───────────┘
+#                         │
+#                         ↓
+#              ┌──────────────────────┐
+#              │   DOMAIN             │  ← entities, VOs, ports
+#              │   (packages/domain)  │
+#              └──────────┬───────────┘
+#                         │ (ports/interfaces)
+#                         ↓
+#              ┌──────────────────────┐
+#              │   INFRASTRUCTURE     │  ← Prisma, JWT, bcrypt, IIS
+#              │   (adapters)         │
+#              └──────────────────────┘
+
+# Data Flow: Send Message
+#
+#   User (Web) → ComposePage → POST /v1/messages {recipientEmails, subject, body}
+#     → PHP Proxy (sesitec.net) → http://86.48.23.197/v1/messages
+#     → IIS Rewrite → localhost:3000/v1/messages
+#     → MessagingController.send()
+#     → SendMessageUseCase.execute()
+#       → Email.create() for each recipient email
+#       → UserRepository.findByEmail() → resolve to UserId
+#       → Message.create(sender, subject, body, recipients)
+#       → MessageRepository.save(message)
+#       → EventBus.publish(MessageSent)
+#         → WebSocketHandler → socket.emit('message:new')
+#     → Response: { data: MessageResponse }

@@ -1,5 +1,6 @@
 import {
   UserId,
+  EmpresaId,
   MessageRepository,
   PaginatedResult,
   Result,
@@ -31,7 +32,7 @@ export class SearchMessagesUseCase {
     query: string;
     page: number;
     pageSize: number;
-  }): Promise<Result<{
+  }, empresaId: EmpresaId): Promise<Result<{
     data: MessageResponse[];
     total: number;
     page: number;
@@ -62,7 +63,7 @@ export class SearchMessagesUseCase {
     const pageSize = Math.max(1, rawPageSize);
 
     // 4. Search
-    const result = await this.messageRepo.search(userId, trimmedQuery, {
+    const result = await this.messageRepo.search(userId, empresaId, trimmedQuery, {
       page,
       pageSize,
     });

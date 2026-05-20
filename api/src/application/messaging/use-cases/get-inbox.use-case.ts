@@ -1,5 +1,6 @@
 import {
   UserId,
+  EmpresaId,
   MessageRepository,
   MessageStatus,
   MessageStatusVO,
@@ -20,7 +21,7 @@ export class GetInboxUseCase {
     private readonly messageRepo: MessageRepository,
   ) {}
 
-  async execute(dto: InboxQueryDTO): Promise<Result<{
+  async execute(dto: InboxQueryDTO, empresaId: EmpresaId): Promise<Result<{
     data: MessageResponse[];
     total: number;
     page: number;
@@ -45,7 +46,7 @@ export class GetInboxUseCase {
     const page = Math.max(1, dto.page || 1);
     const pageSize = Math.min(100, Math.max(1, dto.pageSize || 20));
 
-    const result = await this.messageRepo.findByRecipient(userId, statusFilter, {
+    const result = await this.messageRepo.findByRecipient(userId, empresaId, statusFilter, {
       page,
       pageSize,
     });

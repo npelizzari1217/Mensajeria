@@ -1,0 +1,52 @@
+# =============================================================================
+# Project Overrides — Mensajeria
+# =============================================================================
+# Override or extend global standards for this specific project.
+# These override ~/.config/opencode/global-core/standards/policies.yaml
+
+# ── Prompt Overrides ──────────────────────────────────────────────────
+prompts:
+  sdd_phases:
+    detail_level: standard  # concise | standard | deep
+    language: es           # Spanish for all SDD artifacts
+
+  code_generation:
+    style: clean-architecture-nestjs
+    no_comments: true      # Don't add explanatory comments unless asked
+    prefer_types_over_interfaces: false  # Use interfaces for DTOs
+
+# ── Policy Overrides ─────────────────────────────────────────────────
+policies:
+  commit:
+    style: conventional
+    allow_amend: false     # Never amend pushed commits
+    sign_off: false
+
+  testing:
+    strict_tdd: false      # Write tests alongside code, not before
+    required_for: [domain, application]
+    optional_for: [presentation, infrastructure]
+
+  security:
+    env_files: deny_read   # Block reading .env, .env.*, credentials.json
+
+# ── Convention Overrides ──────────────────────────────────────────────
+conventions:
+  file_naming:
+    use_cases: "{verb}-{noun}.use-case.ts"
+    dto: "{context}.dto.ts"
+
+  nestjs:
+    token_injection: required  # Always @Inject('Token') for interface-based deps
+    controller_prefix: domain-name
+
+# ── Workflow Overrides ────────────────────────────────────────────────
+workflows:
+  sdd_pipeline:
+    skip_phases:
+      - none  # All phases active
+    require_apply_plan: true  # Don't skip apply-plan
+
+  deploy:
+    manual_only: true   # No CI/CD auto-deploy
+    target: windows-iis

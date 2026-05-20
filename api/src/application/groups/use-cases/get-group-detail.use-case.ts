@@ -1,4 +1,4 @@
-import { GroupRepository, UserId, UserRepository, Result, ok, err, GroupNotFoundError } from '@mensajeria/domain';
+import { GroupRepository, UserId, EmpresaId, UserRepository, Result, ok, err, GroupNotFoundError } from '@mensajeria/domain';
 import { GroupDetailResponse, GroupMemberResponse } from '../dtos/create-group.dto';
 import { Inject } from '@nestjs/common';
 
@@ -8,8 +8,11 @@ export class GetGroupDetailUseCase {
     @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
-  async execute(groupId: string, requesterId: string): Promise<Result<GroupDetailResponse, Error>> {
-    const groupResult = await this.groupRepo.findById(groupId);
+  async execute(groupId: string, requesterId: string, empresaId: string): Promise<Result<GroupDetailResponse, Error>> {
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
+
+    const groupResult = await this.groupRepo.findById(groupId, eid.unwrap());
     if (groupResult.isErr()) return err(groupResult.unwrapErr());
     const group = groupResult.unwrap();
     if (!group) return err(new GroupNotFoundError(groupId));

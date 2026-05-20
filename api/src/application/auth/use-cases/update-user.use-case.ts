@@ -1,9 +1,10 @@
 import { Inject } from '@nestjs/common';
 import {
-  UserRepository, UserId, Email, RoleVO,
-  UserNotFoundError, EmailAlreadyExistsError,
+  UserRepository, UserId, Email, RoleVO, EmpresaId,
+  UserNotFoundError, EmailAlreadyExistsError, ForbiddenDomainError,
   Result, ok, err,
 } from '@mensajeria/domain';
+import { CallerContext } from '../dtos/caller-context.dto';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
 
 export interface UpdateUserDTO {
@@ -17,7 +18,7 @@ export class UpdateUserUseCase {
     @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
-  async execute(userId: string, dto: UpdateUserDTO): Promise<Result<UserProfileDTO, Error>> {
+  async execute(userId: string, dto: UpdateUserDTO, caller: CallerContext): Promise<Result<UserProfileDTO, Error>> {
     const uidResult = UserId.create(userId);
     if (uidResult.isErr()) return err(uidResult.unwrapErr());
     const uid = uidResult.unwrap();
@@ -25,6 +26,17 @@ export class UpdateUserUseCase {
     const userResult = await this.userRepo.findById(uid);
     if (userResult.isErr()) return err(new UserNotFoundError(userId));
     const user = userResult.unwrap();
+
+    // Enforce empresa scoping for non-Admin callers
+    if (caller.callerRole !== 'Admin') {
+      const isMember = await this.userRepo.isMemberOf(
+        uid,
+        EmpresaId.reconstruct(caller.callerEmpresaId),
+      );
+      if (!isMember) {
+        return err(new ForbiddenDomainError('Cannot update user from a different empresa'));
+      }
+    }
 
     if (dto.name !== undefined) {
       const nameResult = user.changeName(dto.name);

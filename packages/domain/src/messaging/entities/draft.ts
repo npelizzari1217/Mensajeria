@@ -1,4 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Result, ok, err } from '../../shared/result';
 import crypto from 'crypto';
@@ -13,6 +14,7 @@ export class Draft {
   private constructor(
     private readonly id: string,
     private readonly userId: UserId,
+    private readonly empresaId: EmpresaId,
     private subject: string | null,
     private body: string,
     private readonly recipientIds: string[],
@@ -36,6 +38,7 @@ export class Draft {
       new Draft(
         id,
         props.userId,
+        props.empresaId,
         props.subject ?? null,
         props.body.trim(),
         props.recipientIds ?? [],
@@ -53,6 +56,7 @@ export class Draft {
     return new Draft(
       props.id,
       props.userId,
+      props.empresaId,
       props.subject,
       props.body,
       props.recipientIds,
@@ -70,6 +74,10 @@ export class Draft {
 
   getUserId(): UserId {
     return this.userId;
+  }
+
+  getEmpresaId(): EmpresaId {
+    return this.empresaId;
   }
 
   getSubject(): string | null {
@@ -106,6 +114,7 @@ export class Draft {
     return new Draft(
       this.id,
       this.userId,
+      this.empresaId,
       props.subject !== undefined ? props.subject : this.subject,
       props.body !== undefined ? props.body : this.body,
       props.recipientIds !== undefined ? props.recipientIds : [...this.recipientIds],
@@ -130,6 +139,7 @@ export class Draft {
 
 export interface DraftCreateProps {
   userId: UserId;
+  empresaId: EmpresaId;
   subject?: string | null;
   body: string;
   recipientIds?: string[];
@@ -146,6 +156,7 @@ export interface DraftUpdateProps {
 export interface DraftProps {
   id: string;
   userId: UserId;
+  empresaId: EmpresaId;
   subject: string | null;
   body: string;
   recipientIds: string[];

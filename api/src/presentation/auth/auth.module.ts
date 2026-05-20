@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { AuthController } from './auth.controller';
 import { RegisterUserUseCase } from '../../application/auth/use-cases/register-user.use-case';
 import { LoginUseCase } from '../../application/auth/use-cases/login.use-case';
@@ -8,12 +9,14 @@ import { GetCurrentUserUseCase } from '../../application/auth/use-cases/get-curr
 import { ListUsersUseCase } from '../../application/auth/use-cases/list-users.use-case';
 import { UpdateUserUseCase } from '../../application/auth/use-cases/update-user.use-case';
 import { DeleteUserUseCase } from '../../application/auth/use-cases/delete-user.use-case';
+import { SelectEmpresaUseCase } from '../../application/auth/use-cases/select-empresa.use-case';
 import { JwtAuthPort } from '../../infrastructure/auth/jwt-auth-port';
 import { BcryptPasswordHasher } from '../../infrastructure/auth/bcrypt-password-hasher';
 import { PrismaUserRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-user.repository';
 import { PrismaRefreshTokenRepository } from '../../infrastructure/persistence/prisma/repositories/prisma-refresh-token.repository';
 import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
 import { AuthGuard } from '../../infrastructure/auth/guards/auth.guard';
+import { RolesGuard } from '../../infrastructure/auth/guards/roles.guard';
 import { loadEnvConfig } from '../../infrastructure/config/env.config';
 
 const env = loadEnvConfig();
@@ -64,6 +67,12 @@ const env = loadEnvConfig();
       useFactory: (repo) => new DeleteUserUseCase(repo),
       inject: ['UserRepository'],
     },
+    {
+      provide: SelectEmpresaUseCase,
+      useFactory: (repo, authPort, refreshExpiresIn) =>
+        new SelectEmpresaUseCase(repo, authPort, refreshExpiresIn),
+      inject: ['UserRepository', 'AuthPort', 'REFRESH_TOKEN_EXPIRES_IN'],
+    },
 
     // ── Infrastructure: Auth Ports ──────────────────────────────────
     {
@@ -83,6 +92,8 @@ const env = loadEnvConfig();
       useExisting: BcryptPasswordHasher,
     },
     AuthGuard,
+    Reflector,
+    RolesGuard,
 
     // ── Infrastructure: Persistence ─────────────────────────────────
     PrismaService,

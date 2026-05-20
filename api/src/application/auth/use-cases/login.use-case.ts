@@ -1,5 +1,6 @@
 import {
   Email,
+  EmpresaId,
   RefreshTokenRepository,
   UserRepository,
   InvalidCredentialsError,
@@ -12,6 +13,7 @@ import { PasswordHasher } from '../ports/password-hasher';
 import { LoginDTO } from '../dtos/login.dto';
 import { AuthResponseDTO } from '../dtos/auth-response.dto';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
+import { EmpresaDTO } from '../dtos/empresa.dto';
 
 /**
  * LoginUseCase.
@@ -94,7 +96,19 @@ export class LoginUseCase {
       expiresAt,
     });
 
-    // 7. Return auth response
+    // 7. Get user's empresas
+    const empresasResult = await this.userRepo.getEmpresas(user.getId());
+    const empresas: EmpresaDTO[] = [];
+    if (empresasResult.isOk()) {
+      const memberships = empresasResult.unwrap();
+      empresas.push(...memberships.map((m) => ({
+        id: m.empresaId.get(),
+        nombre: m.nombre,
+        role: m.role,
+      })));
+    }
+
+    // 8. Return auth response
     const profile: UserProfileDTO = {
       id: user.getId().get(),
       email: user.getEmail().get(),
@@ -107,6 +121,7 @@ export class LoginUseCase {
       accessToken,
       refreshToken,
       user: profile,
+      empresas,
     });
   }
 }

@@ -1,6 +1,7 @@
 import {
   Message,
   MessageId,
+  EmpresaId,
   UserId,
   MessageRecipient,
   MessageRepository,
@@ -26,9 +27,9 @@ import { Prisma, MessageStatus as PrismaMessageStatus } from '@prisma/client';
 export class PrismaMessageRepository implements MessageRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: MessageId): Promise<Result<Message, DomainError>> {
+  async findById(id: MessageId, empresaId: EmpresaId): Promise<Result<Message, DomainError>> {
     const row = await this.prisma.message.findUnique({
-      where: { id: id.get() },
+      where: { id: id.get(), empresaId: empresaId.get() },
       include: {
         recipients: {
           include: {
@@ -48,6 +49,7 @@ export class PrismaMessageRepository implements MessageRepository {
 
   async findByRecipient(
     userId: UserId,
+    empresaId: EmpresaId,
     status?: MessageStatusVO,
     pagination?: PaginationParams,
   ): Promise<Result<PaginatedResult<Message>, DomainError>> {
@@ -55,9 +57,9 @@ export class PrismaMessageRepository implements MessageRepository {
     const pageSize = pagination?.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
 
-    // Build where clause
     const where: Prisma.MessageRecipientWhereInput = {
       recipientId: userId.get(),
+      message: { empresaId: empresaId.get() },
     };
 
     if (status) {
@@ -107,6 +109,7 @@ export class PrismaMessageRepository implements MessageRepository {
 
   async findBySender(
     userId: UserId,
+    empresaId: EmpresaId,
     pagination?: PaginationParams,
   ): Promise<Result<PaginatedResult<Message>, DomainError>> {
     const page = pagination?.page ?? 1;
@@ -115,6 +118,7 @@ export class PrismaMessageRepository implements MessageRepository {
 
     const where: Prisma.MessageWhereInput = {
       senderId: userId.get(),
+      empresaId: empresaId.get(),
     };
 
     const [rows, total] = await Promise.all([
@@ -146,6 +150,7 @@ export class PrismaMessageRepository implements MessageRepository {
     await this.prisma.message.create({
       data: {
         id: data.id,
+        empresaId: message.getEmpresaId().get(),
         senderId: data.senderId,
         subject: data.subject,
         body: data.body,
@@ -218,6 +223,7 @@ export class PrismaMessageRepository implements MessageRepository {
 
   async search(
     userId: UserId,
+    empresaId: EmpresaId,
     query: string,
     pagination: PaginationParams,
   ): Promise<Result<PaginatedResult<Message>, DomainError>> {
@@ -225,8 +231,6 @@ export class PrismaMessageRepository implements MessageRepository {
     const pageSize = pagination?.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
 
-    // Use %L: string literal interpolation for safety with tsquery
-    // $1, $2 etc. for safe parameter binding of user-supplied values
     const searchClause = `
       to_tsvector('spanish', coalesce(m.subject, '') || ' ' || coalesce(m.body, ''))
       @@ plainto_tsquery('spanish', $1)
@@ -240,23 +244,25 @@ export class PrismaMessageRepository implements MessageRepository {
       )
     `;
 
-    const whereClause = `${searchClause} AND ${accessClause}`;
+    const empresaClause = `m.empresa_id = $3`;
 
-    // Count total matches
+    const whereClause = `${searchClause} AND ${accessClause} AND ${empresaClause}`;
+
     const countRows = await this.prisma.$queryRawUnsafe<Array<{ total: bigint }>>(
       `SELECT COUNT(*)::bigint as total FROM messages m WHERE ${whereClause}`,
       query,
       userId.get(),
+      empresaId.get(),
     );
     const total = Number(countRows[0]?.total ?? 0);
 
-    // Get paginated matching IDs ordered by relevance (ts_rank), then by creation date
     const rows = await this.prisma.$queryRawUnsafe<Array<{ message_id: string }>>(
       `SELECT m.message_id FROM messages m WHERE ${whereClause}
        ORDER BY ts_rank(to_tsvector('spanish', coalesce(m.subject, '') || ' ' || coalesce(m.body, '')), plainto_tsquery('spanish', $1)) DESC, m.created_at DESC
-       LIMIT $3 OFFSET $4`,
+       LIMIT $4 OFFSET $5`,
       query,
       userId.get(),
+      empresaId.get(),
       pageSize,
       skip,
     );

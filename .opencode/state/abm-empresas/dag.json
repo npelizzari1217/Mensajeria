@@ -1,0 +1,63 @@
+{
+  "change_id": "abm-empresas",
+  "pipeline": {
+    "current_phase": "archived",
+    "phases": {
+      "explore": { "status": "skipped", "completed_at": null },
+      "propose": { "status": "completed", "completed_at": "2026-05-20T00:00:00Z" },
+      "spec": { "status": "completed", "completed_at": "2026-05-20T00:00:00Z" },
+      "design": { "status": "completed", "completed_at": "2026-05-20T00:00:00Z" },
+      "tasks": { "status": "completed", "completed_at": "2026-05-20T12:00:00Z" },
+      "apply": { "status": "completed", "completed_at": "2026-05-20T23:00:00Z" },
+      "verify": { "status": "completed", "completed_at": "2026-05-20T23:46:00Z" },
+      "archive": { "status": "completed", "completed_at": "2026-05-20T23:59:00Z" }
+    }
+  },
+  "governance": {
+    "gates_passed": [
+      "propose",
+      "design",
+      "tasks",
+      "apply",
+      "verify",
+      "archive",
+      "verify_passed",
+      "contracts_intact"
+    ],
+    "gates_pending": [],
+    "blockers": [],
+    "approvals": {}
+  },
+  "context": {
+    "artifact_store": "hybrid",
+    "stack_profile": "nestjs-enterprise",
+    "estimated_lines": null
+  },
+  "recovery": {
+    "checkpoints": [
+      {
+        "phase": "propose",
+        "artifact_engram": "sdd/abm-empresas/proposal",
+        "artifact_fs": "openspec/changes/abm-empresas/proposal.md",
+        "at": "2026-05-20T00:00:00Z"
+      },
+      {
+        "phase": "design",
+        "artifact_engram": "sdd/abm-empresas/design",
+        "artifact_fs": "openspec/changes/abm-empresas/design.md",
+        "at": "2026-05-20T00:00:00Z"
+      },
+      {
+        "phase": "tasks",
+        "artifact_engram": "sdd/abm-empresas/tasks",
+        "artifact_fs": "openspec/changes/abm-empresas/tasks.md",
+        "at": "2026-05-20T12:00:00Z"
+      }
+    ],
+    "failures": [],
+    "retries": 0
+  },
+  "created_at": "2026-05-20T00:00:00Z",
+  "updated_at": "2026-05-20T23:59:00Z",
+  "version": "1.0"
+}

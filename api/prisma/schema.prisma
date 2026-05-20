@@ -35,8 +35,39 @@ model User {
   groupMembers      GroupMember[]
   drafts            Draft[]
   pinnedMessages    UserPinnedMessage[]
+  empresas          UserEmpresa[]
 
   @@map("users")
+}
+
+model Empresa {
+  id        String   @id @default(uuid()) @map("empresa_id")
+  nombre    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  miembros       UserEmpresa[]
+  messages       Message[]
+  groups         Group[]
+  drafts         Draft[]
+  threads        ConversationThread[]
+  refreshTokens  RefreshToken[]
+
+  @@map("empresas")
+}
+
+model UserEmpresa {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  empresaId String   @map("empresa_id")
+  empresa   Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  role      Role     @default(USUARIO)
+  isActive  Boolean  @default(true) @map("is_active")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  @@unique([userId, empresaId])
+  @@map("user_empresas")
 }
 
 model RefreshToken {
@@ -44,14 +75,19 @@ model RefreshToken {
   token     String   @unique
   userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  empresaId String   @map("empresa_id")
+  empresa   Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([empresaId])
   @@map("refresh_tokens")
 }
 
 model Message {
   id              String              @id @default(uuid()) @map("message_id")
+  empresaId       String              @map("empresa_id")
+  empresa         Empresa             @relation(fields: [empresaId], references: [id])
   senderId        String              @map("sender_id")
   sender          User                @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
   threadId        String?             @map("thread_id")
@@ -70,6 +106,7 @@ model Message {
 
   @@index([senderId])
   @@index([threadId])
+  @@index([empresaId])
   @@map("messages")
 }
 
@@ -111,6 +148,8 @@ enum GroupRole {
 
 model Group {
   id          String   @id @default(uuid()) @map("group_id")
+  empresaId   String   @map("empresa_id")
+  empresa     Empresa  @relation(fields: [empresaId], references: [id])
   name        String
   description String?
   createdBy   String   @map("created_by")
@@ -120,6 +159,7 @@ model Group {
 
   members GroupMember[]
 
+  @@index([empresaId])
   @@map("groups")
 }
 
@@ -151,6 +191,8 @@ model UserPinnedMessage {
 
 model Draft {
   id           String   @id @default(uuid()) @map("draft_id")
+  empresaId    String   @map("empresa_id")
+  empresa      Empresa  @relation(fields: [empresaId], references: [id])
   userId       String   @map("user_id")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   subject      String?
@@ -161,11 +203,14 @@ model Draft {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
+  @@index([empresaId])
   @@map("drafts")
 }
 
 model ConversationThread {
   id           String   @id @default(uuid()) @map("thread_id")
+  empresaId    String   @map("empresa_id")
+  empresa      Empresa  @relation(fields: [empresaId], references: [id])
   subject      String
   messageCount Int      @default(0) @map("message_count")
   createdAt    DateTime @default(now()) @map("created_at")
@@ -173,5 +218,6 @@ model ConversationThread {
 
   messages Message[]
 
+  @@index([empresaId])
   @@map("conversation_threads")
 }

@@ -1,6 +1,8 @@
 import {
   User,
   UserId,
+  EmpresaId,
+  EmpresaMembership,
   Email,
   UserRepository,
   Result,
@@ -75,5 +77,50 @@ export class PrismaUserRepository implements UserRepository {
       where: { id: id.get() },
     });
     return ok(undefined);
+  }
+
+  async getEmpresas(userId: UserId): Promise<Result<EmpresaMembership[], DomainError>> {
+    const rows = await this.prisma.userEmpresa.findMany({
+      where: { userId: userId.get() },
+      include: { empresa: true },
+    });
+    const memberships: EmpresaMembership[] = rows.map((r) => ({
+      empresaId: EmpresaId.reconstruct(r.empresaId),
+      nombre: r.empresa.nombre,
+      role: r.role,
+      isActive: r.isActive,
+    }));
+    return ok(memberships);
+  }
+
+  async isMemberOf(userId: UserId, empresaId: EmpresaId): Promise<boolean> {
+    const count = await this.prisma.userEmpresa.count({
+      where: {
+        userId: userId.get(),
+        empresaId: empresaId.get(),
+        isActive: true,
+      },
+    });
+    return count > 0;
+  }
+
+  async addToEmpresa(userId: UserId, empresaId: EmpresaId, role: string): Promise<Result<void, DomainError>> {
+    await this.prisma.userEmpresa.create({
+      data: {
+        userId: userId.get(),
+        empresaId: empresaId.get(),
+        role: role as any,
+        isActive: true,
+      },
+    });
+    return ok(undefined);
+  }
+
+  async findAllByEmpresaId(empresaId: EmpresaId): Promise<Result<User[], DomainError>> {
+    const memberships = await this.prisma.userEmpresa.findMany({
+      where: { empresaId: empresaId.get(), isActive: true },
+      include: { user: true },
+    });
+    return ok(memberships.map((m) => UserMapper.toDomain(m.user)));
   }
 }

@@ -1,4 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
+import { EmpresaId } from '../../shared/value-objects/empresa-id';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Result } from '../../shared/result';
 import { GroupMember } from './group-member';
@@ -14,6 +15,7 @@ export declare class Group {
     private readonly name;
     private readonly description;
     private readonly createdBy;
+    private readonly empresaId;
     private readonly members;
     private isActive;
     private readonly createdAt;
@@ -22,7 +24,7 @@ export declare class Group {
     /**
      * Factory for NEW groups.
      */
-    static create(name: string, description: string | null, createdBy: UserId): Result<Group, Error>;
+    static create(name: string, description: string | null, createdBy: UserId, empresaId: EmpresaId): Result<Group, Error>;
     /**
      * Reconstruction from persistence.
      */
@@ -31,6 +33,7 @@ export declare class Group {
     getName(): string;
     getDescription(): string | null;
     getCreatedBy(): UserId;
+    getEmpresaId(): EmpresaId;
     getMembers(): readonly GroupMember[];
     isActiveGroup(): boolean;
     getCreatedAt(): Timestamp;
@@ -67,6 +70,7 @@ export interface GroupProps {
     name: string;
     description: string | null;
     createdBy: UserId;
+    empresaId: EmpresaId;
     members: GroupMember[];
     isActive: boolean;
     createdAt: Timestamp;

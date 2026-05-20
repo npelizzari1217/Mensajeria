@@ -1,0 +1,38 @@
+{
+  "change_id": "entrega-4-final",
+  "status": "completed",
+  "started_at": "2026-05-13T12:00:00Z",
+  "completed_at": "2026-05-20T15:00:00Z",
+  "summary": "Entrega 4 Final — Groups, Drafts, Forward, Pinned, Export, Mobile, Push. 8 PRs stacked-to-main. 3150 líneas implementadas.",
+  "pipeline": {
+    "current_phase": "archive",
+    "total_phases": 10,
+    "completed_phases": 10,
+    "failed_phases": 0,
+    "blocked_phases": 0
+  },
+  "artifacts": {
+    "proposal": "openspec/changes/entrega-4-final/proposal.md",
+    "specs": [
+      "openspec/specs/groups/spec.md",
+      "openspec/specs/drafts/spec.md",
+      "openspec/specs/forward/spec.md",
+      "openspec/specs/pinned-messages/spec.md",
+      "openspec/specs/data-export/spec.md",
+      "openspec/specs/mobile-app/spec.md",
+      "openspec/specs/push-notifications/spec.md"
+    ],
+    "design": "openspec/changes/entrega-4-final/design.md",
+    "tasks": "openspec/changes/entrega-4-final/tasks.md",
+    "apply_progress": "openspec/changes/entrega-4-final/apply-progress.md"
+  },
+  "health": {
+    "gates_passed": 6,
+    "gates_failed": 0,
+    "tests_passing": 264,
+    "type_errors": 0,
+    "violations": 0,
+    "retries": 0,
+    "recoveries": 0
+  }
+}

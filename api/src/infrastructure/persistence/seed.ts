@@ -62,6 +62,7 @@ async function main() {
       senderId: admin.id,
       subject: 'Bienvenido al sistema',
       body: 'Este es un mensaje de bienvenida para el Supervisor.',
+      empresaId: '00000000-0000-0000-0000-000000000001',
       createdAt: new Date('2026-01-15T10:00:00Z'),
     },
   });
@@ -92,6 +93,7 @@ async function main() {
       senderId: supervisor.id,
       subject: 'Revisión de equipos',
       body: 'Por favor revisa los equipos del laboratorio 3.',
+      empresaId: '00000000-0000-0000-0000-000000000001',
       createdAt: new Date('2026-01-16T09:00:00Z'),
     },
   });
@@ -121,6 +123,7 @@ async function main() {
       senderId: admin.id,
       subject: 'Nueva política',
       body: 'Se ha actualizado la política de seguridad.',
+      empresaId: '00000000-0000-0000-0000-000000000001',
       createdAt: new Date('2026-01-17T08:00:00Z'),
     },
   });
@@ -151,6 +154,7 @@ async function main() {
       subject: 'Re: Nueva política',
       body: 'Gracias, lo revisaré a la brevedad.',
       parentMessageId: msg3.id,
+      empresaId: '00000000-0000-0000-0000-000000000001',
       createdAt: new Date('2026-01-17T09:30:00Z'),
     },
   });

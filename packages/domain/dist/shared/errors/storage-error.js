@@ -15,7 +15,9 @@ class StorageError extends domain_error_1.DomainError {
     code = 'STORAGE_ERROR';
     constructor(message, cause) {
         super(message);
-        this.cause = cause instanceof Error ? cause : undefined;
+        if (cause instanceof Error) {
+            this.cause = cause;
+        }
     }
 }
 exports.StorageError = StorageError;

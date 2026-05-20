@@ -1,5 +1,5 @@
 import {
-  MessageId, UserId,
+  MessageId, UserId, EmpresaId,
   MessageRepository,
   UnauthorizedMessageAccessError,
   MessageNotFoundError,
@@ -20,6 +20,7 @@ export class ExportThreadUseCase {
   async execute(
     messageId: string,
     userId: string,
+    empresaId: EmpresaId,
     _format: string = 'json',
   ): Promise<Result<ThreadExport, Error>> {
     // 1. Validate IDs
@@ -32,7 +33,7 @@ export class ExportThreadUseCase {
     const uid = uidResult.unwrap();
 
     // 2. Find root message
-    const rootResult = await this.messageRepo.findById(msgId);
+    const rootResult = await this.messageRepo.findById(msgId, empresaId);
     if (rootResult.isErr()) return err(new MessageNotFoundError(messageId));
     const rootMessage = rootResult.unwrap();
 

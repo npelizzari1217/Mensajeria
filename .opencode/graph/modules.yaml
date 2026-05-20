@@ -1,0 +1,87 @@
+# =============================================================================
+# Knowledge Graph — Module Registry
+# =============================================================================
+# Maps all modules in the Mensajeria project.
+# Updated by graph-manager agent after significant changes.
+# Used by context-assembly engine to determine what context to inject.
+
+modules:
+  # ── Domain Package ──────────────────────────────────────────────────
+  - name: domain-shared
+    path: packages/domain/src/shared
+    type: domain
+    exports: [UserId, Email, Subject, MessageBody, Timestamp, Result, ok, err, DomainError, RoleVO, MessageStatusVO]
+    bounded_context: shared-kernel
+
+  - name: domain-auth
+    path: packages/domain/src/auth
+    type: domain
+    exports: [User, Password, UserRepository, RefreshTokenRepository, UserRegistered, UserIdentity, EmailAlreadyExistsError, UserNotFoundError, InvalidCredentialsError]
+    bounded_context: auth
+    depends_on: [domain-shared]
+
+  - name: domain-messaging
+    path: packages/domain/src/messaging
+    type: domain
+    exports: [Message, MessageRecipient, MessageRepository, Attachment, Group, GroupRepository, Draft, DraftRepository, MessageSent, MessageRead]
+    bounded_context: messaging
+    depends_on: [domain-shared]
+
+  # ── API Application Layer ───────────────────────────────────────────
+  - name: app-auth
+    path: api/src/application/auth
+    type: application
+    exports: [RegisterUserUseCase, LoginUseCase, RefreshTokenUseCase, LogoutUseCase, GetCurrentUserUseCase, ListUsersUseCase, UpdateUserUseCase, DeleteUserUseCase]
+    bounded_context: auth
+    depends_on: [domain-auth, domain-shared]
+
+  - name: app-messaging
+    path: api/src/application/messaging
+    type: application
+    exports: [SendMessageUseCase, GetInboxUseCase, GetSentUseCase, GetMessageUseCase, MarkAsReadUseCase, ReplyToMessageUseCase, ForwardMessageUseCase, SearchMessagesUseCase]
+    bounded_context: messaging
+    depends_on: [domain-messaging, domain-shared]
+
+  - name: app-groups
+    path: api/src/application/groups
+    type: application
+    exports: [CreateGroupUseCase, UpdateGroupUseCase, AddGroupMemberUseCase, RemoveGroupMemberUseCase, GetGroupDetailUseCase]
+    bounded_context: messaging
+    depends_on: [domain-messaging, domain-shared]
+
+  - name: app-drafts
+    path: api/src/application/drafts
+    type: application
+    exports: [SaveDraftUseCase, UpdateDraftUseCase, GetDraftUseCase, ListDraftsUseCase, SendDraftUseCase, DeleteDraftUseCase]
+    bounded_context: messaging
+    depends_on: [domain-messaging, domain-shared]
+
+  # ── API Infrastructure ──────────────────────────────────────────────
+  - name: infra-persistence
+    path: api/src/infrastructure/persistence
+    type: infrastructure
+    exports: [PrismaService, PrismaUserRepository, PrismaMessageRepository, PrismaGroupRepository, PrismaDraftRepository]
+    bounded_context: shared-infrastructure
+    depends_on: [domain-auth, domain-messaging]
+
+  - name: infra-auth
+    path: api/src/infrastructure/auth
+    type: infrastructure
+    exports: [AuthGuard, RolesGuard, JwtAuthPort, BcryptPasswordHasher, CurrentUser, Roles]
+    bounded_context: auth
+    depends_on: [domain-auth, app-auth]
+
+  # ── API Presentation ────────────────────────────────────────────────
+  - name: pres-auth
+    path: api/src/presentation/auth
+    type: presentation
+    exports: [AuthController, AuthModule]
+    bounded_context: auth
+    depends_on: [app-auth, infra-auth]
+
+  - name: pres-messaging
+    path: api/src/presentation/messaging
+    type: presentation
+    exports: [MessagingController, MessagingGateway, MessagingModule]
+    bounded_context: messaging
+    depends_on: [app-messaging, infra-persistence]

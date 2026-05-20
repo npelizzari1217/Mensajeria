@@ -19,15 +19,17 @@ const message_recipient_1 = require("./message-recipient");
 class Message {
     id;
     senderId;
+    empresaId;
     subject;
     body;
     parentMessageId;
     createdAt;
     recipients;
     _senderName;
-    constructor(id, senderId, subject, body, parentMessageId, createdAt, recipients, _senderName) {
+    constructor(id, senderId, empresaId, subject, body, parentMessageId, createdAt, recipients, _senderName) {
         this.id = id;
         this.senderId = senderId;
+        this.empresaId = empresaId;
         this.subject = subject;
         this.body = body;
         this.parentMessageId = parentMessageId;
@@ -39,7 +41,7 @@ class Message {
      * Factory for NEW messages.
      * Creates the message and initial MessageRecipient entries.
      */
-    static create(senderId, subject, body, recipientIds, parentMessageId) {
+    static create(senderId, empresaId, subject, body, recipientIds, parentMessageId) {
         if (recipientIds.length === 0) {
             return (0, result_1.err)(new Error('Message must have at least one recipient'));
         }
@@ -58,14 +60,14 @@ class Message {
         }
         const id = message_id_1.MessageId.reconstruct(crypto.randomUUID());
         const recipients = recipientIds.map((r) => message_recipient_1.MessageRecipient.create(id, r));
-        return (0, result_1.ok)(new Message(id, senderId, subject, body, parentMessageId ?? null, timestamp_1.Timestamp.now(), recipients));
+        return (0, result_1.ok)(new Message(id, senderId, empresaId, subject, body, parentMessageId ?? null, timestamp_1.Timestamp.now(), recipients));
     }
     /**
      * Reconstruction from persistence — skips runtime validation.
      * Use ONLY when restoring from a trusted source (DB).
      */
     static reconstruct(props) {
-        return new Message(props.id, props.senderId, props.subject, props.body, props.parentMessageId, props.createdAt, props.recipients, props.senderName);
+        return new Message(props.id, props.senderId, props.empresaId, props.subject, props.body, props.parentMessageId, props.createdAt, props.recipients, props.senderName);
     }
     // --- Identity ---
     getId() {
@@ -73,6 +75,9 @@ class Message {
     }
     getSenderId() {
         return this.senderId;
+    }
+    getEmpresaId() {
+        return this.empresaId;
     }
     /**
      * Returns the display name of the sender user.

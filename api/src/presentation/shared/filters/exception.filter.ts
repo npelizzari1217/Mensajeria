@@ -66,12 +66,15 @@ export class AppExceptionFilter implements ExceptionFilter {
     switch (error.code) {
       case 'USER_NOT_FOUND':
       case 'MESSAGE_NOT_FOUND':
+      case 'EMPRESA_NOT_FOUND':
         return HttpStatus.NOT_FOUND;
       case 'EMAIL_ALREADY_EXISTS':
+      case 'EMPRESA_NAME_ALREADY_EXISTS':
         return HttpStatus.CONFLICT;
       case 'INVALID_CREDENTIALS':
         return HttpStatus.UNAUTHORIZED;
       case 'UNAUTHORIZED_MESSAGE_ACCESS':
+      case 'FORBIDDEN':
         return HttpStatus.FORBIDDEN;
       case 'VALIDATION_ERROR':
         return HttpStatus.UNPROCESSABLE_ENTITY;

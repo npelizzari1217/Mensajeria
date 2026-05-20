@@ -3,6 +3,7 @@ import {
   MessageId,
   UserId,
   Email,
+  EmpresaId,
   Subject,
   MessageBody,
   UserRepository,
@@ -32,7 +33,7 @@ export class SendMessageUseCase {
     @Inject('EventBus') private readonly eventBus: EventBus,
   ) {}
 
-  async execute(dto: SendMessageDTO): Promise<Result<MessageResponse, Error>> {
+  async execute(dto: SendMessageDTO, empresaId: EmpresaId): Promise<Result<MessageResponse, Error>> {
     // 1. Validate senderId
     const senderIdResult = UserId.create(dto.senderId);
     if (senderIdResult.isErr()) {
@@ -84,7 +85,7 @@ export class SendMessageUseCase {
     const body = bodyResult.unwrap();
 
     // 6. Create domain entity
-    const messageResult = Message.create(senderId, subject, body, recipientIds);
+    const messageResult = Message.create(senderId, empresaId, subject, body, recipientIds);
     if (messageResult.isErr()) {
       return err(messageResult.unwrapErr());
     }

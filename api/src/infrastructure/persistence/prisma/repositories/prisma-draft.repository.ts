@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Draft, DraftRepository, Result, ok, err } from '@mensajeria/domain';
+import { Draft, DraftRepository, EmpresaId, Result, ok, err } from '@mensajeria/domain';
 import { PrismaService } from '../prisma.service';
 import { DraftMapper } from '../mappers/draft-mapper';
 
@@ -24,10 +24,10 @@ export class PrismaDraftRepository implements DraftRepository {
     }
   }
 
-  async findById(id: string): Promise<Result<Draft | null, Error>> {
+  async findById(id: string, empresaId: EmpresaId): Promise<Result<Draft | null, Error>> {
     try {
       const prismaDraft = await this.db.draft.findUnique({
-        where: { id },
+        where: { id, empresaId: empresaId.get() },
       });
       if (!prismaDraft) {
         return ok(null);
@@ -38,10 +38,10 @@ export class PrismaDraftRepository implements DraftRepository {
     }
   }
 
-  async findByUserId(userId: string): Promise<Result<Draft[], Error>> {
+  async findByUserId(userId: string, empresaId: EmpresaId): Promise<Result<Draft[], Error>> {
     try {
       const drafts = await this.db.draft.findMany({
-        where: { userId },
+        where: { userId, empresaId: empresaId.get() },
         orderBy: { updatedAt: 'desc' },
       });
       return ok(drafts.map((d: any) => this.mapper.toDomain(d)));

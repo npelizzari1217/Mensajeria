@@ -1,5 +1,6 @@
 import {
   UserId,
+  EmpresaId,
   MessageRepository,
   Result,
   ok,
@@ -20,7 +21,7 @@ export class GetSentUseCase {
     userId: string;
     page: number;
     pageSize: number;
-  }): Promise<Result<{
+  }, empresaId: EmpresaId): Promise<Result<{
     data: MessageResponse[];
     total: number;
     page: number;
@@ -35,7 +36,7 @@ export class GetSentUseCase {
     const page = Math.max(1, dto.page || 1);
     const pageSize = Math.min(100, Math.max(1, dto.pageSize || 20));
 
-    const result = await this.messageRepo.findBySender(userId, { page, pageSize });
+    const result = await this.messageRepo.findBySender(userId, empresaId, { page, pageSize });
     if (result.isErr()) {
       return result as any;
     }

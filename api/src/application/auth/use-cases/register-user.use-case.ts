@@ -1,11 +1,13 @@
 import {
   Email,
+  EmpresaId,
   Password,
   RoleVO,
   User,
   UserRegistered,
   UserRepository,
   EmailAlreadyExistsError,
+  ForbiddenDomainError,
   Result,
   ok,
   err,
@@ -37,25 +39,41 @@ export class RegisterUserUseCase {
     }
     const email = emailResult.unwrap();
 
-    // 2. Check uniqueness
+    // 2. Enforce caller permissions
+    if (dto.caller) {
+      if (dto.caller.callerRole === 'Supervisor') {
+        // Supervisor can only create users in their own empresa
+        if (dto.empresaId !== dto.caller.callerEmpresaId) {
+          return err(new ForbiddenDomainError('Supervisor can only create users in their own empresa'));
+        }
+        // Supervisor cannot assign Admin role
+        if (dto.role === 'Admin') {
+          return err(new ForbiddenDomainError('Supervisor cannot assign Admin role'));
+        }
+      } else if (dto.caller.callerRole !== 'Admin') {
+        return err(new ForbiddenDomainError('Only Admin or Supervisor can register users'));
+      }
+    }
+
+    // 3. Check uniqueness
     const exists = await this.userRepo.existsByEmail(email);
     if (exists) {
       return err(new EmailAlreadyExistsError(email.get()));
     }
 
-    // 3. Validate password strength
+    // 4. Validate password strength
     const passwordResult = Password.create(dto.password);
     if (passwordResult.isErr()) {
       return err(passwordResult.unwrapErr());
     }
     const plainPassword = passwordResult.unwrap();
 
-    // 4. Validate name
+    // 5. Validate name
     if (!dto.name || dto.name.trim().length === 0) {
       return err(new Error('Name cannot be empty'));
     }
 
-    // 5. Parse role (optional — defaults to Usuario)
+    // 6. Parse role (optional — defaults to Usuario)
     let role: RoleVO | undefined;
     if (dto.role) {
       const roleResult = RoleVO.create(dto.role);
@@ -65,7 +83,7 @@ export class RegisterUserUseCase {
       role = roleResult.unwrap();
     }
 
-    // 6. Create domain entity
+    // 7. Create domain entity
     const userResult = User.create({
       email,
       name: dto.name,
@@ -77,17 +95,25 @@ export class RegisterUserUseCase {
     }
     const user = userResult.unwrap();
 
-    // 7. Hash password
+    // 8. Hash password
     const hashedPassword = await this.passwordHasher.hash(plainPassword.get());
     user.setHashedPassword(hashedPassword);
 
-    // 8. Persist
+    // 9. Persist
     const saveResult = await this.userRepo.save(user);
     if (saveResult.isErr()) {
       return err(saveResult.unwrapErr());
     }
 
-    // 9. Emit event
+    // 10. Add to empresa
+    const empresaId = EmpresaId.reconstruct(dto.empresaId);
+    const userRole = user.getRole().get();
+    const membershipResult = await this.userRepo.addToEmpresa(user.getId(), empresaId, userRole);
+    if (membershipResult.isErr()) {
+      return err(membershipResult.unwrapErr());
+    }
+
+    // 11. Emit event
     const event = new UserRegistered(
       user.getId(),
       user.getEmail(),
@@ -96,7 +122,7 @@ export class RegisterUserUseCase {
     );
     this.eventBus.publish(event);
 
-    // 10. Return profile
+    // 12. Return profile
     return ok({
       id: user.getId().get(),
       email: user.getEmail().get(),

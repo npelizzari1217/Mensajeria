@@ -1,0 +1,94 @@
+# =============================================================================
+# Stack Profile: nestjs-enterprise
+# =============================================================================
+# Applied to Mensajeria project. Defines conventions, architecture rules,
+# testing strategy, and deployment patterns for NestJS Clean Architecture.
+
+profile:
+  name: nestjs-enterprise
+  version: "1.0"
+
+  # ── Architecture ────────────────────────────────────────────────────
+  architecture:
+    pattern: clean-architecture
+    layers:
+      - name: domain
+        path: packages/domain/src
+        rules:
+          - "Zero framework dependencies (no NestJS, no Prisma)"
+          - "All entities and value objects are immutable or controlled mutation"
+          - "Repository interfaces (ports) defined here"
+          - "Use Result<T, Error> for all operations — never throw"
+      - name: application
+        path: api/src/application
+        rules:
+          - "Use cases orchestrate domain entities"
+          - "No direct infrastructure imports (use @Inject tokens)"
+          - "DTOs for input/output boundaries"
+          - "Return Result<T, Error>, throw mapped in controller"
+      - name: infrastructure
+        path: api/src/infrastructure
+        rules:
+          - "Implement domain repository ports (Prisma)"
+          - "Implement auth ports (JWT, bcrypt)"
+          - "Concrete classes only — no interfaces defined here"
+      - name: presentation
+        path: api/src/presentation
+        rules:
+          - "Controllers are thin — delegate to use cases"
+          - "DTOs validate input shape"
+          - "Global exception filter maps domain errors to HTTP"
+          - "Modules are wiring, not layers"
+
+  # ── Conventions ─────────────────────────────────────────────────────
+  conventions:
+    naming:
+      use_cases: "{verb}-{noun}.use-case.ts"
+      controllers: "{domain}.controller.ts"
+      modules: "{domain}.module.ts"
+      dto: "{domain}.dto.ts or dto/{name}.dto.ts"
+      repositories: "prisma-{domain}.repository.ts"
+    imports:
+      - "@nestjs/common for decorators (Controller, Module, Injectable)"
+      - "@mensajeria/domain for all domain types"
+      - "Relative imports for same bounded context"
+      - "No barrel imports from domain (import specific files)"
+
+  # ── Testing ─────────────────────────────────────────────────────────
+  testing:
+    framework: vitest
+    strategy:
+      unit:
+        - "Domain entities and value objects"
+        - "Use cases with mocked repositories"
+      integration:
+        - "Repositories against test database"
+        - "Controllers with supertest"
+      e2e: "Full NestJS app with test DB"
+    coverage:
+      target: 80%
+      critical_paths: 95%  # auth, messaging core
+
+  # ── Quality ─────────────────────────────────────────────────────────
+  quality:
+    lint: "tsc --noEmit"
+    format: "prettier --check"
+    typecheck: strict
+    security:
+      - "No secrets in code"
+      - "Input validation on all endpoints"
+      - "CORS configured per environment"
+      - "Rate limiting on auth endpoints"
+
+  # ── Deploy ──────────────────────────────────────────────────────────
+  deploy:
+    api:
+      target: "Windows Server + IIS"
+      process_manager: pm2
+      reverse_proxy: IIS (web.config rewrite rules)
+    web:
+      target: "Hostinger shared hosting (Apache)"
+      proxy: "PHP reverse proxy to API"
+    database:
+      engine: postgresql
+      migrations: "prisma migrate deploy"

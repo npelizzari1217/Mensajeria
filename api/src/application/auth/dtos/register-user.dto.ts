@@ -1,3 +1,5 @@
+import { CallerContext } from './caller-context.dto';
+
 /**
  * RegisterUserDTO — input for the register use case.
  *
@@ -9,4 +11,6 @@ export interface RegisterUserDTO {
   password: string;
   name: string;
   role?: string;
+  empresaId: string;
+  caller?: CallerContext;
 }

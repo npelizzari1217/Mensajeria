@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './presentation/auth/auth.module';
+import { EmpresasModule } from './presentation/empresas/empresas.module';
 import { MessagingModule } from './presentation/messaging/messaging.module';
 import { AttachmentsModule } from './presentation/attachments/attachments.module';
 import { GroupsModule } from './presentation/groups/groups.module';
@@ -11,7 +12,7 @@ import { AppExceptionFilter } from './presentation/shared/filters/exception.filt
 import { ResponseInterceptor } from './presentation/shared/interceptors/response.interceptor';
 
 @Module({
-  imports: [AuthModule, MessagingModule, AttachmentsModule, GroupsModule, DraftsModule, PinnedModule, EventBusModule],
+  imports: [AuthModule, EmpresasModule, MessagingModule, AttachmentsModule, GroupsModule, DraftsModule, PinnedModule, EventBusModule],
   providers: [
     {
       provide: APP_FILTER,

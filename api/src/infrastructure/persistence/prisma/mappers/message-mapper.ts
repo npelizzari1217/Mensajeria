@@ -1,6 +1,7 @@
 import {
   Message,
   MessageId,
+  EmpresaId,
   UserId,
   Subject,
   MessageBody,
@@ -78,6 +79,7 @@ export class MessageMapper {
 
     return Message.reconstruct({
       id: MessageId.reconstruct(prismaMessage.id),
+      empresaId: EmpresaId.reconstruct(prismaMessage.empresaId),
       senderId: UserId.reconstruct(prismaMessage.senderId),
       subject: Subject.reconstruct(prismaMessage.subject),
       body: MessageBody.reconstruct(prismaMessage.body),

@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import {
-  Draft, DraftRepository, UserRepository, UserId, Email, Result, ok, err,
+  Draft, DraftRepository, UserRepository, UserId, EmpresaId, Email, Result, ok, err,
 } from '@mensajeria/domain';
 import { SaveDraftDTO, DraftResponse } from '../dtos/draft.dto';
 
@@ -10,9 +10,12 @@ export class SaveDraftUseCase {
     @Inject('UserRepository') private readonly userRepo: UserRepository,
   ) {}
 
-  async execute(dto: SaveDraftDTO): Promise<Result<DraftResponse, Error>> {
+  async execute(dto: SaveDraftDTO, empresaId: string): Promise<Result<DraftResponse, Error>> {
     const userIdResult = UserId.create(dto.userId);
     if (userIdResult.isErr()) return err(userIdResult.unwrapErr());
+
+    const eid = EmpresaId.create(empresaId);
+    if (eid.isErr()) return err(eid.unwrapErr());
 
     if (!dto.body || dto.body.trim().length === 0) {
       return err(new Error('Draft body is required'));
@@ -33,6 +36,7 @@ export class SaveDraftUseCase {
 
     const draftResult = Draft.create({
       userId: userIdResult.unwrap(),
+      empresaId: eid.unwrap(),
       subject: dto.subject ?? null,
       body: dto.body,
       recipientIds,

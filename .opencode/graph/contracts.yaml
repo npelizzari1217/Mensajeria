@@ -1,0 +1,118 @@
+# =============================================================================
+# Knowledge Graph — API Contracts
+# =============================================================================
+# Defines external-facing API contracts. Changes to these require spec deltas.
+# The architecture guardian validates these during apply-plan.
+
+contracts:
+  # ── Auth Contracts ──────────────────────────────────────────────────
+  - id: auth-login
+    method: POST
+    path: /v1/auth/login
+    request: { email: string, password: string }
+    response: { accessToken: string, user: { id, email, name, role } }
+    cookies_set: [refreshToken (httpOnly, path=/v1/auth/refresh)]
+    breaking_changes: [removing fields, changing response shape, changing auth method]
+
+  - id: auth-register
+    method: POST
+    path: /v1/auth/register
+    request: { email: string, password: string, name: string, role?: string }
+    response: { id, email, name, role, createdAt }
+
+  - id: auth-me
+    method: GET
+    path: /v1/auth/me
+    auth: Bearer token
+    response: { id, email, name, role, createdAt }
+
+  - id: auth-refresh
+    method: POST
+    path: /v1/auth/refresh
+    cookies_required: [refreshToken]
+    response: { accessToken: string, user: { id, email, name, role } }
+
+  - id: auth-contacts
+    method: GET
+    path: /v1/auth/contacts
+    auth: Bearer token
+    response: [{ id, email, name, role, createdAt }]
+
+  - id: auth-users-crud
+    method: [PATCH, DELETE]
+    path: /v1/auth/users/:id
+    auth: Bearer token
+    description: "Update/delete users (admin)"
+
+  # ── Messaging Contracts ─────────────────────────────────────────────
+  - id: msg-send
+    method: POST
+    path: /v1/messages
+    auth: Bearer token
+    request: { recipientEmails: string[], subject: string, body: string }
+    response: { id, senderId, senderName, subject, body, recipients, sentAt }
+
+  - id: msg-inbox
+    method: GET
+    path: /v1/messages/inbox
+    auth: Bearer token
+    params: { page?, pageSize?, status? }
+    response: { data: Message[], total, page, pageSize }
+    breaking_changes: [changing recipientId to a different identifier, removing pagination]
+
+  - id: msg-sent
+    method: GET
+    path: /v1/messages/sent
+    auth: Bearer token
+
+  - id: msg-detail
+    method: GET
+    path: /v1/messages/:id
+    auth: Bearer token
+
+  - id: msg-mark-read
+    method: PATCH
+    path: /v1/messages/:id/read
+    auth: Bearer token
+
+  - id: msg-reply
+    method: POST
+    path: /v1/messages/:id/reply
+    auth: Bearer token
+    request: { body: string }
+
+  - id: msg-forward
+    method: POST
+    path: /v1/messages/:id/forward
+    auth: Bearer token
+    request: { recipientEmails: string[], comment?: string }
+
+  # ── Groups Contracts ────────────────────────────────────────────────
+  - id: groups-crud
+    method: [POST, GET, PATCH, DELETE]
+    path: /v1/groups[/:id]
+    auth: Bearer token
+
+  - id: groups-members
+    method: [POST, DELETE, PATCH]
+    path: /v1/groups/:id/members
+    auth: Bearer token
+    description: "Add/remove/change-role by email"
+
+  # ── WebSocket Contracts ─────────────────────────────────────────────
+  - id: ws-events
+    protocol: socket.io
+    namespace: /messages
+    events:
+      - message:new (broadcast)
+      - message:read (broadcast)
+
+# =============================================================================
+# Contract Validation Rules
+# =============================================================================
+validation:
+  - "Any change to request/response shape requires a modified spec"
+  - "Removing a field is a BREAKING change — needs migration plan"
+  - "Adding an optional field is backward-compatible"
+  - "Changing auth method requires full security review"
+  - "WebSocket event names must not change without client update"

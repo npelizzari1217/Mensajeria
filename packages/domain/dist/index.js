@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DraftNotFoundError = exports.GroupAlreadyExistsError = exports.NotGroupAdminError = exports.NotGroupMemberError = exports.GroupNotFoundError = exports.UnauthorizedMessageAccessError = exports.MessageNotFoundError = exports.Draft = exports.GroupMemberRemoved = exports.GroupMemberAdded = exports.GroupCreated = exports.GroupMember = exports.Group = exports.ForwardedContent = exports.GroupRole = exports.MessageRead = exports.MessageSent = exports.Attachment = exports.ConversationThread = exports.MessageRecipient = exports.Message = exports.ThreadId = exports.InvalidCredentialsError = exports.EmailAlreadyExistsError = exports.UserNotFoundError = exports.UserRegistered = exports.User = exports.UserIdentity = exports.Password = exports.Timestamp = exports.MessageStatusVO = exports.MessageStatus = exports.MessageBody = exports.Subject = exports.RoleVO = exports.Role = exports.Email = exports.FileId = exports.MessageId = exports.UserId = exports.ValidationError = exports.StorageError = exports.NotFoundError = exports.DomainError = exports.err = exports.ok = exports.Err = exports.Ok = void 0;
+exports.NotGroupMemberError = exports.GroupNotFoundError = exports.UnauthorizedMessageAccessError = exports.MessageNotFoundError = exports.Draft = exports.GroupMemberRemoved = exports.GroupMemberAdded = exports.GroupCreated = exports.GroupMember = exports.Group = exports.ForwardedContent = exports.GroupRole = exports.MessageRead = exports.MessageSent = exports.Attachment = exports.ConversationThread = exports.MessageRecipient = exports.Message = exports.ThreadId = exports.ForbiddenDomainError = exports.EmpresaNameAlreadyExistsError = exports.EmpresaNotFoundError = exports.InvalidCredentialsError = exports.EmailAlreadyExistsError = exports.UserNotFoundError = exports.UserRegistered = exports.Empresa = exports.User = exports.UserIdentity = exports.Password = exports.EmpresaId = exports.Timestamp = exports.MessageStatusVO = exports.MessageStatus = exports.MessageBody = exports.Subject = exports.RoleVO = exports.Role = exports.Email = exports.FileId = exports.MessageId = exports.UserId = exports.ValidationError = exports.StorageError = exports.NotFoundError = exports.DomainError = exports.err = exports.ok = exports.Err = exports.Ok = void 0;
+exports.DraftNotFoundError = exports.GroupAlreadyExistsError = exports.NotGroupAdminError = void 0;
 // Shared
 var result_1 = require("./shared/result");
 Object.defineProperty(exports, "Ok", { enumerable: true, get: function () { return result_1.Ok; } });
@@ -36,6 +37,8 @@ Object.defineProperty(exports, "MessageStatus", { enumerable: true, get: functio
 Object.defineProperty(exports, "MessageStatusVO", { enumerable: true, get: function () { return message_status_1.MessageStatusVO; } });
 var timestamp_1 = require("./shared/value-objects/timestamp");
 Object.defineProperty(exports, "Timestamp", { enumerable: true, get: function () { return timestamp_1.Timestamp; } });
+var empresa_id_1 = require("./shared/value-objects/empresa-id");
+Object.defineProperty(exports, "EmpresaId", { enumerable: true, get: function () { return empresa_id_1.EmpresaId; } });
 // Auth
 var password_1 = require("./auth/value-objects/password");
 Object.defineProperty(exports, "Password", { enumerable: true, get: function () { return password_1.Password; } });
@@ -43,6 +46,8 @@ var user_identity_1 = require("./auth/value-objects/user-identity");
 Object.defineProperty(exports, "UserIdentity", { enumerable: true, get: function () { return user_identity_1.UserIdentity; } });
 var user_1 = require("./auth/entities/user");
 Object.defineProperty(exports, "User", { enumerable: true, get: function () { return user_1.User; } });
+var empresa_1 = require("./auth/entities/empresa");
+Object.defineProperty(exports, "Empresa", { enumerable: true, get: function () { return empresa_1.Empresa; } });
 var user_registered_1 = require("./auth/events/user-registered");
 Object.defineProperty(exports, "UserRegistered", { enumerable: true, get: function () { return user_registered_1.UserRegistered; } });
 // Auth Errors
@@ -50,6 +55,10 @@ var user_errors_1 = require("./auth/errors/user.errors");
 Object.defineProperty(exports, "UserNotFoundError", { enumerable: true, get: function () { return user_errors_1.UserNotFoundError; } });
 Object.defineProperty(exports, "EmailAlreadyExistsError", { enumerable: true, get: function () { return user_errors_1.EmailAlreadyExistsError; } });
 Object.defineProperty(exports, "InvalidCredentialsError", { enumerable: true, get: function () { return user_errors_1.InvalidCredentialsError; } });
+var empresa_errors_1 = require("./auth/errors/empresa.errors");
+Object.defineProperty(exports, "EmpresaNotFoundError", { enumerable: true, get: function () { return empresa_errors_1.EmpresaNotFoundError; } });
+Object.defineProperty(exports, "EmpresaNameAlreadyExistsError", { enumerable: true, get: function () { return empresa_errors_1.EmpresaNameAlreadyExistsError; } });
+Object.defineProperty(exports, "ForbiddenDomainError", { enumerable: true, get: function () { return empresa_errors_1.ForbiddenDomainError; } });
 // Messaging Value Objects
 var thread_id_1 = require("./messaging/value-objects/thread-id");
 Object.defineProperty(exports, "ThreadId", { enumerable: true, get: function () { return thread_id_1.ThreadId; } });

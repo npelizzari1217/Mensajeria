@@ -119,6 +119,13 @@ class User {
         this.updatedAt = timestamp_1.Timestamp.now();
     }
     /**
+     * Updates the user's email.
+     */
+    changeEmail(newEmail) {
+        this.email = newEmail;
+        this.updatedAt = timestamp_1.Timestamp.now();
+    }
+    /**
      * Returns the user's public identity for authorization context.
      */
     getIdentity() {

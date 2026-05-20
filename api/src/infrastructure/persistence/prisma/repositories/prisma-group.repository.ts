@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Group, GroupRepository, UserId, Result, ok, err } from '@mensajeria/domain';
+import { Group, GroupRepository, UserId, EmpresaId, Result, ok, err } from '@mensajeria/domain';
 import { PrismaService } from '../prisma.service';
 import { GroupMapper } from '../mappers/group-mapper';
 import { Prisma } from '@prisma/client';
@@ -38,10 +38,10 @@ export class PrismaGroupRepository implements GroupRepository {
     }
   }
 
-  async findById(id: string): Promise<Result<Group | null, Error>> {
+  async findById(id: string, empresaId: EmpresaId): Promise<Result<Group | null, Error>> {
     try {
       const prismaGroup = await this.db.group.findUnique({
-        where: { id },
+        where: { id, empresaId: empresaId.get() },
         include: { members: true },
       });
       if (!prismaGroup) {
@@ -53,11 +53,12 @@ export class PrismaGroupRepository implements GroupRepository {
     }
   }
 
-  async findByUser(userId: UserId): Promise<Result<Group[], Error>> {
+  async findByUser(userId: UserId, empresaId: EmpresaId): Promise<Result<Group[], Error>> {
     try {
       const prismaGroups = await this.db.group.findMany({
         where: {
           isActive: true,
+          empresaId: empresaId.get(),
           members: {
             some: { userId: userId.get() },
           },

@@ -1,6 +1,7 @@
 import {
   MessageId,
   UserId,
+  EmpresaId,
   MessageRepository,
   UnauthorizedMessageAccessError,
   Result,
@@ -28,6 +29,7 @@ export class GetMessageUseCase {
   async execute(
     messageId: string,
     userId: string,
+    empresaId: EmpresaId,
   ): Promise<Result<MessageResponse, Error>> {
     // 1. Validate IDs
     const msgIdResult = MessageId.create(messageId);
@@ -43,7 +45,7 @@ export class GetMessageUseCase {
     const uid = uidResult.unwrap();
 
     // 2. Find message
-    const msgResult = await this.messageRepo.findById(msgId);
+    const msgResult = await this.messageRepo.findById(msgId, empresaId);
     if (msgResult.isErr()) {
       return err(new MessageNotFoundError(messageId));
     }

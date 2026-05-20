@@ -20,15 +20,17 @@ class Group {
     name;
     description;
     createdBy;
+    empresaId;
     members;
     isActive;
     createdAt;
     updatedAt;
-    constructor(id, name, description, createdBy, members, isActive, createdAt, updatedAt) {
+    constructor(id, name, description, createdBy, empresaId, members, isActive, createdAt, updatedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.createdBy = createdBy;
+        this.empresaId = empresaId;
         this.members = members;
         this.isActive = isActive;
         this.createdAt = createdAt;
@@ -37,7 +39,7 @@ class Group {
     /**
      * Factory for NEW groups.
      */
-    static create(name, description, createdBy) {
+    static create(name, description, createdBy, empresaId) {
         if (!name || name.trim().length === 0) {
             return (0, result_1.err)(new Error('Group name is required'));
         }
@@ -47,13 +49,13 @@ class Group {
         const id = crypto_1.default.randomUUID();
         const now = timestamp_1.Timestamp.now();
         const adminMember = group_member_1.GroupMember.create(id, createdBy, group_role_1.GroupRole.ADMIN);
-        return (0, result_1.ok)(new Group(id, name.trim(), description, createdBy, [adminMember], true, now, now));
+        return (0, result_1.ok)(new Group(id, name.trim(), description, createdBy, empresaId, [adminMember], true, now, now));
     }
     /**
      * Reconstruction from persistence.
      */
     static reconstruct(props) {
-        return new Group(props.id, props.name, props.description, props.createdBy, props.members, props.isActive, props.createdAt, props.updatedAt);
+        return new Group(props.id, props.name, props.description, props.createdBy, props.empresaId, props.members, props.isActive, props.createdAt, props.updatedAt);
     }
     // --- Identity ---
     getId() {
@@ -67,6 +69,9 @@ class Group {
     }
     getCreatedBy() {
         return this.createdBy;
+    }
+    getEmpresaId() {
+        return this.empresaId;
     }
     getMembers() {
         return [...this.members];
