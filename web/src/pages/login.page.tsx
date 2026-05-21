@@ -75,7 +75,7 @@ export default function LoginPage() {
   if (showEmpresaSelector) {
     return (
       <div className="login-page">
-        <div className="login-card">
+        <div className="login-card card-glow">
           <h1>Seleccionar Empresa</h1>
           <p className="login-subtitle">Elegi la empresa para continuar</p>
           {error && <div className="alert alert-error">{error}</div>}
@@ -83,7 +83,7 @@ export default function LoginPage() {
             {empresas.map((emp) => (
               <button
                 key={emp.id}
-                className="btn btn-secondary btn-block empresa-btn"
+                className="btn btn-secondary btn-block empresa-btn login-card-glow"
                 onClick={() => handleSelectEmpresa(emp.id)}
                 disabled={loading}
               >
@@ -104,7 +104,7 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-card">
+      <div className="login-card card-glow">
         <h1>Mensajeria</h1>
         <p className="login-subtitle">Inicia sesion para continuar</p>
 

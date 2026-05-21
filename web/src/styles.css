@@ -1033,3 +1033,320 @@ h3 {
 .alert {
   border-radius: 8px;
 }
+
+/* ── Premium UI v2 ────────────────────────────────────────────────── */
+/*
+ * Additive-only block. Cascades over Premium UI v1.
+ * Rollback: delete this entire block.
+ */
+
+/* === Global Typography & Base === */
+html,
+body,
+#root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === Sidebar Glassmorphism === */
+.sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  backdrop-filter: blur(8px);
+}
+
+.sidebar-header h2 {
+  background: linear-gradient(135deg, #e2e8f0 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-link {
+  border-left: 3px solid transparent;
+  margin: 2px 8px;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-left-color: rgba(255, 255, 255, 0.2);
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-left-color: #818cf8;
+  box-shadow:
+    inset -2px 0 12px rgba(99, 102, 241, 0.2),
+    0 0 20px rgba(99, 102, 241, 0.08);
+}
+
+/* === Cards Glassmorphism === */
+.card-glow,
+.card {
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-glow:hover,
+.card:hover {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(99, 102, 241, 0.06),
+    0 16px 48px rgba(99, 102, 241, 0.04);
+  border-color: rgba(99, 102, 241, 0.15);
+}
+
+/* === Primary Buttons — Indigo Gradient === */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  transform: scale(1.03);
+  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.5);
+}
+
+/* === Secondary Buttons === */
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
+}
+
+/* === Danger Buttons === */
+.btn-danger {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(244, 63, 94, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  transform: scale(1.03);
+  box-shadow: 0 6px 28px rgba(244, 63, 94, 0.5);
+}
+
+/* === Form Inputs === */
+.form-group input,
+.form-group textarea,
+.form-group select,
+.search-input {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.search-input:focus {
+  border-color: #818cf8;
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.12),
+    0 0 20px rgba(99, 102, 241, 0.06);
+}
+
+/* === Tables === */
+.message-table {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.message-table th {
+  background: linear-gradient(180deg, #eef2ff 0%, #f0f4ff 100%);
+  color: #374151;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.message-table tbody tr {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.message-table tbody tr:hover {
+  background: #eef2ff;
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.06);
+}
+
+/* === Topbar === */
+.topbar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* === Badges === */
+.badge {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #4338ca;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.1);
+}
+
+.badge-unread {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  color: #5b21b6;
+}
+
+.badge-read {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.badge-pending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+/* === Login Page — Animated Gradient + Glassmorphism === */
+.login-page {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 30%, #312e81 60%, #4c1d95 100%);
+  background-size: 400% 400%;
+  animation: loginBgShift 12s ease-in-out infinite;
+}
+
+@keyframes loginBgShift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+.login-card {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-card.card-glow {
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 0 40px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.login-card h1 {
+  background: linear-gradient(135deg, #4f46e5 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  font-size: 2rem;
+}
+
+/* === Login — Empresa Selector Buttons === */
+.empresa-btn.login-card-glow {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.empresa-btn.login-card-glow:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.12);
+  transform: scale(1.02);
+}
+
+/* === Page Titles — Gradient Text === */
+.page-header h1 {
+  background: linear-gradient(135deg, #4f46e5 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* === Loading Skeleton Shimmer === */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* === Sidebar SVG Icons === */
+.nav-link svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.nav-link:hover svg,
+.nav-link.active svg {
+  opacity: 1;
+}
+
+/* === Logout button refinement === */
+.logout-btn {
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logout-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}

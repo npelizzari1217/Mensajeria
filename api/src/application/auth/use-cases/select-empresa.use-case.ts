@@ -26,6 +26,14 @@ export class SelectEmpresaUseCase {
       return err(new Error('User is not a member of this empresa'));
     }
 
+    // Fetch user entity to get domain-validated role (PascalCase),
+    // NOT the raw Prisma enum from the user_empresas pivot table
+    const userResult = await this.userRepo.findById(uid);
+    if (userResult.isErr()) {
+      return err(userResult.unwrapErr());
+    }
+    const user = userResult.unwrap();
+
     const empresasResult = await this.userRepo.getEmpresas(uid);
     const empresas: EmpresaDTO[] = [];
     if (empresasResult.isOk()) {
@@ -33,7 +41,7 @@ export class SelectEmpresaUseCase {
       empresas.push(...memberships.map((m) => ({
         id: m.empresaId.get(),
         nombre: m.nombre,
-        role: m.role,
+        role: user.getRole().get(),
       })));
     }
 
@@ -44,7 +52,7 @@ export class SelectEmpresaUseCase {
 
     const payload: TokenPayload = {
       sub: userId,
-      role: selectedEmpresa.role as TokenPayload['role'],
+      role: user.getRole().get(),
       empresaId,
     };
 
