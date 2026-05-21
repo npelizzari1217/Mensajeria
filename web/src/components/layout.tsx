@@ -33,7 +33,7 @@ export default function Layout() {
     ...(isAdmin(user?.role) ? [{ to: '/admin/empresas' as const, label: 'Empresas', icon: 'building' }] : []),
   ];
 
-  const iconSvgs: Record<string, JSX.Element> = {
+  const iconSvgs = {
     inbox: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
