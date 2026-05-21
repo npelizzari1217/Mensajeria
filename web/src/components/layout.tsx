@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/auth.context';
 import { canManageUsers, isAdmin } from '../constants/roles';
@@ -9,10 +10,15 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   const navLinks = [
@@ -99,7 +105,11 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-      <aside className="sidebar">
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h2>Mensajeria</h2>
         </div>
@@ -111,6 +121,7 @@ export default function Layout() {
               className={
                 location.pathname === link.to ? 'nav-link active' : 'nav-link'
               }
+              onClick={() => setSidebarOpen(false)}
             >
               {iconSvgs[link.icon]}
               {link.label}
@@ -121,7 +132,29 @@ export default function Layout() {
 
       <div className="main-wrapper">
         <header className="topbar">
-          <span className="user-info">
+          <button
+            type="button"
+            className="hamburger-btn"
+            onClick={toggleSidebar}
+            aria-label="Abrir menú"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+
+          <span className="user-info" style={{ marginLeft: sidebarOpen ? '0' : '0.5rem' }}>
             {user?.name ?? 'Usuario'} ({user?.role ?? '-'})
           </span>
           <button
