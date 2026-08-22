@@ -1,12 +1,34 @@
 # CLAUDE.md — mensajeria
 
-## SDD — modelo por fase
+## SDD
 
 Este repo trabaja con Spec-Driven Development: los artefactos viven en `openspec/` y en
 `sdd/`. Cada fase la ejecuta su subagente dedicado vía la herramienta Agent, **nunca
 invocando la skill** (las `sdd-*/SKILL.md` traen `delegate_only: true`: si las cargás como
 skill, sos el orquestador y tenés que delegar igual). El `model` es obligatorio en cada
 llamada.
+
+### Cuándo NO corresponde el ciclo completo
+
+Se implementa directo, sin ciclo SDD, **solo** si es un cambio mecánico de un archivo ya
+entendido, **sin diseño pendiente**. En ese caso lo hace el orquestador.
+
+Contar archivos NO es el criterio: un solo guard de dominio puede romper la capa que lo
+espeja, y el cambio se ve trivial hasta que alguien lo usa. Antes de arrancar, tres
+preguntas de sí/no:
+
+1. ¿Cambia algo que otra capa espeja? (un guard de dominio, un enum, un contrato de error,
+   un permiso, un schema del front)
+2. ¿Hay más de una forma razonable de hacerlo?
+3. ¿Cambia lo que el usuario ve o hace? (una pantalla, un flujo, el significado de un estado)
+
+**Un solo sí → ciclo SDD completo. Tres noes → lo hace el orquestador.**
+
+Ante la duda, SDD. El costo es asimétrico: equivocarse hacia "directo" cuando había una
+decisión escondida cuesta un ciclo de retrabajo; equivocarse hacia SDD en algo mecánico
+cuesta un rato.
+
+### Modelo por fase
 
 | Fase | Agente | Modelo |
 |---|---|---|
