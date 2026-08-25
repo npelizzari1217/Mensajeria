@@ -36,6 +36,7 @@ El `tsconfig.base.json` ya es estricto, y la revisión tiene que sostenerlo, no 
 `strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`,
 `isolatedModules`, `forceConsistentCasingInFileNames`.
 
+- Comentarios de código en español. Los identificadores, nombres de archivo, mensajes de error y copy de UI siguen en inglés. No reportes comentarios en inglés preexistentes: solo los nuevos.
 - **Prohibido `any`**, y prohibido `as any` para callar al compilador, también en tests.
   Para lo desconocido, `unknown` + validación con Zod.
 - Parámetros y retornos de funciones exportadas, tipados explícitamente.

@@ -1,0 +1,10 @@
+# Fin de línea: LF en el repositorio Y en el working tree.
+# Sin esto, core.autocrlf=true materializa CRLF al hacer checkout en Windows y
+# cada archivo aparece como reescrito entero para quien trabaje en Linux o WSL.
+# text=auto deja los binarios intactos: Git los detecta solo.
+* text=auto eol=lf
+
+# Scripts de Windows: se quedan en CRLF. PowerShell 5.1 los necesita así.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
