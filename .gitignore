@@ -58,3 +58,6 @@ mobile/android/
 
 # Herramientas
 mobile/.atl/
+
+# Config local de gga (herramienta personal, no del proyecto)
+.gga
