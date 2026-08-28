@@ -161,4 +161,31 @@ export async function assignUserToEmpresa(empresaId: string, userId: string, rol
   return data.data;
 }
 
+// ── Roles ────────────────────────────────────────────────────────────
+
+export interface RoleData {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export async function getRoles(): Promise<RoleData[]> {
+  const { data } = await apiClient.get('/roles');
+  return data.data;
+}
+
+export async function createRole(name: string, description?: string) {
+  const { data } = await apiClient.post('/roles', { name, description });
+  return data.data;
+}
+
+export async function updateRole(id: number, name: string, description?: string) {
+  const { data } = await apiClient.patch(`/roles/${id}`, { name, description });
+  return data.data;
+}
+
+export async function deleteRole(id: number) {
+  await apiClient.delete(`/roles/${id}`);
+}
+
 export default apiClient;

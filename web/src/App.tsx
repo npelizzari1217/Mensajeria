@@ -16,6 +16,7 @@ import DraftEditPage from './pages/drafts/edit.page';
 import PinnedPage from './pages/pinned.page';
 import UsersAdminPage from './pages/users-admin.page';
 import EmpresasAdminPage from './pages/empresas-admin.page';
+import RolesAdminPage from './pages/roles-admin.page';
 import { ADMIN_ROLES, MANAGE_USERS_ROLES } from './constants/roles';
 
 export default function App() {
@@ -72,6 +73,13 @@ export default function App() {
       <Route element={<ProtectedRoute requiredRoles={ADMIN_ROLES} />}>
         <Route element={<Layout />}>
           <Route path="/admin/empresas" element={<EmpresasAdminPage />} />
+        </Route>
+      </Route>
+
+      {/* Admin: Roles — requires Admin role only */}
+      <Route element={<ProtectedRoute requiredRoles={ADMIN_ROLES} />}>
+        <Route element={<Layout />}>
+          <Route path="/admin/roles" element={<RolesAdminPage />} />
         </Route>
       </Route>
 

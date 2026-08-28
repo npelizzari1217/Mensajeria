@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient, { getErrorMessage } from '../api/client';
+import apiClient, { getErrorMessage, getRoles, type RoleData } from '../api/client';
 import { useAuth } from '../contexts/auth.context';
 import { isAdmin, isSupervisor } from '../constants/roles';
 
@@ -9,6 +9,7 @@ interface UserProfile {
   email: string;
   name: string;
   role: string;
+  roleId?: number;
   createdAt: string;
 }
 
@@ -20,8 +21,8 @@ interface Empresa {
 export default function UsersAdminPage() {
   const { user, empresaId: currentEmpresaId } = useAuth();
   const navigate = useNavigate();
-  const userIsAdmin = isAdmin(user?.role);
-  const userIsSupervisor = isSupervisor(user?.role);
+  const userIsAdmin = isAdmin(user?.roleId ?? user?.role);
+  const userIsSupervisor = isSupervisor(user?.roleId ?? user?.role);
 
   // Redirect non-admin/non-supervisor users
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function UsersAdminPage() {
   }, [user, userIsAdmin, userIsSupervisor, navigate]);
 
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [roles, setRoles] = useState<RoleData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +42,7 @@ export default function UsersAdminPage() {
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
-  const [formRole, setFormRole] = useState('Usuario');
+  const [formRoleId, setFormRoleId] = useState<number | ''>('');
   const [formEmpresaId, setFormEmpresaId] = useState('');
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [saving, setSaving] = useState(false);
@@ -58,9 +60,19 @@ export default function UsersAdminPage() {
     }
   }, []);
 
+  const fetchRoles = useCallback(async () => {
+    try {
+      const data = await getRoles();
+      setRoles(data ?? []);
+    } catch {
+      // silent — roles are not critical for viewing users
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchRoles();
+  }, [fetchUsers, fetchRoles]);
 
   // Load empresas list for ADMIN — used in the new-user form
   useEffect(() => {
@@ -72,11 +84,16 @@ export default function UsersAdminPage() {
     }
   }, [userIsAdmin]);
 
+  /** Roles available for the current user to assign. Admin sees all; Supervisor only id >= 3. */
+  const assignableRoles = userIsAdmin
+    ? roles
+    : roles.filter((r) => r.id >= 3);
+
   function resetForm() {
     setFormName('');
     setFormEmail('');
     setFormPassword('');
-    setFormRole('Usuario');
+    setFormRoleId('');
     setFormEmpresaId('');
     setEditingId(null);
     setShowCreate(false);
@@ -87,7 +104,9 @@ export default function UsersAdminPage() {
     setFormName(u.name);
     setFormEmail(u.email);
     setFormPassword('');
-    setFormRole(u.role);
+    // Determine roleId: use u.roleId if present, else look up from loaded roles by name
+    const rId = u.roleId ?? roles.find((r) => r.name === u.role)?.id ?? '';
+    setFormRoleId(rId);
     setShowCreate(true);
   }
 
@@ -95,6 +114,7 @@ export default function UsersAdminPage() {
     e.preventDefault();
     if (!formName.trim() || !formEmail.trim()) return;
     if (!editingId && !formPassword) return;
+    if (formRoleId === '') return;
 
     setSaving(true);
     setError(null);
@@ -104,7 +124,7 @@ export default function UsersAdminPage() {
         await apiClient.patch(`/auth/users/${editingId}`, {
           name: formName.trim(),
           email: formEmail.trim(),
-          role: formRole,
+          roleId: Number(formRoleId),
         });
       } else {
         const empresaId = userIsAdmin ? formEmpresaId : currentEmpresaId;
@@ -112,7 +132,7 @@ export default function UsersAdminPage() {
           name: formName.trim(),
           email: formEmail.trim(),
           password: formPassword,
-          role: formRole,
+          roleId: Number(formRoleId),
           empresaId,
         });
       }
@@ -200,13 +220,12 @@ export default function UsersAdminPage() {
               <label htmlFor="urole">Rol</label>
               <select
                 id="urole"
-                value={formRole}
-                onChange={(e) => setFormRole(e.target.value)}
+                value={formRoleId}
+                onChange={(e) => setFormRoleId(Number(e.target.value) || '')}
               >
-                <option value="Usuario">Usuario</option>
-                <option value="Tecnico">Tecnico</option>
-                <option value="Supervisor">Supervisor</option>
-                {userIsAdmin && <option value="Admin">Admin</option>}
+                {assignableRoles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
               </select>
             </div>
             {!editingId && userIsAdmin && (
@@ -259,7 +278,7 @@ export default function UsersAdminPage() {
                 <td>{u.name}</td>
                 <td>{u.email}</td>
                 <td>
-                  <span className={`badge ${isAdmin(u.role) ? 'badge-primary' : 'badge-default'}`}>
+                  <span className={`badge ${isAdmin(u.roleId ?? u.role) ? 'badge-primary' : 'badge-default'}`}>
                     {u.role}
                   </span>
                 </td>
