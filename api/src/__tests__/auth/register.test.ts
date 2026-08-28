@@ -3,7 +3,6 @@ import {
   User,
   UserId,
   Email,
-  RoleVO,
   Timestamp,
   Result,
   ok,
@@ -25,6 +24,7 @@ describe('RegisterUserUseCase', () => {
     email: 'test@example.com',
     password: 'ValidPass1',
     name: 'Test User',
+    empresaId: '00000000-0000-0000-0000-000000000001',
   };
 
   beforeEach(() => {
@@ -33,6 +33,12 @@ describe('RegisterUserUseCase', () => {
       findByEmail: vi.fn(),
       save: vi.fn().mockResolvedValue(ok(undefined)),
       existsByEmail: vi.fn().mockResolvedValue(false),
+      findAll: vi.fn(),
+      delete: vi.fn(),
+      getEmpresas: vi.fn(),
+      isMemberOf: vi.fn(),
+      addToEmpresa: vi.fn().mockResolvedValue(ok(undefined)),
+      findAllByEmpresaId: vi.fn(),
     };
     mockHasher = {
       hash: vi.fn().mockResolvedValue('$2b$12$hashedpasswordvalue'),
@@ -52,7 +58,8 @@ describe('RegisterUserUseCase', () => {
     const profile = result.unwrap();
     expect(profile.email).toBe('test@example.com');
     expect(profile.name).toBe('Test User');
-    expect(profile.role).toBe('Usuario');
+    expect(profile.role.id).toBe(4);
+    expect(profile.role.name).toBe('Usuario');
     expect(profile.id).toBeDefined();
     expect(profile.createdAt).toBeDefined();
   });
@@ -97,14 +104,15 @@ describe('RegisterUserUseCase', () => {
   });
 
   it('should register with custom role', async () => {
-    const result = await useCase.execute({ ...validDTO, role: 'Supervisor' });
+    const result = await useCase.execute({ ...validDTO, roleId: 2 });
 
     expect(result.isOk()).toBe(true);
-    expect(result.unwrap().role).toBe('Supervisor');
+    expect(result.unwrap().role.id).toBe(2);
+    expect(result.unwrap().role.name).toBe('Supervisor');
   });
 
   it('should return error for invalid role', async () => {
-    const result = await useCase.execute({ ...validDTO, role: 'GodMode' });
+    const result = await useCase.execute({ ...validDTO, roleId: 999 });
 
     expect(result.isErr()).toBe(true);
   });

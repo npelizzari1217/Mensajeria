@@ -6,6 +6,7 @@
  */
 export interface CallerContext {
   callerId: string;
-  callerRole: string; // 'Admin' | 'Supervisor' | 'Tecnico' | 'Usuario'
+  callerRole: string; // 'Admin' | 'Supervisor' | 'Tecnico' | 'Usuario' — legacy, prefer callerRoleId
+  callerRoleId: number; // 1=Admin, 2=Supervisor, 3=Técnico, 4=Usuario
   callerEmpresaId: string;
 }

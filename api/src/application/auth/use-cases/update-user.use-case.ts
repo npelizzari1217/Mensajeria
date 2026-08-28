@@ -1,16 +1,17 @@
 import { Inject } from '@nestjs/common';
 import {
-  UserRepository, UserId, Email, RoleVO, EmpresaId,
+  UserRepository, UserId, Email, EmpresaId,
   UserNotFoundError, EmailAlreadyExistsError, ForbiddenDomainError,
   Result, ok, err,
 } from '@mensajeria/domain';
 import { CallerContext } from '../dtos/caller-context.dto';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
+import { roleIdToName } from '../role-name-mapper';
 
 export interface UpdateUserDTO {
   name?: string;
   email?: string;
-  role?: string;
+  roleId?: number;
 }
 
 export class UpdateUserUseCase {
@@ -28,7 +29,7 @@ export class UpdateUserUseCase {
     const user = userResult.unwrap();
 
     // Enforce empresa scoping for non-Admin callers
-    if (caller.callerRole !== 'Admin') {
+    if (caller.callerRoleId !== 1) {
       const isMember = await this.userRepo.isMemberOf(
         uid,
         EmpresaId.reconstruct(caller.callerEmpresaId),
@@ -55,20 +56,27 @@ export class UpdateUserUseCase {
       }
     }
 
-    if (dto.role !== undefined) {
-      const roleResult = RoleVO.create(dto.role);
-      if (roleResult.isErr()) return err(roleResult.unwrapErr());
-      user.changeRole(roleResult.unwrap());
+    if (dto.roleId !== undefined) {
+      // Validate roleId range
+      if (dto.roleId < 1 || dto.roleId > 4 || !Number.isInteger(dto.roleId)) {
+        return err(new Error('Invalid roleId: must be 1-4'));
+      }
+      // Enforce permissions: caller must be able to assign this role
+      if (!user.canAssignRole(dto.roleId)) {
+        return err(new ForbiddenDomainError('You do not have permission to assign this role'));
+      }
+      user.changeRoleId(dto.roleId);
     }
 
     const saveResult = await this.userRepo.save(user);
     if (saveResult.isErr()) return err(saveResult.unwrapErr());
 
+    const roleId = user.getRoleId();
     return ok({
       id: user.getId().get(),
       email: user.getEmail().get(),
       name: user.getName(),
-      role: user.getRole().get(),
+      role: { id: roleId, name: roleIdToName(roleId) },
       createdAt: user.getCreatedAt().toString(),
     });
   }

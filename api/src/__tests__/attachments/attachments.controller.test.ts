@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AttachmentsController } from '../../presentation/attachments/attachments.controller';
-import { ok, err, NotFoundError } from '@mensajeria/domain';
+import {
+  EmpresaId,
+  ok,
+  err,
+  NotFoundError,
+} from '@mensajeria/domain';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -134,6 +139,7 @@ describe('AttachmentsController', () => {
       expect(mockGetUseCase.execute).toHaveBeenCalledWith(
         ATTACHMENT_ID,
         MOCK_USER.userId,
+        expect.any(EmpresaId),
       );
     });
 
@@ -177,6 +183,7 @@ describe('AttachmentsController', () => {
       expect(mockDeleteUseCase.execute).toHaveBeenCalledWith(
         ATTACHMENT_ID,
         MOCK_USER.userId,
+        expect.any(EmpresaId),
       );
     });
 
