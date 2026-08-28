@@ -1,73 +1,76 @@
 import { Result, ok, err } from '../result';
 
 /**
- * Role enum — user authorization levels.
- *
- * Hierarchical: Admin > Supervisor > Tecnico > Usuario
+ * Predefined role IDs (hierarchy by numeric value: lower = higher rank).
+ * Use these constants instead of the old Role enum.
  */
-export enum Role {
-  Admin = 'Admin',
-  Supervisor = 'Supervisor',
-  Tecnico = 'Tecnico',
-  Usuario = 'Usuario',
-}
-
-const VALID_ROLES = Object.values(Role) as string[];
+export const ADMIN_ROLE_ID = 1;
+export const SUPERVISOR_ROLE_ID = 2;
+export const TECNICO_ROLE_ID = 3;
+export const USUARIO_ROLE_ID = 4;
 
 /**
  * Role Value Object.
  *
- * Wraps a Role enum with safe construction and comparison.
- * Guarantees that only valid system roles are represented.
+ * Wraps a numeric role ID with its human-readable name.
+ * Guarantees that only valid role IDs are represented.
+ *
+ * Hierarchy: lower ID = higher rank.
+ *   Admin(1) > Supervisor(2) > Técnico(3) > Usuario(4)
  */
 export class RoleVO {
-  private constructor(private readonly value: Role) {
+  private constructor(
+    private readonly id: number,
+    private readonly name: string,
+  ) {
     Object.freeze(this);
   }
 
-  static create(raw: string): Result<RoleVO, Error> {
-    if (!raw || raw.trim().length === 0) {
-      return err(new Error('Role cannot be empty'));
+  static create(id: number, name: string): Result<RoleVO, Error> {
+    if (!Number.isInteger(id) || id <= 0) {
+      return err(new Error('Role ID must be a positive integer'));
     }
-    const normalized = raw.trim();
-    // Accept both "Admin" and "admin", but always store the canonical form
-    const match = VALID_ROLES.find(
-      (r) => r.toLowerCase() === normalized.toLowerCase(),
-    );
-    if (!match) {
-      return err(
-        new Error(
-          `Invalid role '${raw}'. Valid roles: ${VALID_ROLES.join(', ')}`,
-        ),
-      );
+    if (!name || name.trim().length === 0) {
+      return err(new Error('Role name cannot be empty'));
     }
-    return ok(new RoleVO(match as Role));
+    return ok(new RoleVO(id, name.trim()));
   }
 
-  static reconstruct(raw: string): RoleVO {
-    return new RoleVO(raw as Role);
+  static reconstruct(id: number, name: string): RoleVO {
+    return new RoleVO(id, name);
   }
 
-  get(): Role {
-    return this.value;
+  getId(): number {
+    return this.id;
+  }
+
+  getName(): string {
+    return this.name;
+  }
+
+  /** @deprecated Use getId() instead — kept for migration compatibility */
+  get(): number {
+    return this.id;
   }
 
   equals(other: RoleVO): boolean {
-    return this.value === other.value;
+    return this.id === other.id && this.name === other.name;
   }
 
   toString(): string {
-    return this.value;
+    return this.name;
   }
 
-  isAtLeast(minimum: Role): boolean {
-    const hierarchy: Role[] = [Role.Admin, Role.Supervisor, Role.Tecnico, Role.Usuario];
-    const currentIndex = hierarchy.indexOf(this.value);
-    const minimumIndex = hierarchy.indexOf(minimum);
-    return currentIndex >= 0 && currentIndex <= minimumIndex;
+  /**
+   * Checks if this role has at least the rank of the given minimum role ID.
+   * Lower ID = higher rank, so this.id <= minimum means "I am at least as
+   * privileged as the required minimum".
+   */
+  isAtLeast(minimumId: number): boolean {
+    return this.id <= minimumId;
   }
 
   static default(): RoleVO {
-    return new RoleVO(Role.Usuario);
+    return new RoleVO(USUARIO_ROLE_ID, 'Usuario');
   }
 }

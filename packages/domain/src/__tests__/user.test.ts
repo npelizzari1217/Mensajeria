@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { User } from '../auth/entities/user';
 import { UserId } from '../shared/value-objects/user-id';
 import { Email } from '../shared/value-objects/email';
-import { RoleVO, Role } from '../shared/value-objects/role';
 import { Password } from '../auth/value-objects/password';
 import { Timestamp } from '../shared/value-objects/timestamp';
 
@@ -10,27 +9,26 @@ const validEmail = 'user@example.com';
 const validName = 'Juan Pérez';
 const validPlaintext = 'SecurePass1';
 
-function createValidUser(role?: RoleVO): User {
+function createValidUser(roleId?: number): User {
   const email = Email.create(validEmail).unwrap();
   const password = Password.create(validPlaintext).unwrap();
-  const result = User.create({ email, name: validName, password, role });
+  const result = User.create({ email, name: validName, password, roleId });
   return result.unwrap();
 }
 
 describe('User', () => {
   describe('create()', () => {
-    it('creates a user with default role Usuario', () => {
+    it('creates a user with default role 4 (Usuario)', () => {
       const user = createValidUser();
-      expect(user.getRole().get()).toBe(Role.Usuario);
+      expect(user.getRoleId()).toBe(4);
       expect(user.getName()).toBe(validName);
       expect(user.getEmail().get()).toBe(validEmail);
       expect(user.getId()).toBeInstanceOf(UserId);
     });
 
-    it('creates a user with specified role', () => {
-      const role = RoleVO.create('Admin').unwrap();
-      const user = createValidUser(role);
-      expect(user.getRole().get()).toBe(Role.Admin);
+    it('creates a user with specified roleId', () => {
+      const user = createValidUser(1);
+      expect(user.getRoleId()).toBe(1);
     });
 
     it('fails with empty name', () => {
@@ -59,7 +57,6 @@ describe('User', () => {
     it('reconstructs a user from persistence data', () => {
       const id = UserId.reconstruct('550e8400-e29b-41d4-a716-446655440000');
       const email = Email.reconstruct('test@example.com');
-      const role = RoleVO.reconstruct('Admin');
       const createdAt = Timestamp.reconstruct('2025-01-01T00:00:00Z');
       const updatedAt = Timestamp.reconstruct('2025-01-01T00:00:00Z');
 
@@ -67,7 +64,7 @@ describe('User', () => {
         id,
         email,
         name: 'Test User',
-        role,
+        roleId: 1,
         hashedPassword: '$2b$10$hashedpassword123',
         createdAt,
         updatedAt,
@@ -76,6 +73,7 @@ describe('User', () => {
       expect(user.getId().equals(id)).toBe(true);
       expect(user.getEmail().equals(email)).toBe(true);
       expect(user.getName()).toBe('Test User');
+      expect(user.getRoleId()).toBe(1);
       expect(user.getHashedPassword()).toBe('$2b$10$hashedpassword123');
     });
   });
@@ -88,17 +86,28 @@ describe('User', () => {
   });
 
   describe('canAssignRole()', () => {
-    it('returns true for Admin', () => {
-      const admin = createValidUser(RoleVO.create('Admin').unwrap());
-      expect(admin.canAssignRole()).toBe(true);
+    it('returns true for Admin assigning any role', () => {
+      const admin = createValidUser(1);
+      expect(admin.canAssignRole(1)).toBe(true);   // Admin can assign Admin
+      expect(admin.canAssignRole(2)).toBe(true);   // Admin can assign Supervisor
+      expect(admin.canAssignRole(3)).toBe(true);   // Admin can assign Técnico
+      expect(admin.canAssignRole(4)).toBe(true);   // Admin can assign Usuario
     });
 
-    it('returns false for non-Admin', () => {
-      const user = createValidUser(RoleVO.create('Usuario').unwrap());
-      expect(user.canAssignRole()).toBe(false);
+    it('returns true for Supervisor assigning Técnico or Usuario', () => {
+      const supervisor = createValidUser(2);
+      expect(supervisor.canAssignRole(1)).toBe(false); // Supervisor cannot assign Admin
+      expect(supervisor.canAssignRole(2)).toBe(false); // Supervisor cannot assign Supervisor
+      expect(supervisor.canAssignRole(3)).toBe(true);  // Supervisor can assign Técnico
+      expect(supervisor.canAssignRole(4)).toBe(true);  // Supervisor can assign Usuario
+    });
 
-      const tec = createValidUser(RoleVO.create('Tecnico').unwrap());
-      expect(tec.canAssignRole()).toBe(false);
+    it('returns false for non-privileged roles', () => {
+      const tecnico = createValidUser(3);
+      expect(tecnico.canAssignRole(4)).toBe(false);
+
+      const user = createValidUser(4);
+      expect(user.canAssignRole(4)).toBe(false);
     });
   });
 
@@ -125,21 +134,20 @@ describe('User', () => {
     });
   });
 
-  describe('changeRole()', () => {
+  describe('changeRoleId()', () => {
     it('updates the role', () => {
-      const user = createValidUser();
-      const newRole = RoleVO.create('Supervisor').unwrap();
-      user.changeRole(newRole);
-      expect(user.getRole().get()).toBe(Role.Supervisor);
+      const user = createValidUser(4);
+      user.changeRoleId(2);
+      expect(user.getRoleId()).toBe(2);
     });
   });
 
   describe('getIdentity()', () => {
-    it('returns userId and role', () => {
-      const user = createValidUser();
+    it('returns userId and roleId', () => {
+      const user = createValidUser(1);
       const identity = user.getIdentity();
       expect(identity.userId.equals(user.getId())).toBe(true);
-      expect(identity.role.equals(user.getRole())).toBe(true);
+      expect(identity.roleId).toBe(1);
     });
   });
 });
