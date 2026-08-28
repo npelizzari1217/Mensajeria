@@ -1,27 +1,10 @@
----
-title: "user-auth Specification"
-change: mensajeria-core
-phase: spec
-artifact: spec
-capability: user-auth
-status: draft
----
+# Delta for user-auth
 
-# user-auth Specification
-
-## Purpose
-Autenticación y autorización de usuarios con JWT y roles RBAC. Base de seguridad para todo el sistema.
-
-## Modelo
-- **User**: id, email (único), name, password (hasheado), roleId (FK → Role), createdAt, updatedAt
-- **Role**: tabla con id (INT, PK), name (VARCHAR unique), description (VARCHAR nullable). Seeds: 1=Admin, 2=Supervisor, 3=Técnico, 4=Usuario
-- **Tokens**: access_token (JWT, corto plazo), refresh_token (largo plazo)
-- **UserIdentity**: id + roleId + roleName para checks de autorización
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: User Registration
 El sistema MUST permitir registrar usuarios con email + password + name + roleId, bajo caller context. El endpoint MUST requerir AuthGuard + RolesGuard + `@Roles(1, 2)`.
+(Previously: usaba role string enum y decorator @Roles('Admin', 'Supervisor'))
 
 | Regla | Valor |
 |-------|-------|
@@ -54,6 +37,7 @@ El sistema MUST permitir registrar usuarios con email + password + name + roleId
 
 ### Requirement: User Login + JWT Tokens
 El sistema MUST autenticar usuarios con email+password y retornar access_token + refresh_token. El JWT payload DEBE incluir `role` como string (nombre del rol) para retrocompatibilidad y `roleId` numérico. La respuesta HTTP DEBE incluir `role` expandido como `{ id, name }`.
+(Previously: login devolvía role string plano; ahora devuelve roleId + role expandido)
 
 | Regla | Valor |
 |-------|-------|
@@ -80,8 +64,7 @@ El sistema MUST autenticar usuarios con email+password y retornar access_token +
 
 ### Requirement: Role-Based Access Control (RBAC)
 El sistema MUST proteger endpoints por rol usando IDs numéricos. Guards comparan jerarquía: un `roleId` menor o igual al requerido satisface la condición. Request sin rol requerido MUST recibir 403.
-
-Jerarquía implícita: Admin(1) > Supervisor(2) > Técnico(3) > Usuario(4)
+(Previously: usaba decorator @Roles('Admin'), ahora @Roles(1) con comparación numérica por jerarquía)
 
 #### Scenario: Usuario accede a recurso propio (permitido)
 - GIVEN access_token válido con roleId=4, endpoint requiere roleId ≤ 4
@@ -102,6 +85,7 @@ Jerarquía implícita: Admin(1) > Supervisor(2) > Técnico(3) > Usuario(4)
 
 ### Requirement: User Profile
 El sistema MUST permitir obtener el perfil del usuario autenticado, incluyendo rol expandido.
+(Previously: devolvía role como string; ahora devuelve roleId + role: { id, name })
 
 #### Scenario: Obtener perfil propio
 - GIVEN access_token válido
@@ -110,23 +94,9 @@ El sistema MUST permitir obtener el perfil del usuario autenticado, incluyendo r
 
 ---
 
-### Requirement: Token Refresh
-El sistema MUST permitir renovar access_token usando refresh_token.
-
-#### Scenario: Refresh exitoso
-- GIVEN refresh_token válido y activo en DB
-- WHEN POST /auth/refresh
-- THEN 200, nuevo access_token, opcionalmente nuevo refresh_token (rotation)
-
-#### Scenario: Refresh token revocado
-- GIVEN refresh_token eliminado de DB
-- WHEN POST /auth/refresh
-- THEN 401 Unauthorized
-
----
-
 ### Requirement: Scoped User Administration
 El sistema MUST aplicar scope por empresa en list, edit y delete de usuarios. ListUsers DEBE permitir filtrar por `roleId`. Admin MAY operar sobre cualquiera; Supervisor MUST limitarse a su empresa.
+(Previously: sin filtro por roleId)
 
 #### Scenario: Admin lista todos los usuarios
 - GIVEN solicitante Admin autenticado (roleId=1)
@@ -152,21 +122,3 @@ El sistema MUST aplicar scope por empresa en list, edit y delete de usuarios. Li
 - GIVEN solicitante Supervisor autenticado y usuario perteneciente a su empresa
 - WHEN DELETE `/auth/users/:id`
 - THEN 204 No Content
-
----
-
-## Acceptance Criteria
-1. [ ] Registro → Login → access_token válido y verificable
-2. [ ] Password nunca se retorna en ninguna respuesta
-3. [ ] Usuario sin token → 401 en endpoints protegidos
-4. [ ] Usuario sin rol suficiente → 403
-5. [ ] Email duplicado → 409
-6. [ ] Enumeración de emails prevenida (login devuelve mismo 401 para email no existe vs password erróneo)
-7. [ ] bcrypt es el único algoritmo de hash utilizado para passwords
-
-## Out of Scope (próximas entregas)
-- Permisos granulares por recurso
-- OAuth / SSO
-- 2FA
-- Password recovery
-- Refresh token family detection
