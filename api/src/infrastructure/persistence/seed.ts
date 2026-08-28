@@ -1,4 +1,4 @@
-import { PrismaClient, Role, MessageStatus } from '@prisma/client';
+import { PrismaClient, MessageStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -14,7 +14,7 @@ async function main() {
       email: 'admin@mensajeria.com',
       password: passwordHash,
       name: 'Admin',
-      role: Role.ADMIN,
+      roleId: 1,
     },
   });
 
@@ -25,7 +25,7 @@ async function main() {
       email: 'supervisor@mensajeria.com',
       password: passwordHash,
       name: 'Supervisor',
-      role: Role.SUPERVISOR,
+      roleId: 2,
     },
   });
 
@@ -36,7 +36,7 @@ async function main() {
       email: 'tecnico@mensajeria.com',
       password: passwordHash,
       name: 'Técnico',
-      role: Role.TECNICO,
+      roleId: 3,
     },
   });
 
@@ -47,7 +47,7 @@ async function main() {
       email: 'usuario@mensajeria.com',
       password: passwordHash,
       name: 'Usuario',
-      role: Role.USUARIO,
+      roleId: 4,
     },
   });
 
@@ -177,10 +177,10 @@ async function main() {
   });
 
   console.log('✅ Seed completed:');
-  console.log(`  - ${admin.email} (${admin.role})`);
-  console.log(`  - ${supervisor.email} (${supervisor.role})`);
-  console.log(`  - ${tecnico.email} (${tecnico.role})`);
-  console.log(`  - ${usuario.email} (${usuario.role})`);
+  console.log(`  - ${admin.email} (roleId: ${admin.roleId})`);
+  console.log(`  - ${supervisor.email} (roleId: ${supervisor.roleId})`);
+  console.log(`  - ${tecnico.email} (roleId: ${tecnico.roleId})`);
+  console.log(`  - ${usuario.email} (roleId: ${usuario.roleId})`);
   console.log('  - 4 mensajes de ejemplo');
   console.log('\nDefault password for all users: Admin1234');
 }
