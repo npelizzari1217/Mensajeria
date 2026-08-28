@@ -10,7 +10,6 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Role } from '@mensajeria/domain';
 import { CreateEmpresaUseCase } from '../../application/empresas/use-cases/create-empresa.use-case';
 import { ListEmpresasUseCase } from '../../application/empresas/use-cases/list-empresas.use-case';
 import { GetEmpresaUseCase } from '../../application/empresas/use-cases/get-empresa.use-case';
@@ -43,7 +42,7 @@ export class EmpresasController {
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  @Roles(1)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() body: CreateEmpresaRequest) {
     const result = await this.createEmpresaUseCase.execute({ nombre: body.nombre });
@@ -53,7 +52,7 @@ export class EmpresasController {
 
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  @Roles(1)
   async list() {
     const result = await this.listEmpresasUseCase.execute();
     if (result.isErr()) throw result.unwrapErr();
@@ -62,7 +61,7 @@ export class EmpresasController {
 
   @Get(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  @Roles(1)
   async getOne(@Param('id') id: string) {
     const result = await this.getEmpresaUseCase.execute(id);
     if (result.isErr()) throw result.unwrapErr();
@@ -71,7 +70,7 @@ export class EmpresasController {
 
   @Patch(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  @Roles(1)
   async update(@Param('id') id: string, @Body() body: UpdateEmpresaRequest) {
     const result = await this.updateEmpresaUseCase.execute(id, { nombre: body.nombre });
     if (result.isErr()) throw result.unwrapErr();
@@ -80,7 +79,7 @@ export class EmpresasController {
 
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  @Roles(1)
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string) {
     const result = await this.deleteEmpresaUseCase.execute(id);
@@ -89,12 +88,12 @@ export class EmpresasController {
 
   @Post(':id/users')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  @Roles(1)
   @HttpCode(HttpStatus.OK)
   async assignUser(@Param('id') empresaId: string, @Body() body: AssignUserRequest) {
     const result = await this.assignUserToEmpresaUseCase.execute(empresaId, {
       userId: body.userId,
-      role: body.role,
+      roleId: body.roleId,
     });
     if (result.isErr()) throw result.unwrapErr();
     return { data: { message: 'User assigned successfully' } };
