@@ -1,6 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
 import { Email } from '../../shared/value-objects/email';
-import { RoleVO } from '../../shared/value-objects/role';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Password } from '../value-objects/password';
 import { Result } from '../../shared/result';
@@ -8,13 +7,13 @@ export interface CreateUserProps {
     email: Email;
     name: string;
     password: Password;
-    role?: RoleVO;
+    roleId?: number;
 }
 export interface UserProps {
     id: UserId;
     email: Email;
     name: string;
-    role: RoleVO;
+    roleId: number;
     hashedPassword: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;
@@ -27,12 +26,15 @@ export interface UserProps {
  * - Password validation on creation (delegated to Password VO)
  * - Role assignment permissions
  * - Message sending capability
+ *
+ * Role hierarchy (numeric roleId): 1=Admin, 2=Supervisor, 3=Técnico, 4=Usuario.
+ * Lower ID = higher rank.
  */
 export declare class User {
     private readonly id;
     private email;
     private name;
-    private role;
+    private roleId;
     private hashedPassword;
     private readonly createdAt;
     private updatedAt;
@@ -43,7 +45,7 @@ export declare class User {
      * The returned user uses the raw plaintext — the application use case
      * MUST hash it via PasswordHasher before calling user.changePassword().
      *
-     * Default role: Usuario.
+     * Default roleId: 4 (Usuario).
      */
     static create(props: CreateUserProps): Result<User, Error>;
     /**
@@ -54,7 +56,7 @@ export declare class User {
     getId(): UserId;
     getEmail(): Email;
     getName(): string;
-    getRole(): RoleVO;
+    getRoleId(): number;
     getHashedPassword(): string;
     getCreatedAt(): Timestamp;
     getUpdatedAt(): Timestamp;
@@ -64,10 +66,15 @@ export declare class User {
      */
     canSendMessage(): boolean;
     /**
-     * Checks if the user can assign roles to other users.
-     * Only Admin can assign roles.
+     * Checks if the user can assign the given target role to another user.
+     *
+     * Hierarchy rules:
+     *   Admin(1)       → can assign any role (all roleIds)
+     *   Supervisor(2)  → can only assign roles with roleId >= 3 (Técnico, Usuario)
+     *   Técnico(3)     → cannot assign roles
+     *   Usuario(4)     → cannot assign roles
      */
-    canAssignRole(): boolean;
+    canAssignRole(targetRoleId: number): boolean;
     /**
      * Updates the user's hashed password.
      * Called by the use case AFTER hashing via PasswordHasher.
@@ -79,9 +86,9 @@ export declare class User {
     changeName(newName: string): Result<void, Error>;
     /**
      * Updates the user's role.
-     * Only call after verifying the caller has canAssignRole().
+     * Only call after verifying the caller has canAssignRole(newRoleId).
      */
-    changeRole(newRole: RoleVO): void;
+    changeRoleId(newRoleId: number): void;
     /**
      * Updates the user's email.
      */
@@ -91,7 +98,7 @@ export declare class User {
      */
     getIdentity(): {
         userId: UserId;
-        role: RoleVO;
+        roleId: number;
     };
 }
 //# sourceMappingURL=user.d.ts.map

@@ -1,6 +1,5 @@
 import { UserId } from '../../shared/value-objects/user-id';
 import { Email } from '../../shared/value-objects/email';
-import { RoleVO, Role } from '../../shared/value-objects/role';
 import { Timestamp } from '../../shared/value-objects/timestamp';
 import { Password } from '../value-objects/password';
 import { Result, ok, err } from '../../shared/result';
@@ -9,14 +8,14 @@ export interface CreateUserProps {
   email: Email;
   name: string;
   password: Password;
-  role?: RoleVO;
+  roleId?: number;
 }
 
 export interface UserProps {
   id: UserId;
   email: Email;
   name: string;
-  role: RoleVO;
+  roleId: number;
   hashedPassword: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -30,13 +29,16 @@ export interface UserProps {
  * - Password validation on creation (delegated to Password VO)
  * - Role assignment permissions
  * - Message sending capability
+ *
+ * Role hierarchy (numeric roleId): 1=Admin, 2=Supervisor, 3=Técnico, 4=Usuario.
+ * Lower ID = higher rank.
  */
 export class User {
   private constructor(
     private readonly id: UserId,
     private email: Email,
     private name: string,
-    private role: RoleVO,
+    private roleId: number,
     private hashedPassword: string,
     private readonly createdAt: Timestamp,
     private updatedAt: Timestamp,
@@ -48,19 +50,19 @@ export class User {
    * The returned user uses the raw plaintext — the application use case
    * MUST hash it via PasswordHasher before calling user.changePassword().
    *
-   * Default role: Usuario.
+   * Default roleId: 4 (Usuario).
    */
   static create(props: CreateUserProps): Result<User, Error> {
     if (!props.name || props.name.trim().length === 0) {
       return err(new Error('User name cannot be empty'));
     }
-    const role = props.role ?? RoleVO.default();
+    const roleId = props.roleId ?? 4; // default: Usuario
     return ok(
       new User(
         UserId.reconstruct(crypto.randomUUID()),
         props.email,
         props.name.trim(),
-        role,
+        roleId,
         props.password.get(), // plaintext until hashed by use case
         Timestamp.now(),
         Timestamp.now(),
@@ -77,7 +79,7 @@ export class User {
       props.id,
       props.email,
       props.name,
-      props.role,
+      props.roleId,
       props.hashedPassword,
       props.createdAt,
       props.updatedAt,
@@ -98,8 +100,8 @@ export class User {
     return this.name;
   }
 
-  getRole(): RoleVO {
-    return this.role;
+  getRoleId(): number {
+    return this.roleId;
   }
 
   getHashedPassword(): string {
@@ -125,11 +127,18 @@ export class User {
   }
 
   /**
-   * Checks if the user can assign roles to other users.
-   * Only Admin can assign roles.
+   * Checks if the user can assign the given target role to another user.
+   *
+   * Hierarchy rules:
+   *   Admin(1)       → can assign any role (all roleIds)
+   *   Supervisor(2)  → can only assign roles with roleId >= 3 (Técnico, Usuario)
+   *   Técnico(3)     → cannot assign roles
+   *   Usuario(4)     → cannot assign roles
    */
-  canAssignRole(): boolean {
-    return this.role.get() === Role.Admin;
+  canAssignRole(targetRoleId: number): boolean {
+    if (this.roleId === 1) return true;                 // Admin can assign any role
+    if (this.roleId === 2 && targetRoleId >= 3) return true; // Supervisor → Técnico / Usuario
+    return false;
   }
 
   /**
@@ -155,10 +164,10 @@ export class User {
 
   /**
    * Updates the user's role.
-   * Only call after verifying the caller has canAssignRole().
+   * Only call after verifying the caller has canAssignRole(newRoleId).
    */
-  changeRole(newRole: RoleVO): void {
-    this.role = newRole;
+  changeRoleId(newRoleId: number): void {
+    this.roleId = newRoleId;
     this.updatedAt = Timestamp.now();
   }
 
@@ -173,8 +182,8 @@ export class User {
   /**
    * Returns the user's public identity for authorization context.
    */
-  getIdentity(): { userId: UserId; role: RoleVO } {
-    return { userId: this.id, role: this.role };
+  getIdentity(): { userId: UserId; roleId: number } {
+    return { userId: this.id, roleId: this.roleId };
   }
 }
 

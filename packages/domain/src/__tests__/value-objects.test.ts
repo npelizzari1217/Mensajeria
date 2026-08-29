@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { UserId } from '../shared/value-objects/user-id';
 import { MessageId } from '../shared/value-objects/message-id';
 import { Email } from '../shared/value-objects/email';
-import { RoleVO, Role } from '../shared/value-objects/role';
+import { RoleVO } from '../shared/value-objects/role';
 import { Subject } from '../shared/value-objects/subject';
 import { MessageBody } from '../shared/value-objects/message-body';
 import { MessageStatusVO, MessageStatus } from '../shared/value-objects/message-status';
@@ -113,49 +113,73 @@ describe('Email', () => {
 });
 
 describe('RoleVO', () => {
-  it('creates a valid role', () => {
-    const result = RoleVO.create('Admin');
+  it('creates a valid role with id + name', () => {
+    const result = RoleVO.create(1, 'Admin');
     expect(result.isOk()).toBe(true);
-    expect(result.unwrap().get()).toBe(Role.Admin);
+    expect(result.unwrap().getId()).toBe(1);
+    expect(result.unwrap().getName()).toBe('Admin');
   });
 
-  it('accepts lowercase role name', () => {
-    const result = RoleVO.create('admin');
-    expect(result.isOk()).toBe(true);
-    expect(result.unwrap().get()).toBe(Role.Admin);
-  });
-
-  it('rejects invalid role', () => {
-    const result = RoleVO.create('SuperAdmin');
+  it('rejects role with non-positive id', () => {
+    const result = RoleVO.create(0, 'Admin');
     expect(result.isErr()).toBe(true);
   });
 
-  it('rejects empty role', () => {
-    const result = RoleVO.create('');
+  it('rejects role with negative id', () => {
+    const result = RoleVO.create(-1, 'Admin');
     expect(result.isErr()).toBe(true);
   });
 
-  it('provides default role', () => {
+  it('rejects role with non-integer id', () => {
+    const result = RoleVO.create(1.5, 'Admin');
+    expect(result.isErr()).toBe(true);
+  });
+
+  it('rejects empty role name', () => {
+    const result = RoleVO.create(1, '');
+    expect(result.isErr()).toBe(true);
+  });
+
+  it('trims the role name', () => {
+    const result = RoleVO.create(1, '  Admin  ');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().getName()).toBe('Admin');
+  });
+
+  it('provides default role (id=4, Usuario)', () => {
     const defaultRole = RoleVO.default();
-    expect(defaultRole.get()).toBe(Role.Usuario);
+    expect(defaultRole.getId()).toBe(4);
+    expect(defaultRole.getName()).toBe('Usuario');
   });
 
-  it('checks hierarchy with isAtLeast', () => {
-    const admin = RoleVO.create('Admin').unwrap();
-    const user = RoleVO.create('Usuario').unwrap();
-    const tec = RoleVO.create('Tecnico').unwrap();
+  it('checks hierarchy with isAtLeast (lower ID = higher rank)', () => {
+    const admin = RoleVO.create(1, 'Admin').unwrap();
+    const user = RoleVO.create(4, 'Usuario').unwrap();
+    const tec = RoleVO.create(3, 'Técnico').unwrap();
 
-    expect(admin.isAtLeast(Role.Usuario)).toBe(true);
-    expect(admin.isAtLeast(Role.Admin)).toBe(true);
-    expect(user.isAtLeast(Role.Admin)).toBe(false);
-    expect(tec.isAtLeast(Role.Usuario)).toBe(true);
-    expect(tec.isAtLeast(Role.Supervisor)).toBe(false);
+    expect(admin.isAtLeast(4)).toBe(true);   // Admin >= Usuario
+    expect(admin.isAtLeast(1)).toBe(true);   // Admin >= Admin
+    expect(user.isAtLeast(1)).toBe(false);   // Usuario < Admin
+    expect(tec.isAtLeast(4)).toBe(true);     // Técnico >= Usuario
+    expect(tec.isAtLeast(2)).toBe(false);    // Técnico < Supervisor
   });
 
-  it('compares equality', () => {
-    const a = RoleVO.create('Admin').unwrap();
-    const b = RoleVO.create('Admin').unwrap();
+  it('compares equality by id and name', () => {
+    const a = RoleVO.create(1, 'Admin').unwrap();
+    const b = RoleVO.create(1, 'Admin').unwrap();
     expect(a.equals(b)).toBe(true);
+  });
+
+  it('considers different names not equal even with same id', () => {
+    const a = RoleVO.create(1, 'Admin').unwrap();
+    const b = RoleVO.create(1, 'Administrador').unwrap();
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('reconstructs without validation', () => {
+    const role = RoleVO.reconstruct(2, 'Supervisor');
+    expect(role.getId()).toBe(2);
+    expect(role.getName()).toBe('Supervisor');
   });
 });
 

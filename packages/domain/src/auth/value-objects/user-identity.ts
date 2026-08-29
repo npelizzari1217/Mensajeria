@@ -1,5 +1,4 @@
 import { UserId } from '../../shared/value-objects/user-id';
-import { RoleVO } from '../../shared/value-objects/role';
 import { Result, ok, err } from '../../shared/result';
 
 /**
@@ -7,46 +6,65 @@ import { Result, ok, err } from '../../shared/result';
  *
  * Represents an authenticated user's identity for authorization checks.
  * Injected into request context by AuthGuard after token verification.
- * Carries userId + role for roles.guard.ts checks.
+ * Carries userId + roleId + roleName for consistent authorization.
  */
 export class UserIdentity {
   private constructor(
     private readonly userId: UserId,
-    private readonly role: RoleVO,
+    private readonly roleId: number,
+    private readonly roleName: string,
   ) {
     Object.freeze(this);
   }
 
-  static create(userId: UserId, role: RoleVO): Result<UserIdentity, Error> {
-    if (!userId) {
+  static from(props: {
+    id: UserId;
+    roleId: number;
+    roleName: string;
+    empresaId?: string;
+  }): Result<UserIdentity, Error> {
+    if (!props.id) {
       return err(new Error('UserIdentity requires a valid UserId'));
     }
-    if (!role) {
-      return err(new Error('UserIdentity requires a valid Role'));
+    if (!Number.isInteger(props.roleId) || props.roleId <= 0) {
+      return err(new Error('UserIdentity requires a valid roleId (positive integer)'));
     }
-    return ok(new UserIdentity(userId, role));
+    if (!props.roleName || props.roleName.trim().length === 0) {
+      return err(new Error('UserIdentity requires a valid roleName'));
+    }
+    return ok(new UserIdentity(props.id, props.roleId, props.roleName.trim()));
   }
 
   getUserId(): UserId {
     return this.userId;
   }
 
-  getRole(): RoleVO {
-    return this.role;
+  getRoleId(): number {
+    return this.roleId;
+  }
+
+  getRoleName(): string {
+    return this.roleName;
   }
 
   /**
    * Checks if this identity has at least the given role level.
+   * Lower roleId = higher rank, so this.roleId <= required means
+   * "I am at least as privileged as the required minimum".
    */
-  hasRole(minimum: Parameters<RoleVO['isAtLeast']>[0]): boolean {
-    return this.role.isAtLeast(minimum);
+  hasRole(requiredRoleId: number): boolean {
+    return this.roleId <= requiredRoleId;
   }
 
   equals(other: UserIdentity): boolean {
-    return this.userId.equals(other.userId) && this.role.equals(other.role);
+    return (
+      this.userId.equals(other.userId) &&
+      this.roleId === other.roleId &&
+      this.roleName === other.roleName
+    );
   }
 
   toString(): string {
-    return `UserIdentity(${this.userId.toString()}, ${this.role.toString()})`;
+    return `UserIdentity(${this.userId.toString()}, ${this.roleName}(${this.roleId}))`;
   }
 }
