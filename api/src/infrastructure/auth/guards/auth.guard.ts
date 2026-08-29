@@ -48,7 +48,8 @@ export class AuthGuard implements CanActivate {
 
       request.user = {
         userId: payload.sub,
-        role: payload.role,
+        roleId: payload.role,       // numeric roleId from JWT
+        role: payload.roleName,     // human-readable role name
         empresaId: payload.empresaId,
       };
       return true;

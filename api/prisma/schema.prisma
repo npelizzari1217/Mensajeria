@@ -7,11 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  SUPERVISOR
-  TECNICO
-  USUARIO
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(50)
+  description String?  @db.VarChar(200)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  userEmpresas UserEmpresa[]
+
+  @@map("roles")
 }
 
 enum MessageStatus {
@@ -25,11 +31,12 @@ model User {
   email     String   @unique
   password  String   @map("password_hash")
   name      String   @map("display_name")
-  role      Role     @default(USUARIO)
+  roleId    Int      @default(4)
+  role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  sentMessages      Message[]          @relation("sender")
+  sentMessages      Message[]           @relation("sender")
   messageRecipients MessageRecipient[]
   refreshTokens     RefreshToken[]
   groupMembers      GroupMember[]
@@ -46,25 +53,26 @@ model Empresa {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  miembros       UserEmpresa[]
-  messages       Message[]
-  groups         Group[]
-  drafts         Draft[]
-  threads        ConversationThread[]
-  refreshTokens  RefreshToken[]
+  miembros      UserEmpresa[]
+  messages      Message[]
+  groups        Group[]
+  drafts        Draft[]
+  threads       ConversationThread[]
+  refreshTokens RefreshToken[]
 
   @@map("empresas")
 }
 
 model UserEmpresa {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  empresaId String   @map("empresa_id")
-  empresa   Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  role      Role     @default(USUARIO)
-  isActive  Boolean  @default(true) @map("is_active")
-  joinedAt  DateTime @default(now()) @map("joined_at")
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  empresaId   String   @map("empresa_id")
+  empresa     Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  roleId      Int      @default(4)
+  empresaRole Role     @relation(fields: [roleId], references: [id])
+  isActive    Boolean  @default(true) @map("is_active")
+  joinedAt    DateTime @default(now()) @map("joined_at")
 
   @@unique([userId, empresaId])
   @@map("user_empresas")
@@ -164,13 +172,13 @@ model Group {
 }
 
 model GroupMember {
-  id        String    @id @default(uuid())
-  groupId   String    @map("group_id")
-  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId    String    @map("user_id")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      GroupRole @default(MEMBER)
-  joinedAt  DateTime  @default(now()) @map("joined_at")
+  id       String    @id @default(uuid())
+  groupId  String    @map("group_id")
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String    @map("user_id")
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now()) @map("joined_at")
 
   @@unique([groupId, userId])
   @@map("group_members")
