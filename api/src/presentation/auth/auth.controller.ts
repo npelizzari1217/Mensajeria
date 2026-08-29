@@ -13,7 +13,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { Role } from '@mensajeria/domain';
 import { RegisterUserUseCase } from '../../application/auth/use-cases/register-user.use-case';
 import { LoginUseCase } from '../../application/auth/use-cases/login.use-case';
 import { RefreshTokenUseCase } from '../../application/auth/use-cases/refresh-token.use-case';
@@ -53,21 +52,22 @@ export class AuthController {
 
   @Post('register')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Supervisor)
+  @Roles(1, 2)
   @HttpCode(HttpStatus.CREATED)
   async register(
-    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
+    @CurrentUser() user: { userId: string; role: string; roleId: number; empresaId?: string },
     @Body() body: RegisterRequest,
   ) {
     const result = await this.registerUserUseCase.execute({
       email: body.email,
       password: body.password,
       name: body.name,
-      role: body.role,
+      roleId: body.roleId,
       empresaId: body.empresaId ?? '00000000-0000-0000-0000-000000000001',
       caller: {
         callerId: user.userId,
         callerRole: user.role,
+        callerRoleId: user.roleId,
         callerEmpresaId: user.empresaId ?? '00000000-0000-0000-0000-000000000001',
       },
     });
@@ -201,12 +201,13 @@ export class AuthController {
 
   @Get('contacts')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Supervisor)
+  @Roles(1, 2)
   @HttpCode(HttpStatus.OK)
-  async listContacts(@CurrentUser() user: { userId: string; role: string; empresaId?: string }) {
+  async listContacts(@CurrentUser() user: { userId: string; role: string; roleId: number; empresaId?: string }) {
     const caller: CallerContext = {
       callerId: user.userId,
       callerRole: user.role,
+      callerRoleId: user.roleId,
       callerEmpresaId: user.empresaId ?? '00000000-0000-0000-0000-000000000001',
     };
     const result = await this.listUsersUseCase.execute(caller);
@@ -218,16 +219,17 @@ export class AuthController {
 
   @Patch('users/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Supervisor)
+  @Roles(1, 2)
   @HttpCode(HttpStatus.OK)
   async updateUser(
-    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
+    @CurrentUser() user: { userId: string; role: string; roleId: number; empresaId?: string },
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; role?: string },
+    @Body() body: { name?: string; email?: string; roleId?: number },
   ) {
     const caller: CallerContext = {
       callerId: user.userId,
       callerRole: user.role,
+      callerRoleId: user.roleId,
       callerEmpresaId: user.empresaId ?? '00000000-0000-0000-0000-000000000001',
     };
     const result = await this.updateUserUseCase.execute(id, body, caller);
@@ -239,15 +241,16 @@ export class AuthController {
 
   @Delete('users/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Supervisor)
+  @Roles(1, 2)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteUser(
-    @CurrentUser() user: { userId: string; role: string; empresaId?: string },
+    @CurrentUser() user: { userId: string; role: string; roleId: number; empresaId?: string },
     @Param('id') id: string,
   ) {
     const caller: CallerContext = {
       callerId: user.userId,
       callerRole: user.role,
+      callerRoleId: user.roleId,
       callerEmpresaId: user.empresaId ?? '00000000-0000-0000-0000-000000000001',
     };
     const result = await this.deleteUserUseCase.execute(id, caller);

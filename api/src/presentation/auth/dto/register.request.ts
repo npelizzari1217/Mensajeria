@@ -5,6 +5,6 @@ export interface RegisterRequest {
   email: string;
   password: string;
   name: string;
-  role?: string;
+  roleId?: number;
   empresaId?: string;
 }

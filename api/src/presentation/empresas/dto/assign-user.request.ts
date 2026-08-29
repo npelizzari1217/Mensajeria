@@ -3,5 +3,5 @@
  */
 export interface AssignUserRequest {
   userId: string;
-  role?: string;
+  roleId?: number; // defaults to 4 (Usuario)
 }
