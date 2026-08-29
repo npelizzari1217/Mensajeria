@@ -62,7 +62,7 @@ export class AssignUserToEmpresaUseCase {
     const addResult = await this.userRepo.addToEmpresa(
       uid,
       eid,
-      dto.role ?? 'USUARIO',
+      dto.roleId ?? 4,
     );
     if (addResult.isErr()) {
       return err(addResult.unwrapErr());

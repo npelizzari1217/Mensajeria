@@ -10,7 +10,7 @@ export interface RegisterUserDTO {
   email: string;
   password: string;
   name: string;
-  role?: string;
+  roleId?: number;
   empresaId: string;
   caller?: CallerContext;
 }

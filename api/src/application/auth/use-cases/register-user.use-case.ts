@@ -2,7 +2,6 @@ import {
   Email,
   EmpresaId,
   Password,
-  RoleVO,
   User,
   UserRegistered,
   UserRepository,
@@ -17,6 +16,7 @@ import { Inject } from '@nestjs/common';
 import { PasswordHasher } from '../ports/password-hasher';
 import { RegisterUserDTO } from '../dtos/register-user.dto';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
+import { roleIdToName } from '../role-name-mapper';
 
 /**
  * RegisterUserUseCase.
@@ -39,18 +39,18 @@ export class RegisterUserUseCase {
     }
     const email = emailResult.unwrap();
 
-    // 2. Enforce caller permissions
+    // 2. Enforce caller permissions (using numeric roleId)
     if (dto.caller) {
-      if (dto.caller.callerRole === 'Supervisor') {
-        // Supervisor can only create users in their own empresa
+      if (dto.caller.callerRoleId === 2) {
+        // Supervisor (2) can only create users in their own empresa
         if (dto.empresaId !== dto.caller.callerEmpresaId) {
           return err(new ForbiddenDomainError('Supervisor can only create users in their own empresa'));
         }
-        // Supervisor cannot assign Admin role
-        if (dto.role === 'Admin') {
+        // Supervisor cannot assign Admin role (1)
+        if (dto.roleId === 1) {
           return err(new ForbiddenDomainError('Supervisor cannot assign Admin role'));
         }
-      } else if (dto.caller.callerRole !== 'Admin') {
+      } else if (dto.caller.callerRoleId !== 1) {
         return err(new ForbiddenDomainError('Only Admin or Supervisor can register users'));
       }
     }
@@ -73,22 +73,19 @@ export class RegisterUserUseCase {
       return err(new Error('Name cannot be empty'));
     }
 
-    // 6. Parse role (optional — defaults to Usuario)
-    let role: RoleVO | undefined;
-    if (dto.role) {
-      const roleResult = RoleVO.create(dto.role);
-      if (roleResult.isErr()) {
-        return err(roleResult.unwrapErr());
-      }
-      role = roleResult.unwrap();
+    // 6. Resolve roleId (optional — defaults to 4 = Usuario)
+    const roleId = dto.roleId ?? 4;
+    if (roleId < 1 || roleId > 4 || !Number.isInteger(roleId)) {
+      return err(new Error('Invalid roleId: must be 1-4'));
     }
+    const roleName = roleIdToName(roleId);
 
     // 7. Create domain entity
     const userResult = User.create({
       email,
       name: dto.name,
       password: plainPassword,
-      role,
+      roleId,
     });
     if (userResult.isErr()) {
       return err(userResult.unwrapErr());
@@ -107,8 +104,11 @@ export class RegisterUserUseCase {
 
     // 10. Add to empresa
     const empresaId = EmpresaId.reconstruct(dto.empresaId);
-    const userRole = user.getRole().get();
-    const membershipResult = await this.userRepo.addToEmpresa(user.getId(), empresaId, userRole);
+    const membershipResult = await this.userRepo.addToEmpresa(
+      user.getId(),
+      empresaId,
+      user.getRoleId(),
+    );
     if (membershipResult.isErr()) {
       return err(membershipResult.unwrapErr());
     }
@@ -118,7 +118,8 @@ export class RegisterUserUseCase {
       user.getId(),
       user.getEmail(),
       user.getName(),
-      user.getRole(),
+      user.getRoleId(),
+      roleName,
     );
     this.eventBus.publish(event);
 
@@ -127,7 +128,7 @@ export class RegisterUserUseCase {
       id: user.getId().get(),
       email: user.getEmail().get(),
       name: user.getName(),
-      role: user.getRole().get(),
+      role: { id: user.getRoleId(), name: roleName },
       createdAt: user.getCreatedAt().toString(),
     });
   }

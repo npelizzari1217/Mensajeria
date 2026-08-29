@@ -29,8 +29,15 @@ export default function Layout() {
     { to: '/groups', label: 'Grupos', icon: 'users' },
     { to: '/drafts', label: 'Borradores', icon: 'file' },
     { to: '/pinned', label: 'Fijados', icon: 'pin' },
-    ...(canManageUsers(user?.role) ? [{ to: '/admin/users' as const, label: 'Usuarios', icon: 'user' }] : []),
-    ...(isAdmin(user?.role) ? [{ to: '/admin/empresas' as const, label: 'Empresas', icon: 'building' }] : []),
+    ...(canManageUsers(user?.roleId ?? user?.role)
+      ? [{ to: '/admin/users' as const, label: 'Usuarios', icon: 'user' }]
+      : []),
+    ...(isAdmin(user?.roleId ?? user?.role)
+      ? [
+          { to: '/admin/empresas' as const, label: 'Empresas', icon: 'building' },
+          { to: '/admin/roles' as const, label: 'Roles', icon: 'shield' },
+        ]
+      : []),
   ];
 
   const iconSvgs: Record<string, any> = {
@@ -99,6 +106,11 @@ export default function Layout() {
         <line x1="9" y1="14" x2="9" y2="14.01"/>
         <line x1="15" y1="14" x2="15" y2="14.01"/>
         <path d="M9 18h6v4H9z"/>
+      </svg>
+    ),
+    shield: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       </svg>
     ),
   };

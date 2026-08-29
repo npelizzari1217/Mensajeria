@@ -1,30 +1,39 @@
 import { Result } from '../result';
 /**
- * Role enum — user authorization levels.
- *
- * Hierarchical: Admin > Supervisor > Tecnico > Usuario
+ * Predefined role IDs (hierarchy by numeric value: lower = higher rank).
+ * Use these constants instead of the old Role enum.
  */
-export declare enum Role {
-    Admin = "Admin",
-    Supervisor = "Supervisor",
-    Tecnico = "Tecnico",
-    Usuario = "Usuario"
-}
+export declare const ADMIN_ROLE_ID = 1;
+export declare const SUPERVISOR_ROLE_ID = 2;
+export declare const TECNICO_ROLE_ID = 3;
+export declare const USUARIO_ROLE_ID = 4;
 /**
  * Role Value Object.
  *
- * Wraps a Role enum with safe construction and comparison.
- * Guarantees that only valid system roles are represented.
+ * Wraps a numeric role ID with its human-readable name.
+ * Guarantees that only valid role IDs are represented.
+ *
+ * Hierarchy: lower ID = higher rank.
+ *   Admin(1) > Supervisor(2) > Técnico(3) > Usuario(4)
  */
 export declare class RoleVO {
-    private readonly value;
+    private readonly id;
+    private readonly name;
     private constructor();
-    static create(raw: string): Result<RoleVO, Error>;
-    static reconstruct(raw: string): RoleVO;
-    get(): Role;
+    static create(id: number, name: string): Result<RoleVO, Error>;
+    static reconstruct(id: number, name: string): RoleVO;
+    getId(): number;
+    getName(): string;
+    /** @deprecated Use getId() instead — kept for migration compatibility */
+    get(): number;
     equals(other: RoleVO): boolean;
     toString(): string;
-    isAtLeast(minimum: Role): boolean;
+    /**
+     * Checks if this role has at least the rank of the given minimum role ID.
+     * Lower ID = higher rank, so this.id <= minimum means "I am at least as
+     * privileged as the required minimum".
+     */
+    isAtLeast(minimumId: number): boolean;
     static default(): RoleVO;
 }
 //# sourceMappingURL=role.d.ts.map

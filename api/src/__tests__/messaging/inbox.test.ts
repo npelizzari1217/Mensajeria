@@ -3,8 +3,8 @@ import {
   UserId,
   User,
   Email,
-  RoleVO,
   Timestamp,
+  EmpresaId,
   Message,
   MessageId,
   Subject,
@@ -18,6 +18,8 @@ import {
 } from '@mensajeria/domain';
 import { GetInboxUseCase } from '../../application/messaging/use-cases/get-inbox.use-case';
 import { GetSentUseCase } from '../../application/messaging/use-cases/get-sent.use-case';
+
+const TEST_EMPRESA_ID = EmpresaId.reconstruct('00000000-0000-0000-0000-000000000001');
 
 function makeMessage(
   id: string,
@@ -93,7 +95,7 @@ describe('GetInboxUseCase', () => {
         userId,
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const inbox = result.unwrap();
@@ -111,7 +113,7 @@ describe('GetInboxUseCase', () => {
         userId,
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       expect(result.unwrap().data).toHaveLength(0);
@@ -127,12 +129,14 @@ describe('GetInboxUseCase', () => {
         userId,
         page: 1,
         pageSize: 999,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       // The pageSize passed to repo should be capped at 100
+      // findByRecipient is called with (userId, empresaId, statusFilter, pagination)
       expect(mockMessageRepo.findByRecipient).toHaveBeenCalledWith(
-        expect.any(Object),
+        expect.objectContaining({ value: userId }),
+        expect.any(Object), // empresaId
         undefined,
         expect.objectContaining({ pageSize: 100 }),
       );
@@ -154,7 +158,7 @@ describe('GetInboxUseCase', () => {
         userId,
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const sent = result.unwrap();
@@ -171,7 +175,7 @@ describe('GetInboxUseCase', () => {
         userId,
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       expect(result.unwrap().data).toHaveLength(0);

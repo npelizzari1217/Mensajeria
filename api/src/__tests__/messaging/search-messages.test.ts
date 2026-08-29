@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   UserId,
+  EmpresaId,
   Message,
   MessageId,
   Subject,
@@ -17,6 +18,8 @@ import {
   Timestamp,
 } from '@mensajeria/domain';
 import { SearchMessagesUseCase } from '../../application/messaging/use-cases/search-messages.use-case';
+
+const TEST_EMPRESA_ID = EmpresaId.reconstruct('00000000-0000-0000-0000-000000000001');
 
 function makeMessage(
   id: string,
@@ -97,7 +100,7 @@ describe('SearchMessagesUseCase', () => {
         query: 'a',
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBeInstanceOf(ValidationError);
@@ -110,7 +113,7 @@ describe('SearchMessagesUseCase', () => {
         query: '',
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBeInstanceOf(ValidationError);
@@ -122,7 +125,7 @@ describe('SearchMessagesUseCase', () => {
         query: '   ',
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBeInstanceOf(ValidationError);
@@ -134,7 +137,7 @@ describe('SearchMessagesUseCase', () => {
         query: 'a'.repeat(201),
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBeInstanceOf(ValidationError);
@@ -150,7 +153,7 @@ describe('SearchMessagesUseCase', () => {
           total: 2,
           page: 1,
           pageSize: 20,
-        }),
+        } as PaginatedResult<Message>),
       );
 
       const result = await useCase.execute({
@@ -158,7 +161,7 @@ describe('SearchMessagesUseCase', () => {
         query: 'proyecto',
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const data = result.unwrap();
@@ -182,7 +185,7 @@ describe('SearchMessagesUseCase', () => {
         query: 'zzzznotfound',
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const data = result.unwrap();
@@ -191,7 +194,6 @@ describe('SearchMessagesUseCase', () => {
     });
 
     it('should only return messages the user has access to', async () => {
-      // The search method is access-filtered by userId — mock shows user-specific results
       const otherUserId = '00000000-0000-0000-0000-000000009999';
 
       (mockMessageRepo.search as any).mockResolvedValue(
@@ -208,16 +210,17 @@ describe('SearchMessagesUseCase', () => {
         query: 'proyecto',
         page: 1,
         pageSize: 20,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const data = result.unwrap();
       expect(data.data).toHaveLength(0);
       expect(data.total).toBe(0);
 
-      // Verify the search was called with the correct userId
+      // Verify the search was called with the correct userId (UserId VO)
       expect(mockMessageRepo.search).toHaveBeenCalledWith(
         expect.objectContaining({ value: otherUserId }),
+        TEST_EMPRESA_ID,
         'proyecto',
         expect.objectContaining({ page: 1, pageSize: 20 }),
       );
@@ -240,7 +243,7 @@ describe('SearchMessagesUseCase', () => {
         query: 'proyecto',
         page: 2,
         pageSize: 1,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const data = result.unwrap();
@@ -265,7 +268,7 @@ describe('SearchMessagesUseCase', () => {
         query: 'proyecto',
         page: 0,
         pageSize: 0,
-      });
+      }, TEST_EMPRESA_ID);
 
       expect(result.isOk()).toBe(true);
       const data = result.unwrap();

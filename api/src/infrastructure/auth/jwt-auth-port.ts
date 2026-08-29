@@ -14,7 +14,11 @@ export class JwtAuthPort implements AuthPort {
   ) {}
 
   sign(payload: TokenPayload, options?: SignOptions): string {
-    const jwtPayload: any = { sub: payload.sub, role: payload.role };
+    const jwtPayload: any = {
+      sub: payload.sub,
+      role: payload.role,         // numeric roleId
+      roleName: payload.roleName, // human-readable name
+    };
     if (payload.empresaId) {
       jwtPayload.empresaId = payload.empresaId;
     }
@@ -26,10 +30,15 @@ export class JwtAuthPort implements AuthPort {
   }
 
   verify(token: string): TokenPayload {
-    const decoded = jwt.verify(token, this.secret) as jwt.JwtPayload & { role: string; empresaId?: string };
+    const decoded = jwt.verify(token, this.secret) as jwt.JwtPayload & {
+      role: number;
+      roleName: string;
+      empresaId?: string;
+    };
     return {
       sub: decoded.sub as string,
-      role: decoded.role as any,
+      role: decoded.role as number,
+      roleName: decoded.roleName as string,
       empresaId: decoded.empresaId,
     };
   }

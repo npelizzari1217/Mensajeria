@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NotGroupMemberError = exports.GroupNotFoundError = exports.UnauthorizedMessageAccessError = exports.MessageNotFoundError = exports.Draft = exports.GroupMemberRemoved = exports.GroupMemberAdded = exports.GroupCreated = exports.GroupMember = exports.Group = exports.ForwardedContent = exports.GroupRole = exports.MessageRead = exports.MessageSent = exports.Attachment = exports.ConversationThread = exports.MessageRecipient = exports.Message = exports.ThreadId = exports.ForbiddenDomainError = exports.EmpresaNameAlreadyExistsError = exports.EmpresaNotFoundError = exports.InvalidCredentialsError = exports.EmailAlreadyExistsError = exports.UserNotFoundError = exports.UserRegistered = exports.Empresa = exports.User = exports.UserIdentity = exports.Password = exports.EmpresaId = exports.Timestamp = exports.MessageStatusVO = exports.MessageStatus = exports.MessageBody = exports.Subject = exports.RoleVO = exports.Role = exports.Email = exports.FileId = exports.MessageId = exports.UserId = exports.ValidationError = exports.StorageError = exports.NotFoundError = exports.DomainError = exports.err = exports.ok = exports.Err = exports.Ok = void 0;
-exports.DraftNotFoundError = exports.GroupAlreadyExistsError = exports.NotGroupAdminError = void 0;
+exports.Role = exports.Draft = exports.GroupMemberRemoved = exports.GroupMemberAdded = exports.GroupCreated = exports.GroupMember = exports.Group = exports.ForwardedContent = exports.GroupRole = exports.MessageRead = exports.MessageSent = exports.Attachment = exports.ConversationThread = exports.MessageRecipient = exports.Message = exports.ThreadId = exports.ForbiddenDomainError = exports.EmpresaNameAlreadyExistsError = exports.EmpresaNotFoundError = exports.InvalidCredentialsError = exports.EmailAlreadyExistsError = exports.UserNotFoundError = exports.UserRegistered = exports.Empresa = exports.User = exports.UserIdentity = exports.Password = exports.EmpresaId = exports.Timestamp = exports.MessageStatusVO = exports.MessageStatus = exports.MessageBody = exports.Subject = exports.USUARIO_ROLE_ID = exports.TECNICO_ROLE_ID = exports.SUPERVISOR_ROLE_ID = exports.ADMIN_ROLE_ID = exports.RoleVO = exports.Email = exports.FileId = exports.MessageId = exports.UserId = exports.ValidationError = exports.StorageError = exports.NotFoundError = exports.DomainError = exports.err = exports.ok = exports.Err = exports.Ok = void 0;
+exports.DraftNotFoundError = exports.GroupAlreadyExistsError = exports.NotGroupAdminError = exports.NotGroupMemberError = exports.GroupNotFoundError = exports.UnauthorizedMessageAccessError = exports.MessageNotFoundError = exports.RoleHasUsersError = exports.RoleNameAlreadyExistsError = exports.RoleName = exports.RoleId = void 0;
 // Shared
 var result_1 = require("./shared/result");
 Object.defineProperty(exports, "Ok", { enumerable: true, get: function () { return result_1.Ok; } });
@@ -26,8 +26,11 @@ Object.defineProperty(exports, "FileId", { enumerable: true, get: function () { 
 var email_1 = require("./shared/value-objects/email");
 Object.defineProperty(exports, "Email", { enumerable: true, get: function () { return email_1.Email; } });
 var role_1 = require("./shared/value-objects/role");
-Object.defineProperty(exports, "Role", { enumerable: true, get: function () { return role_1.Role; } });
 Object.defineProperty(exports, "RoleVO", { enumerable: true, get: function () { return role_1.RoleVO; } });
+Object.defineProperty(exports, "ADMIN_ROLE_ID", { enumerable: true, get: function () { return role_1.ADMIN_ROLE_ID; } });
+Object.defineProperty(exports, "SUPERVISOR_ROLE_ID", { enumerable: true, get: function () { return role_1.SUPERVISOR_ROLE_ID; } });
+Object.defineProperty(exports, "TECNICO_ROLE_ID", { enumerable: true, get: function () { return role_1.TECNICO_ROLE_ID; } });
+Object.defineProperty(exports, "USUARIO_ROLE_ID", { enumerable: true, get: function () { return role_1.USUARIO_ROLE_ID; } });
 var subject_1 = require("./shared/value-objects/subject");
 Object.defineProperty(exports, "Subject", { enumerable: true, get: function () { return subject_1.Subject; } });
 var message_body_1 = require("./shared/value-objects/message-body");
@@ -96,6 +99,16 @@ Object.defineProperty(exports, "GroupMemberRemoved", { enumerable: true, get: fu
 // Messaging Entities — Drafts
 var draft_1 = require("./messaging/entities/draft");
 Object.defineProperty(exports, "Draft", { enumerable: true, get: function () { return draft_1.Draft; } });
+// Role
+var role_2 = require("./role/entities/role");
+Object.defineProperty(exports, "Role", { enumerable: true, get: function () { return role_2.Role; } });
+var role_id_1 = require("./role/value-objects/role-id");
+Object.defineProperty(exports, "RoleId", { enumerable: true, get: function () { return role_id_1.RoleId; } });
+var role_name_1 = require("./role/value-objects/role-name");
+Object.defineProperty(exports, "RoleName", { enumerable: true, get: function () { return role_name_1.RoleName; } });
+var role_errors_1 = require("./role/errors/role.errors");
+Object.defineProperty(exports, "RoleNameAlreadyExistsError", { enumerable: true, get: function () { return role_errors_1.RoleNameAlreadyExistsError; } });
+Object.defineProperty(exports, "RoleHasUsersError", { enumerable: true, get: function () { return role_errors_1.RoleHasUsersError; } });
 // Messaging Errors
 var message_errors_1 = require("./messaging/errors/message.errors");
 Object.defineProperty(exports, "MessageNotFoundError", { enumerable: true, get: function () { return message_errors_1.MessageNotFoundError; } });

@@ -11,14 +11,16 @@ class UserRegistered {
     userId;
     email;
     name;
-    role;
+    roleId;
+    roleName;
     eventName = 'UserRegistered';
     occurredAt = new Date();
-    constructor(userId, email, name, role) {
+    constructor(userId, email, name, roleId, roleName) {
         this.userId = userId;
         this.email = email;
         this.name = name;
-        this.role = role;
+        this.roleId = roleId;
+        this.roleName = roleName;
     }
 }
 exports.UserRegistered = UserRegistered;

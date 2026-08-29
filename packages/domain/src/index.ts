@@ -12,7 +12,7 @@ export { UserId } from './shared/value-objects/user-id';
 export { MessageId } from './shared/value-objects/message-id';
 export { FileId } from './shared/value-objects/file-id';
 export { Email } from './shared/value-objects/email';
-export { Role, RoleVO } from './shared/value-objects/role';
+export { RoleVO, ADMIN_ROLE_ID, SUPERVISOR_ROLE_ID, TECNICO_ROLE_ID, USUARIO_ROLE_ID } from './shared/value-objects/role';
 export { Subject } from './shared/value-objects/subject';
 export { MessageBody } from './shared/value-objects/message-body';
 export { MessageStatus, MessageStatusVO } from './shared/value-objects/message-status';
@@ -79,6 +79,14 @@ export type { DraftCreateProps, DraftUpdateProps, DraftProps } from './messaging
 
 // Messaging Repositories — Drafts
 export { DraftRepository } from './messaging/repositories/draft-repository';
+
+// Role
+export { Role } from './role/entities/role';
+export type { CreateRoleProps, RoleProps } from './role/entities/role';
+export { RoleId } from './role/value-objects/role-id';
+export { RoleName } from './role/value-objects/role-name';
+export { RoleRepository } from './role/repositories/role-repository';
+export { RoleNameAlreadyExistsError, RoleHasUsersError } from './role/errors/role.errors';
 
 // Messaging Errors
 export { MessageNotFoundError, UnauthorizedMessageAccessError } from './messaging/errors/message.errors';

@@ -1,7 +1,6 @@
 import { DomainEvent } from '../../shared/events/domain-event';
 import { UserId } from '../../shared/value-objects/user-id';
 import { Email } from '../../shared/value-objects/email';
-import { RoleVO } from '../../shared/value-objects/role';
 
 /**
  * Domain event emitted when a new user registers successfully.
@@ -17,6 +16,7 @@ export class UserRegistered implements DomainEvent {
     readonly userId: UserId,
     readonly email: Email,
     readonly name: string,
-    readonly role: RoleVO,
+    readonly roleId: number,
+    readonly roleName: string,
   ) {}
 }

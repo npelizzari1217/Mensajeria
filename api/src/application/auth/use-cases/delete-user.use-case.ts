@@ -19,8 +19,8 @@ export class DeleteUserUseCase {
     const userResult = await this.userRepo.findById(uid);
     if (userResult.isErr()) return err(new UserNotFoundError(userId));
 
-    // Enforce empresa scoping for non-Admin callers
-    if (caller.callerRole !== 'Admin') {
+    // Enforce empresa scoping for non-Admin callers (1 = Admin)
+    if (caller.callerRoleId !== 1) {
       const isMember = await this.userRepo.isMemberOf(
         uid,
         EmpresaId.reconstruct(caller.callerEmpresaId),

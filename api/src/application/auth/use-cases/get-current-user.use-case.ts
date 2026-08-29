@@ -7,6 +7,7 @@ import {
   err,
 } from '@mensajeria/domain';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
+import { roleIdToName } from '../role-name-mapper';
 
 /**
  * GetCurrentUserUseCase.
@@ -29,11 +30,12 @@ export class GetCurrentUserUseCase {
     }
     const user = userResult.unwrap();
 
+    const roleId = user.getRoleId();
     return ok({
       id: user.getId().get(),
       email: user.getEmail().get(),
       name: user.getName(),
-      role: user.getRole().get(),
+      role: { id: roleId, name: roleIdToName(roleId) },
       createdAt: user.getCreatedAt().toString(),
     });
   }

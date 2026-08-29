@@ -3,7 +3,6 @@ import {
   User,
   UserId,
   Email,
-  RoleVO,
   Timestamp,
   RefreshTokenRepository,
   ok,
@@ -20,7 +19,7 @@ function makeUser(email: string) {
     id: UserId.reconstruct('550e8400-e29b-41d4-a716-446655440000'),
     email: Email.reconstruct(email),
     name: 'Test User',
-    role: RoleVO.reconstruct('Usuario'),
+    roleId: 4,
     hashedPassword: '$2b$12$hashedpasswordvalue',
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -49,6 +48,7 @@ describe('LoginUseCase', () => {
       findByEmail: vi.fn(),
       save: vi.fn(),
       existsByEmail: vi.fn(),
+      getEmpresas: vi.fn().mockResolvedValue(ok([])),
     };
     mockHasher = {
       hash: vi.fn(),
@@ -161,7 +161,8 @@ describe('LoginUseCase', () => {
     // First call — access token
     const firstCall = (mockAuthPort.sign as any).mock.calls[0];
     expect(firstCall[0].sub).toBe('550e8400-e29b-41d4-a716-446655440000');
-    expect(firstCall[0].role).toBe('Usuario');
+    expect(firstCall[0].role).toBe(4);
+    expect(firstCall[0].roleName).toBe('Usuario');
     // Second call — refresh token with custom expiresIn
     const secondCall = (mockAuthPort.sign as any).mock.calls[1];
     expect(secondCall[1]?.expiresIn).toBe('7d');

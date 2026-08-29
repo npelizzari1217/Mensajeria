@@ -1,11 +1,10 @@
-import { Role } from '@mensajeria/domain';
-
 /**
  * Payload stored inside the JWT token.
  */
 export interface TokenPayload {
   sub: string;
-  role: Role;
+  role: number;       // numeric roleId
+  roleName: string;   // human-readable role name
   empresaId?: string;
 }
 

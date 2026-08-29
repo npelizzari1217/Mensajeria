@@ -41,16 +41,16 @@ export interface UserRepository {
     delete(id: UserId): Promise<Result<void, DomainError>>;
     getEmpresas(userId: UserId): Promise<Result<EmpresaMembership[], DomainError>>;
     isMemberOf(userId: UserId, empresaId: EmpresaId): Promise<boolean>;
-    addToEmpresa(userId: UserId, empresaId: EmpresaId, role: string): Promise<Result<void, DomainError>>;
+    addToEmpresa(userId: UserId, empresaId: EmpresaId, roleId: number): Promise<Result<void, DomainError>>;
     /**
-     * Finds all users that belong to a given empresa.
+     * Finds all users that belong to a given empresa, optionally filtered by roleId.
      */
-    findAllByEmpresaId(empresaId: EmpresaId): Promise<Result<User[], DomainError>>;
+    findAllByEmpresaId(empresaId: EmpresaId, roleId?: number): Promise<Result<User[], DomainError>>;
 }
 export interface EmpresaMembership {
     empresaId: EmpresaId;
     nombre: string;
-    role: string;
+    roleId: number;
     isActive: boolean;
 }
 //# sourceMappingURL=user-repository.d.ts.map

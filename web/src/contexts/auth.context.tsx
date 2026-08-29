@@ -14,7 +14,9 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: string;         // role name — kept for backward compatibility
+  roleId?: number;      // numeric role ID from the backend
+  roleName?: string;    // role name from the backend
   createdAt?: string;
 }
 
@@ -35,6 +37,46 @@ interface AuthContextType {
   empresas: EmpresaInfo[];
   empresaId: string | null;
   pendingEmpresaSelection: boolean;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Normalise raw user payload from login / refresh responses.
+ *
+ * The backend may return `role` as a string ("Admin") or as an object
+ * `{ id: number, name: string }`.  This function ensures the consumer
+ * always has `role` (string), `roleId` (number), and `roleName` (string).
+ */
+function normalizeUser(raw: Record<string, unknown>): UserProfile {
+  const roleValue = raw.role;
+  let roleStr = '';
+  let roleId: number | undefined;
+  let roleName: string | undefined;
+
+  if (roleValue && typeof roleValue === 'object' && roleValue !== null) {
+    const obj = roleValue as Record<string, unknown>;
+    roleId = typeof obj.id === 'number' ? obj.id : Number(obj.id) || undefined;
+    roleName = typeof obj.name === 'string' ? obj.name : String(obj.name ?? '');
+    roleStr = roleName;
+  } else if (typeof roleValue === 'string') {
+    roleStr = roleValue;
+    roleName = roleValue;
+  } else if (typeof roleValue === 'number') {
+    roleId = roleValue;
+    roleStr = String(roleValue);
+    roleName = roleStr;
+  }
+
+  return {
+    id: String(raw.id ?? ''),
+    email: String(raw.email ?? ''),
+    name: String(raw.name ?? ''),
+    role: roleStr,
+    roleId,
+    roleName,
+    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : undefined,
+  };
 }
 
 // ── Context ─────────────────────────────────────────────────────────
@@ -65,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         const { accessToken: token, user: userData } = data.data;
         setAccessToken(token);
-        setUser(userData);
+        setUser(normalizeUser(userData));
       } catch {
         if (cancelled) return;
         setAccessToken(null);
@@ -89,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await apiClient.post('/auth/login', { email, password });
       const { accessToken: token, user: userData, empresas: empresasData } = data.data;
       setAccessToken(token);
-      setUser(userData);
+      setUser(normalizeUser(userData));
 
       if (empresasData && empresasData.length > 0) {
         setEmpresas(empresasData);

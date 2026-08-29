@@ -1,24 +1,32 @@
 import { UserId } from '../../shared/value-objects/user-id';
-import { RoleVO } from '../../shared/value-objects/role';
 import { Result } from '../../shared/result';
 /**
  * UserIdentity Value Object.
  *
  * Represents an authenticated user's identity for authorization checks.
  * Injected into request context by AuthGuard after token verification.
- * Carries userId + role for roles.guard.ts checks.
+ * Carries userId + roleId + roleName for consistent authorization.
  */
 export declare class UserIdentity {
     private readonly userId;
-    private readonly role;
+    private readonly roleId;
+    private readonly roleName;
     private constructor();
-    static create(userId: UserId, role: RoleVO): Result<UserIdentity, Error>;
+    static from(props: {
+        id: UserId;
+        roleId: number;
+        roleName: string;
+        empresaId?: string;
+    }): Result<UserIdentity, Error>;
     getUserId(): UserId;
-    getRole(): RoleVO;
+    getRoleId(): number;
+    getRoleName(): string;
     /**
      * Checks if this identity has at least the given role level.
+     * Lower roleId = higher rank, so this.roleId <= required means
+     * "I am at least as privileged as the required minimum".
      */
-    hasRole(minimum: Parameters<RoleVO['isAtLeast']>[0]): boolean;
+    hasRole(requiredRoleId: number): boolean;
     equals(other: UserIdentity): boolean;
     toString(): string;
 }

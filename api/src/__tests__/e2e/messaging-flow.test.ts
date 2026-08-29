@@ -3,8 +3,8 @@ import {
   User,
   UserId,
   Email,
-  RoleVO,
   Timestamp,
+  EmpresaId,
   Message,
   MessageId,
   Subject,
@@ -26,12 +26,14 @@ import { GetMessageUseCase } from '../../application/messaging/use-cases/get-mes
 import { MarkAsReadUseCase } from '../../application/messaging/use-cases/mark-as-read.use-case';
 import { ReplyToMessageUseCase } from '../../application/messaging/use-cases/reply-to-message.use-case';
 
+const TEST_EMPRESA_ID = EmpresaId.reconstruct('00000000-0000-0000-0000-000000000001');
+
 function makeUser(id: string, name: string) {
   return User.reconstruct({
     id: UserId.reconstruct(id),
     email: Email.reconstruct(`${name.toLowerCase().replace(/\s/g, '')}@example.com`),
     name,
-    role: RoleVO.reconstruct('Usuario'),
+    roleId: 4,
     hashedPassword: '$2b$12$hashed',
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -107,7 +109,14 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
         if (!user) return err(new NotFoundError('User', id.get()));
         return ok(user);
       }),
-      findByEmail: vi.fn(),
+      findByEmail: vi.fn(async (email: Email) => {
+        for (const user of userStore.values()) {
+          if (user.getEmail().get() === email.get()) {
+            return ok(user);
+          }
+        }
+        return err(new NotFoundError('User', email.get()));
+      }),
       save: vi.fn(),
       existsByEmail: vi.fn(),
     } as any;
@@ -257,10 +266,10 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
     // ── 1. Alice sends a message to Bob ──────────────────────────────
     const sendResult = await sendMessageUseCase.execute({
       senderId,
-      recipientIds: [recipientId],
+      recipientEmails: ['bob@example.com'],
       subject: 'Project Update',
       body: 'The project is on track for Q1 delivery.',
-    });
+    }, TEST_EMPRESA_ID);
     expect(sendResult.isOk()).toBe(true);
     const sentMessage = sendResult.unwrap();
     expect(sentMessage.subject).toBe('Project Update');
@@ -272,7 +281,7 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
       userId: senderId,
       page: 1,
       pageSize: 20,
-    });
+    }, TEST_EMPRESA_ID);
     expect(sentResult.isOk()).toBe(true);
     expect(sentResult.unwrap().data.length).toBeGreaterThanOrEqual(1);
 
@@ -281,7 +290,7 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
       userId: recipientId,
       page: 1,
       pageSize: 20,
-    });
+    }, TEST_EMPRESA_ID);
     expect(inboxResult.isOk()).toBe(true);
     const inbox = inboxResult.unwrap();
     expect(inbox.data.length).toBeGreaterThanOrEqual(1);
@@ -313,7 +322,7 @@ describe('Messaging E2E Flow (Send → Receive → Read → Reply)', () => {
       senderId: recipientId,
       parentMessageId: messageId,
       body: 'Thanks for the update, Alice!',
-    });
+    }, TEST_EMPRESA_ID);
     expect(replyResult.isOk()).toBe(true);
     const reply = replyResult.unwrap();
     expect(reply.parentMessageId).toBe(messageId);
