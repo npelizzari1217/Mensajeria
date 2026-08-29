@@ -7,8 +7,8 @@ import {
   err,
 } from '@mensajeria/domain';
 import { AuthPort, TokenPayload } from '../ports/auth-port';
-import { UserProfileDTO } from '../dtos/user-profile.dto';
 import { EmpresaDTO } from '../dtos/empresa.dto';
+import { roleIdToName } from '../role-name-mapper';
 
 export class SelectEmpresaUseCase {
   constructor(
@@ -26,13 +26,14 @@ export class SelectEmpresaUseCase {
       return err(new Error('User is not a member of this empresa'));
     }
 
-    // Fetch user entity to get domain-validated role (PascalCase),
-    // NOT the raw Prisma enum from the user_empresas pivot table
+    // Fetch user entity to get domain-validated role
     const userResult = await this.userRepo.findById(uid);
     if (userResult.isErr()) {
       return err(userResult.unwrapErr());
     }
     const user = userResult.unwrap();
+    const roleId = user.getRoleId();
+    const roleName = roleIdToName(roleId);
 
     const empresasResult = await this.userRepo.getEmpresas(uid);
     const empresas: EmpresaDTO[] = [];
@@ -41,7 +42,8 @@ export class SelectEmpresaUseCase {
       empresas.push(...memberships.map((m) => ({
         id: m.empresaId.get(),
         nombre: m.nombre,
-        role: user.getRole().get(),
+        roleId: m.roleId,
+        roleName: roleIdToName(m.roleId),
       })));
     }
 
@@ -52,7 +54,8 @@ export class SelectEmpresaUseCase {
 
     const payload: TokenPayload = {
       sub: userId,
-      role: user.getRole().get(),
+      role: roleId,
+      roleName,
       empresaId,
     };
 

@@ -14,6 +14,7 @@ import { LoginDTO } from '../dtos/login.dto';
 import { AuthResponseDTO } from '../dtos/auth-response.dto';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
 import { EmpresaDTO } from '../dtos/empresa.dto';
+import { roleIdToName } from '../role-name-mapper';
 
 /**
  * LoginUseCase.
@@ -76,10 +77,14 @@ export class LoginUseCase {
       return err(new InvalidCredentialsError());
     }
 
+    const roleId = user.getRoleId();
+    const roleName = roleIdToName(roleId);
+
     // 4. Sign access token (default short expiration from adapter)
     const payload: TokenPayload = {
       sub: user.getId().get(),
-      role: user.getRole().get(),
+      role: roleId,
+      roleName,
     };
     const accessToken = this.authPort.sign(payload);
 
@@ -104,7 +109,8 @@ export class LoginUseCase {
       empresas.push(...memberships.map((m) => ({
         id: m.empresaId.get(),
         nombre: m.nombre,
-        role: m.role,
+        roleId: m.roleId,
+        roleName: roleIdToName(m.roleId),
       })));
     }
 
@@ -113,7 +119,7 @@ export class LoginUseCase {
       id: user.getId().get(),
       email: user.getEmail().get(),
       name: user.getName(),
-      role: user.getRole().get(),
+      role: { id: roleId, name: roleName },
       createdAt: user.getCreatedAt().toString(),
     };
 

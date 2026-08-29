@@ -16,6 +16,7 @@ import {
 } from '@mensajeria/domain';
 import { AuthPort } from '../ports/auth-port';
 import { UserProfileDTO } from '../dtos/user-profile.dto';
+import { roleIdToName } from '../role-name-mapper';
 
 export interface RefreshTokenResult {
   accessToken: string;
@@ -57,10 +58,14 @@ export class RefreshTokenUseCase {
     }
     const user = userResult.unwrap();
 
+    const roleId = user.getRoleId();
+    const roleName = roleIdToName(roleId);
+
     // 5. Sign a new access token
     const newAccessToken = this.authPort.sign({
       sub: user.getId().get(),
-      role: user.getRole().get(),
+      role: roleId,
+      roleName,
     });
 
     // 6. Return
@@ -70,7 +75,7 @@ export class RefreshTokenUseCase {
         id: user.getId().get(),
         email: user.getEmail().get(),
         name: user.getName(),
-        role: user.getRole().get(),
+        role: { id: roleId, name: roleName },
         createdAt: user.getCreatedAt().toString(),
       },
     });

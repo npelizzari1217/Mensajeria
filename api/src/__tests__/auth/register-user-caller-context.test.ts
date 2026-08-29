@@ -52,6 +52,7 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
       caller: {
         callerId: 'admin-1',
         callerRole: 'Admin',
+        callerRoleId: 1,
         callerEmpresaId: 'empresa-a',
       },
     });
@@ -63,20 +64,22 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
     expect(mockUserRepo.addToEmpresa).toHaveBeenCalled();
   });
 
-  it('ADMIN can register user with Admin role', async () => {
+  it('ADMIN can register user with Admin role (roleId: 1)', async () => {
     const result = await useCase.execute({
       ...validBase,
       empresaId: 'empresa-b',
-      role: 'Admin',
+      roleId: 1,
       caller: {
         callerId: 'admin-1',
         callerRole: 'Admin',
+        callerRoleId: 1,
         callerEmpresaId: 'empresa-a',
       },
     });
 
     expect(result.isOk()).toBe(true);
-    expect(result.unwrap().role).toBe('Admin');
+    expect(result.unwrap().role.id).toBe(1);
+    expect(result.unwrap().role.name).toBe('Admin');
   });
 
   // ── Scenario 2: SUPERVISOR registers user for own empresa ──
@@ -87,6 +90,7 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
       caller: {
         callerId: 'supervisor-1',
         callerRole: 'Supervisor',
+        callerRoleId: 2,
         callerEmpresaId: 'empresa-a',
       },
     });
@@ -104,6 +108,7 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
       caller: {
         callerId: 'supervisor-1',
         callerRole: 'Supervisor',
+        callerRoleId: 2,
         callerEmpresaId: 'empresa-a',
       },
     });
@@ -117,14 +122,15 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
   });
 
   // ── Scenario 4: SUPERVISOR tries to assign Admin role → Forbidden ──
-  it('SUPERVISOR cannot assign Admin role', async () => {
+  it('SUPERVISOR cannot assign Admin role (roleId: 1)', async () => {
     const result = await useCase.execute({
       ...validBase,
       empresaId: 'empresa-a',
-      role: 'Admin',
+      roleId: 1,
       caller: {
         callerId: 'supervisor-1',
         callerRole: 'Supervisor',
+        callerRoleId: 2,
         callerEmpresaId: 'empresa-a',
       },
     });
@@ -145,6 +151,7 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
       caller: {
         callerId: 'tecnico-1',
         callerRole: 'Tecnico',
+        callerRoleId: 3,
         callerEmpresaId: 'empresa-a',
       },
     });
@@ -164,6 +171,7 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
       caller: {
         callerId: 'user-1',
         callerRole: 'Usuario',
+        callerRoleId: 4,
         callerEmpresaId: 'empresa-a',
       },
     });
@@ -171,6 +179,56 @@ describe('RegisterUserUseCase — CallerContext enforcement', () => {
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toBeInstanceOf(ForbiddenDomainError);
     expect(mockUserRepo.save).not.toHaveBeenCalled();
+  });
+
+  // ── roleId-based user creation ──────────────────────────────────────
+
+  it('User.create({ roleId: 4 }) → Usuario per default', async () => {
+    const result = await useCase.execute({
+      ...validBase,
+      empresaId: 'empresa-a',
+      // roleId defaults to 4
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().role.id).toBe(4);
+    expect(result.unwrap().role.name).toBe('Usuario');
+  });
+
+  it('Admin(1) can create Admins(1) — full privilege', async () => {
+    const result = await useCase.execute({
+      ...validBase,
+      empresaId: 'empresa-a',
+      roleId: 1,
+      caller: {
+        callerId: 'admin-1',
+        callerRole: 'Admin',
+        callerRoleId: 1,
+        callerEmpresaId: 'empresa-a',
+      },
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().role.id).toBe(1);
+    expect(result.unwrap().role.name).toBe('Admin');
+  });
+
+  it('Supervisor(2) cannot create Admins(1)', async () => {
+    const result = await useCase.execute({
+      ...validBase,
+      empresaId: 'empresa-a',
+      roleId: 1,
+      caller: {
+        callerId: 'supervisor-1',
+        callerRole: 'Supervisor',
+        callerRoleId: 2,
+        callerEmpresaId: 'empresa-a',
+      },
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toBeInstanceOf(ForbiddenDomainError);
+    expect(result.unwrapErr().message).toContain('Admin role');
   });
 
   // ── Backward compatibility: no caller context ──

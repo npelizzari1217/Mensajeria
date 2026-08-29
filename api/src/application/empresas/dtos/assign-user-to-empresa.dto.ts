@@ -3,5 +3,5 @@
  */
 export interface AssignUserToEmpresaDTO {
   userId: string;
-  role?: string; // defaults to 'USUARIO'
+  roleId?: number; // defaults to 4 (Usuario)
 }

@@ -3,7 +3,6 @@ import {
   User,
   UserId,
   Email,
-  RoleVO,
   Timestamp,
   RefreshTokenRecord,
   RefreshTokenRepository,
@@ -26,14 +25,14 @@ import { UserRepository } from '@mensajeria/domain';
 function makeUser(
   id: string,
   email: string,
-  role: string = 'Usuario',
+  roleId: number = 4,
   password: string = '$2b$12$hashed',
 ) {
   return User.reconstruct({
     id: UserId.reconstruct(id),
     email: Email.reconstruct(email),
     name: 'Test User',
-    role: RoleVO.reconstruct(role),
+    roleId,
     hashedPassword: password,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -126,6 +125,8 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
         }
         return false;
       }),
+      getEmpresas: vi.fn().mockResolvedValue(ok([])),
+      addToEmpresa: vi.fn().mockResolvedValue(ok(undefined)),
     } as any;
 
     mockHasher = {
@@ -174,6 +175,7 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'user@example.com',
       password: 'SecurePass1',
       name: 'Flow User',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
     expect(registerResult.isOk()).toBe(true);
     const registeredUser = registerResult.unwrap();
@@ -211,6 +213,7 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'store-test@example.com',
       password: 'SecurePass1',
       name: 'Store Test',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     const loginResult = await loginUseCase.execute({
@@ -233,6 +236,7 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'revoke-test@example.com',
       password: 'SecurePass1',
       name: 'Revoke Test',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     const loginResult = await loginUseCase.execute({
@@ -262,6 +266,7 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'expired-test@example.com',
       password: 'SecurePass1',
       name: 'Expired Test',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     const loginResult = await loginUseCase.execute({
@@ -287,6 +292,7 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'logout-test@example.com',
       password: 'SecurePass1',
       name: 'Logout Test',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     // Login to create a refresh token
@@ -318,6 +324,7 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'secure@example.com',
       password: 'SecurePass1',
       name: 'Secure User',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     const loginResult = await loginUseCase.execute({
@@ -334,12 +341,14 @@ describe('Auth Flow (Register → Login → Access → Profile → Refresh → L
       email: 'duplicate@example.com',
       password: 'SecurePass1',
       name: 'First',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     const duplicateResult = await registerUseCase.execute({
       email: 'duplicate@example.com',
       password: 'SecurePass2',
       name: 'Second',
+      empresaId: '00000000-0000-0000-0000-000000000001',
     });
 
     expect(duplicateResult.isErr()).toBe(true);

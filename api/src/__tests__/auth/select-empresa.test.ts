@@ -3,7 +3,6 @@ import {
   User,
   UserId,
   Email,
-  RoleVO,
   Timestamp,
   EmpresaId,
   ok,
@@ -13,12 +12,12 @@ import { SelectEmpresaUseCase } from '../../application/auth/use-cases/select-em
 import { AuthPort } from '../../application/auth/ports/auth-port';
 import { UserRepository } from '@mensajeria/domain';
 
-function makeUser(role: string) {
+function makeUser(roleId: number) {
   return User.reconstruct({
     id: UserId.reconstruct('550e8400-e29b-41d4-a716-446655440000'),
     email: Email.reconstruct('test@example.com'),
     name: 'Test User',
-    role: RoleVO.reconstruct(role),
+    roleId,
     hashedPassword: '$2b$12$hashedpasswordvalue',
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -55,23 +54,24 @@ describe('SelectEmpresaUseCase', () => {
     useCase = new SelectEmpresaUseCase(mockRepo, mockAuthPort, '7d');
   });
 
-  function mockSuccessfulScenario(role: string) {
+  function mockSuccessfulScenario(roleId: number) {
+    const roleNames: Record<number, string> = { 1: 'Admin', 2: 'Supervisor', 3: 'Técnico', 4: 'Usuario' };
     (mockRepo.isMemberOf as any).mockResolvedValue(true);
-    (mockRepo.findById as any).mockResolvedValue(ok(makeUser(role)));
+    (mockRepo.findById as any).mockResolvedValue(ok(makeUser(roleId)));
     (mockRepo.getEmpresas as any).mockResolvedValue(
       ok([
         {
           empresaId: EmpresaId.reconstruct(EMPRESA_ID),
           nombre: 'Test Empresa',
-          role: role.toUpperCase(), // Prisma-style uppercase that SHOULD be overwritten
+          roleId,
           isActive: true,
         },
       ]),
     );
   }
 
-  it('should sign JWT with PascalCase role from User entity (Admin)', async () => {
-    mockSuccessfulScenario('Admin');
+  it('should sign JWT with numeric roleId from User entity (Admin)', async () => {
+    mockSuccessfulScenario(1);
 
     const result = await useCase.execute(
       '550e8400-e29b-41d4-a716-446655440000',
@@ -81,16 +81,18 @@ describe('SelectEmpresaUseCase', () => {
     expect(result.isOk()).toBe(true);
 
     const firstCall = (mockAuthPort.sign as any).mock.calls[0];
-    expect(firstCall[0].role).toBe('Admin');
+    expect(firstCall[0].role).toBe(1);
+    expect(firstCall[0].roleName).toBe('Admin');
     expect(firstCall[0].sub).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(firstCall[0].empresaId).toBe(EMPRESA_ID);
 
     const response = result.unwrap();
-    expect(response.empresa.role).toBe('Admin');
+    expect(response.empresa.roleId).toBe(1);
+    expect(response.empresa.roleName).toBe('Admin');
   });
 
-  it('should sign JWT with PascalCase role from User entity (Supervisor)', async () => {
-    mockSuccessfulScenario('Supervisor');
+  it('should sign JWT with numeric roleId from User entity (Supervisor)', async () => {
+    mockSuccessfulScenario(2);
 
     const result = await useCase.execute(
       '550e8400-e29b-41d4-a716-446655440000',
@@ -100,14 +102,16 @@ describe('SelectEmpresaUseCase', () => {
     expect(result.isOk()).toBe(true);
 
     const firstCall = (mockAuthPort.sign as any).mock.calls[0];
-    expect(firstCall[0].role).toBe('Supervisor');
+    expect(firstCall[0].role).toBe(2);
+    expect(firstCall[0].roleName).toBe('Supervisor');
 
     const response = result.unwrap();
-    expect(response.empresa.role).toBe('Supervisor');
+    expect(response.empresa.roleId).toBe(2);
+    expect(response.empresa.roleName).toBe('Supervisor');
   });
 
-  it('should sign JWT with PascalCase role from User entity (Usuario)', async () => {
-    mockSuccessfulScenario('Usuario');
+  it('should sign JWT with numeric roleId from User entity (Usuario)', async () => {
+    mockSuccessfulScenario(4);
 
     const result = await useCase.execute(
       '550e8400-e29b-41d4-a716-446655440000',
@@ -117,14 +121,16 @@ describe('SelectEmpresaUseCase', () => {
     expect(result.isOk()).toBe(true);
 
     const firstCall = (mockAuthPort.sign as any).mock.calls[0];
-    expect(firstCall[0].role).toBe('Usuario');
+    expect(firstCall[0].role).toBe(4);
+    expect(firstCall[0].roleName).toBe('Usuario');
 
     const response = result.unwrap();
-    expect(response.empresa.role).toBe('Usuario');
+    expect(response.empresa.roleId).toBe(4);
+    expect(response.empresa.roleName).toBe('Usuario');
   });
 
-  it('should sign JWT with PascalCase role from User entity (Tecnico)', async () => {
-    mockSuccessfulScenario('Tecnico');
+  it('should sign JWT with numeric roleId from User entity (Tecnico)', async () => {
+    mockSuccessfulScenario(3);
 
     const result = await useCase.execute(
       '550e8400-e29b-41d4-a716-446655440000',
@@ -134,10 +140,12 @@ describe('SelectEmpresaUseCase', () => {
     expect(result.isOk()).toBe(true);
 
     const firstCall = (mockAuthPort.sign as any).mock.calls[0];
-    expect(firstCall[0].role).toBe('Tecnico');
+    expect(firstCall[0].role).toBe(3);
+    expect(firstCall[0].roleName).toBe('Técnico');
 
     const response = result.unwrap();
-    expect(response.empresa.role).toBe('Tecnico');
+    expect(response.empresa.roleId).toBe(3);
+    expect(response.empresa.roleName).toBe('Técnico');
   });
 
   it('should return error when user is not a member of the empresa', async () => {
