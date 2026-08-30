@@ -1,60 +1,53 @@
 # CLAUDE.md — mensajeria
 
-## SDD
+> Las reglas universales (SDD, modelo por fase, commits, branch+PR, tests, código) están en
+> `C:\trabajos\CLAUDE.md`. Este archivo contiene solo lo específico de este proyecto.
 
-Este repo trabaja con Spec-Driven Development: los artefactos viven en `openspec/` y en
-`sdd/`. Cada fase la ejecuta su subagente dedicado vía la herramienta Agent, **nunca
-invocando la skill** (las `sdd-*/SKILL.md` traen `delegate_only: true`: si las cargás como
-skill, sos el orquestador y tenés que delegar igual). El `model` es obligatorio en cada
-llamada.
+## [Overrides locales]
 
-### Cuándo NO corresponde el ciclo completo
+Todo lo que define `C:\trabajos\CLAUDE.md` aplica en este proyecto **sin anulaciones**.
+Verificado el 2026-08-30.
 
-Se implementa directo, sin ciclo SDD, **solo** si es un cambio mecánico de un archivo ya
-entendido, **sin diseño pendiente**. En ese caso lo hace el orquestador.
+Si en algún momento este proyecto se aparta del global, la anulación va acá y con este
+formato — nunca como una regla suelta en otra sección:
 
-Contar archivos NO es el criterio: un solo guard de dominio puede romper la capa que lo
-espeja, y el cambio se ve trivial hasta que alguien lo usa. Antes de arrancar, tres
-preguntas de sí/no:
+- **ANULA:** `<regla global textual>` — **Motivo:** `<por qué acá no aplica>`
+- **REEMPLAZA POR:** `<la regla que rige en este proyecto>`
 
-1. ¿Cambia algo que otra capa espeja? (un guard de dominio, un enum, un contrato de error,
-   un permiso, un schema del front)
-2. ¿Las alternativas difieren en comportamiento observable o en el contrato? Que existan dos
-   formas de escribirlo NO cuenta: casi siempre las hay. Cuenta que las dos formas no hagan
-   lo mismo.
-3. ¿Cambia lo que el usuario ve o hace? (una pantalla, un flujo, el significado de un estado)
+---
 
-**Un solo sí → ciclo SDD completo. Tres noes → lo hace el orquestador.**
+## Qué es
 
-Ante la duda, SDD. El costo es asimétrico: equivocarse hacia "directo" cuando había una
-decisión escondida cuesta un ciclo de retrabajo; equivocarse hacia SDD en algo mecánico
-cuesta un rato.
+App de mensajería con cliente **web** y **mobile**. Backend NestJS con soporte WebSocket
+(socket.io) además del borde HTTP.
 
-### Modelo por fase
+## Stack
 
-| Fase | Agente | Modelo |
-|---|---|---|
-| explore | `sdd-explore` | sonnet |
-| propose | `sdd-propose` | **opus** |
-| spec | `sdd-spec` | sonnet |
-| design | `sdd-design` | **opus** |
-| tasks | `sdd-tasks` | **opus** |
-| apply | `sdd-apply` | sonnet |
-| verify | `sdd-verify` | **opus** |
-| archive | `sdd-archive` | sonnet |
+pnpm workspaces (9) · Turbo · Node ≥ 20  
+`packages/domain` — dominio puro  
+`api` — NestJS + Prisma + bcrypt + JWT + socket.io  
+`web` — cliente web  
+`mobile` — cliente mobile  
 
-### Por qué cada fase corre donde corre (revisión 2026-08-22)
+TypeScript strict. Sin ESLint ni Biome: `pnpm lint` = `tsc --noEmit`.
 
-Tres fases cambiaron de modelo. El fundamento sale de revisar dónde aparecieron los
-defectos en los ciclos ya archivados, no de una preferencia.
+## Arquitectura
 
-| Fase | Modelo | Cambio | Por qué |
-|---|---|---|---|
-| explore | sonnet | — | Define el mapa que heredan las fases siguientes. Sin fallos atribuidos. |
-| propose | opus | — | Fase supervisada por vos; se sostiene sola. Candidata a bajar si necesitás presupuesto. |
-| spec | sonnet | — | Sin fallos atribuidos todavía. Pendiente de confirmar si los huecos de `tasks` son de diseño o de requisito no escrito. |
-| design | opus | — | Razona bien. Lo que falla es la estimación (~3×) y la rotura colateral. Se arregla obligándolo a correr typecheck real, no subiendo modelo. |
-| tasks | sonnet → opus | ⬆ | Último punto donde un hueco de design cuesta minutos. El único pase que atrapó CRÍTICOS corrió en opus. Evidencia n=1: aplicar, pero no darlo por medido. |
-| apply | sonnet | — | Su falla (implementación antes del test en archivos grandes) es de disciplina, no de capacidad. Ya corregida en el prompt. |
-| verify | sonnet → opus | ⬆ | Los verify que sirvieron inyectaron mutación y borraron un guard para probar el RED. Eso es razonamiento adversarial, no checklist. |
-| archive | haiku → sonnet | ⬆ | Falla reproducible en dos ciclos. Fase corta: el ahorro no compensa un artefacto que miente. |
+Hexagonal:
+- `packages/domain` — dominio puro (`auth`, `messaging`, `role`, `shared`)
+- `api/src/application` — casos de uso, DTOs, puertos (`ports/`)
+- `api/src/infrastructure` — adaptadores: Prisma, hashing, transporte
+- `api/src/presentation` — borde HTTP y WebSocket
+
+## WebSockets
+
+El gateway socket.io es una superficie de entrada igual que un controller HTTP. Tiene que
+autenticar y autorizar con las mismas reglas que el borde HTTP. Si difiere, es un hallazgo.
+
+## Artefactos SDD
+
+Los artefactos viven en `openspec/` y en `sdd/` (ambos commitados al repo).
+
+## Comandos
+
+`pnpm build` · `pnpm test` · `pnpm lint` (los tres vía Turbo desde la raíz)
