@@ -101,10 +101,20 @@ Comandos: `pnpm build` · `pnpm test` · `pnpm lint` (los tres vía Turbo desde 
 
 _(Procedencia: `CLAUDE.md` del proyecto y práctica del repo)_
 
-Proyecto de una sola persona: **no usa pull requests** ni revisor externo.
+Proyecto de una sola persona: no hay revisor externo ni issue-first.
 
-**No señales como problema**: la ausencia de PR, que un cambio supere N líneas, o que falte
-un issue asociado.
+**Pero SÍ usa pull requests**, desde el 2026-08-27. El motivo no es la revisión —no hay a
+quién revisarle— sino el **aislamiento entre máquinas**: el mismo repo se trabaja desde
+varias PCs, y la rama principal es el único lugar donde dos chocan de verdad. Toda tarea
+arranca en su propia rama, se pushea al abrir el PR, y entra a `main` con `--no-ff`. Nunca
+commit directo a `main`, nunca `--force` sobre ella.
+
+**No señales como problema**: que falte un issue asociado o que no haya etiquetas — eso
+sigue sin aplicar acá.
+
+**Tampoco reportes nada sobre el PR ni sobre el tamaño de la rama.** No es que no importen:
+es que no los podés ver. Esta revisión corre en `pre-commit`, sobre un commit suelto, antes
+de que exista el PR y sin conocer el resto de la rama.
 
 Commits: **Conventional Commits**, en inglés (el historial del repo es en inglés), **sin
 atribución de IA ni `Co-Authored-By`**.
