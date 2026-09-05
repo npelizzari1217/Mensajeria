@@ -62,3 +62,4 @@ mobile/.atl/
 # Config local de gga (herramienta personal, no del proyecto)
 .gga
 .atl/
+.claude/settings.local.json
