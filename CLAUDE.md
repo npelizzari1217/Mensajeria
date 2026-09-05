@@ -1,18 +1,8 @@
 # CLAUDE.md — mensajeria
 
-> Las reglas universales (SDD, modelo por fase, commits, branch+PR, tests, código) están en
-> `C:\trabajos\CLAUDE.md`. Este archivo contiene solo lo específico de este proyecto.
-
-## [Overrides locales]
-
-Todo lo que define `C:\trabajos\CLAUDE.md` aplica en este proyecto **sin anulaciones**.
-Verificado el 2026-08-30.
-
-Si en algún momento este proyecto se aparta del global, la anulación va acá y con este
-formato — nunca como una regla suelta en otra sección:
-
-- **ANULA:** `<regla global textual>` — **Motivo:** `<por qué acá no aplica>`
-- **REEMPLAZA POR:** `<la regla que rige en este proyecto>`
+> Las reglas universales (SDD, tabla de modelos, persistencia, commits, rama+PR, TDD,
+> delegación, estándares de código) están en `~/proyectos/CLAUDE.md`. Este archivo contiene
+> solo lo específico de este proyecto.
 
 ---
 
@@ -44,10 +34,14 @@ Hexagonal:
 El gateway socket.io es una superficie de entrada igual que un controller HTTP. Tiene que
 autenticar y autorizar con las mismas reglas que el borde HTTP. Si difiere, es un hallazgo.
 
-## Artefactos SDD
-
-Los artefactos viven en `openspec/` y en `sdd/` (ambos commitados al repo).
-
 ## Comandos
 
 `pnpm build` · `pnpm test` · `pnpm lint` (los tres vía Turbo desde la raíz)
+
+---
+
+## Dónde vive el historial de decisiones
+
+Además del `openspec/` que pide el global, este repo tiene un `sdd/` con artefactos
+commiteados. Los dos viajan con el repo; si buscás una decisión vieja y no está en
+`openspec/changes/`, mirá `sdd/`.

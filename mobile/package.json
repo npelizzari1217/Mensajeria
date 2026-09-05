@@ -1,13 +1,14 @@
 {
   "name": "mobile",
   "version": "0.1.0",
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "index.js",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@babel/runtime": "7.29.2",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
