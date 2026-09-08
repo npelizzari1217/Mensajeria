@@ -25,8 +25,12 @@ const REQUIRED_SCRIPTS = ['lint', 'test'];
  */
 const EXCEPTIONS = {
   mobile:
-    'Expo/React Native sin infraestructura de tests. Decision pendiente desde ' +
-    'el 2026-09-08: agregar tests o declararlo fuera de alcance de forma definitiva.',
+    'Tiene tests desde el 2026-09-08 (jest-expo, 6 casos). Sigue sin `lint` ' +
+    'porque hoy no typecheckea: 5 errores preexistentes — falta @types/node en ' +
+    'app.config.ts y src/api/client.ts, y src/theme/tamagui.config.ts importa ' +
+    'tamagui, que no esta instalado y al que nadie referencia. Decision ' +
+    'pendiente: instalar los tipos y borrar el archivo huerfano, o declararlo ' +
+    'fuera de alcance.',
 };
 
 const ROOT = process.cwd();
