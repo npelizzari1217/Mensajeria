@@ -30,6 +30,11 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
+      # Primero la completitud: si un workspace no esta cubierto, el verde de
+      # las compuertas de abajo no significa nada. Ver scripts/check-gate-coverage.mjs.
+      - name: Cobertura de las compuertas
+        run: pnpm gate:coverage
+
       # Las tres compuertas de calidad, en el orden que fija
       # proyectos/CLAUDE.md seccion 4: lint, tipos y tests.
       # Aca `pnpm lint` es `tsc --noEmit`: no hay ESLint ni Biome en este repo.
