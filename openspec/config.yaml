@@ -1,8 +1,73 @@
 # openspec/config.yaml — mensajeria
-# Mínimo: habilita el override de modelos por proyecto.
-# PENDIENTE: correr `sdd-init` para que complete `context:`, `rules:` y los
-# comandos de verificación detectando el stack real. No completar a mano.
+# Generado por sdd-init (re-inicialización) a partir del árbol real del repo.
 schema: spec-driven
+
+context: |
+  Monorepo pnpm workspaces (packageManager pnpm@9.0.0, Node >=20, Turbo) con 4
+  paquetes: `api` (NestJS 10 + Prisma 5 + socket.io + JWT/bcrypt + Zod, Vitest),
+  `web` (React 19 + Vite 6 + React Router 7, Vitest + Testing Library), `mobile`
+  (Expo ~51 + React Native 0.74, sin test runner configurado) y `packages/domain`
+  (dominio puro TypeScript, cero dependencias externas, Vitest). Arquitectura
+  hexagonal en `api/src`: `application/*/ports` como frontera hacia
+  `infrastructure` (Prisma, hashing, transporte); `presentation` es el borde
+  HTTP y WebSocket. Sin ESLint ni Biome: `pnpm lint` = `tsc --noEmit` por
+  paquete (verificado en `api`, `web`, `packages/domain`; `mobile` no define
+  `lint` ni `test`).
+
+strict_tdd: false
+strict_tdd_rationale: >
+  No hay un comando de test a nivel workspace que cubra los 4 proyectos: `pnpm
+  test` (`turbo run test`) solo ejecuta el script `test` de los paquetes que lo
+  declaran (api, web, packages/domain); `mobile` no tiene script `test` ni
+  dependencias de testing instaladas, así que turbo lo omite en silencio, sin
+  fallar y sin ejecutar nada ahí. Sin un comando workspace-wide que cubra los 4
+  proyectos in-scope, la puerta de decisión de sdd-init cae a `strict_tdd:
+  false`. Revertir a `true` requiere agregar un test runner a `mobile` (por
+  ejemplo jest-expo) o excluir `mobile` explícitamente del alcance TDD.
+
+projects:
+  - path: api
+    stack: "NestJS 10 + Prisma 5 + socket.io + Zod"
+    test_command: "pnpm --filter api test"
+    test_framework: vitest
+    lint_command: "pnpm --filter api lint"
+    build_command: "pnpm --filter api build"
+    coverage_command: "pnpm --filter api exec vitest run --coverage"
+  - path: web
+    stack: "React 19 + Vite 6 + React Router 7"
+    test_command: "pnpm --filter web test"
+    test_framework: "vitest + @testing-library/react"
+    lint_command: "pnpm --filter web lint"
+    build_command: "pnpm --filter web build"
+    coverage_command: null
+  - path: mobile
+    stack: "Expo ~51 + React Native 0.74"
+    test_command: null
+    test_framework: null
+    lint_command: null
+    build_command: null
+    coverage_command: null
+  - path: packages/domain
+    stack: "TypeScript puro — dominio, cero dependencias externas"
+    test_command: "pnpm --filter @mensajeria/domain test"
+    test_framework: vitest
+    lint_command: "pnpm --filter @mensajeria/domain lint"
+    build_command: "pnpm --filter @mensajeria/domain build"
+    coverage_command: null
+
+verification:
+  build: "pnpm build"
+  test: "pnpm test"
+  lint: "pnpm lint"
+
+rules:
+  - "Español neutro (no rioplatense) en artefactos legibles por personas: comentarios, prosa, copy de UI, mensajes de error. Identificadores, nombres de archivo y código en inglés."
+  - "Arquitectura hexagonal: `packages/domain` no importa `@nestjs/*` ni `@prisma/client`; `api/src/application` no importa `@prisma/client` — usa `application/*/ports/`, y el adaptador concreto vive en `infrastructure`."
+  - "El gateway socket.io es una superficie de entrada igual que un controller HTTP: debe autenticar y autorizar con las mismas reglas que el borde HTTP. Una diferencia es un hallazgo."
+  - "Validación de entrada con Zod en el borde. Contraseñas con bcrypt (nunca en texto plano ni en logs). Auth con JWT + cookie-parser; la autorización se decide en el backend."
+  - "Sin ESLint ni Biome: no reportar formato, comillas, punto y coma ni orden de imports. `pnpm lint` es `tsc --noEmit`."
+  - "`mobile` no tiene test runner ni lint configurado: no asumir cobertura de tests ni de tipos ahí hasta que se agregue tooling."
+  - "No tocar `openspec/changes/` fuera del flujo SDD explícito: hay ciclos abiertos (`entrega-4-final`, `fix-select-empresa-role-premium-ui`, `mobile-app`) y archivados en `openspec/changes/archive/`."
 
 # ---------------------------------------------------------------------------
 # Modelos por fase SDD — override del default global.
