@@ -80,8 +80,11 @@ describe('SocketContext', () => {
       </SocketProvider>,
     );
 
+    // La base sale de VITE_API_URL, que bajo vitest está vacía: la llamada real
+    // es '/messages'. Se afirma el namespace, que es el comportamiento; la base
+    // es configuración de deploy y no pertenece a esta prueba.
     expect(mockIo).toHaveBeenCalledWith(
-      'http://localhost:3000/messages',
+      '/messages',
       expect.objectContaining({
         transports: ['websocket', 'polling'],
       }),

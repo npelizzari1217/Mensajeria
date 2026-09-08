@@ -1,0 +1,48 @@
+name: gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancela corridas viejas de la misma rama: solo importa la ultima.
+concurrency:
+  group: gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # Primero la completitud: si un workspace no esta cubierto, el verde de
+      # las compuertas de abajo no significa nada. Ver scripts/check-gate-coverage.mjs.
+      - name: Cobertura de las compuertas
+        run: pnpm gate:coverage
+
+      # Las tres compuertas de calidad, en el orden que fija
+      # proyectos/CLAUDE.md seccion 4: lint, tipos y tests.
+      # Aca `pnpm lint` es `tsc --noEmit`: no hay ESLint ni Biome en este repo.
+      - name: Lint y tipos
+        run: pnpm lint
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

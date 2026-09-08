@@ -63,3 +63,6 @@ mobile/.atl/
 .gga
 .atl/
 .claude/settings.local.json
+
+# Info incremental de TypeScript: artefacto de build, se regenera solo.
+*.tsbuildinfo
