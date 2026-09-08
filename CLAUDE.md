@@ -42,6 +42,6 @@ autenticar y autorizar con las mismas reglas que el borde HTTP. Si difiere, es u
 
 ## Dónde vive el historial de decisiones
 
-Además del `openspec/` que pide el global, este repo tiene un `sdd/` con artefactos
-commiteados. Los dos viajan con el repo; si buscás una decisión vieja y no está en
-`openspec/changes/`, mirá `sdd/`.
+`openspec/` es el único almacén. Hasta el 2026-09-08 este repo tenía además un `sdd/`
+en la raíz con 5 cambios; se eliminó para que el ciclo SDD sea uno solo, igual que en el
+resto de la carpeta. Esos artefactos siguen en la historia de git: `git show be2e7e1~1:sdd/`.
