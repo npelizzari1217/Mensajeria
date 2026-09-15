@@ -75,3 +75,9 @@ rules:
   - "Sin ESLint ni Biome: no reportar formato, comillas, punto y coma ni orden de imports. `pnpm lint` es `tsc --noEmit`."
   - "`mobile` no tiene test runner ni lint configurado: no asumir cobertura de tests ni de tipos ahí hasta que se agregue tooling."
   - "No tocar `openspec/changes/` fuera del flujo SDD explícito: hay ciclos abiertos (`entrega-4-final`, `fix-select-empresa-role-premium-ui`, `mobile-app`) y archivados en `openspec/changes/archive/`."
+
+# Artefactos del ciclo SDD: fuente unica en Git, bajo openspec/changes/.
+# Engram queda como memoria (decisiones, hallazgos, contexto entre sesiones),
+# nunca como copia de estos artefactos. Decision del 2026-09-15.
+sdd:
+  artifact_store: openspec
