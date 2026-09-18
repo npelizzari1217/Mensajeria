@@ -1,9 +1,38 @@
 name: gates
 
+# Filtro de rutas: la unica job de este workflow (install + gate:coverage + lint + test +
+# build) corre entera para cualquier cambio que toque codigo o configuracion de build. Las
+# dos listas de abajo (push y pull_request) tienen que ser IDENTICAS a mano: GitHub no
+# soporta anchors de YAML en `on:` en runners viejos y no podemos correr el workflow para
+# confirmar version, asi que no usamos ese atajo. Si tocas una lista, toca la otra.
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/gates.yml' # el propio gate: un cambio en la compuerta tiene que ejercitarla
+      - 'api/**'
+      - 'web/**'
+      - 'mobile/**'
+      - 'packages/**'
+      - '**/package.json' # scripts/check-gate-coverage.mjs escanea TODOS los workspaces via `pnpm -r list`; un package.json nuevo (o uno que pierda lint/test) tiene que activar el chequeo aunque su carpeta no matchee arriba
+      - 'pnpm-lock.yaml' # resolucion de dependencias: afecta install + build de los 5 workspaces
+      - 'pnpm-workspace.yaml' # cambia que directorios son workspaces, es decir que escanea gate:coverage
+      - 'turbo.json' # pipeline de build/test/lint (dependsOn, outputs)
+      - 'tsconfig.base.json' # tsconfig compartido que extienden api/web/mobile/packages/domain; afecta `tsc --noEmit` en todos
+      - '.nvmrc' # version de Node para actions/setup-node; un bump puede romper build o test
   pull_request:
+    paths:
+      - '.github/workflows/gates.yml'
+      - 'api/**'
+      - 'web/**'
+      - 'mobile/**'
+      - 'packages/**'
+      - '**/package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'tsconfig.base.json'
+      - '.nvmrc'
 
 # Cancela corridas viejas de la misma rama: solo importa la ultima.
 concurrency:
