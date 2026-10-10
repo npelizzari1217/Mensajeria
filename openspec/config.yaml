@@ -1,3 +1,5 @@
+# CONGELADO desde el 2026-10-10: ODD reemplazó a SDD y este archivo queda como historia.
+# Ver ~/proyectos/CLAUDE.md §3.2 y §6.1. No lo lee ninguna herramienta vigente.
 # openspec/config.yaml — mensajeria
 # Generado por sdd-init (re-inicialización) a partir del árbol real del repo.
 schema: spec-driven
@@ -13,24 +15,6 @@ context: |
   HTTP y WebSocket. Sin ESLint ni Biome: `pnpm lint` = `tsc --noEmit` por
   paquete (verificado en `api`, `web`, `packages/domain`; `mobile` no define
   `lint` ni `test`).
-
-# La excepcion de los bugfixes NO cabe en este booleano, y por eso va escrita aca:
-# strict_tdd: false aplica SOLO a las features. En un cambio cuyo tipo de trabajo es
-# CORRECCION DE DEFECTO, TDD sigue siendo OBLIGATORIO. El orquestador inyecta
-# "STRICT TDD MODE IS ACTIVE" al lanzar sdd-apply y sdd-verify, y esa inyeccion manda
-# por encima de este valor: sdd-apply debe cargar strict-tdd.md y entregar su tabla de
-# TDD Cycle Evidence (RED -> GREEN -> REFACTOR), y sdd-verify la exige.
-# Ver la seccion `## Tests` de AGENTS.md y la 6.3 de ~/proyectos/CLAUDE.md.
-strict_tdd: false
-strict_tdd_rationale: >
-  No hay un comando de test a nivel workspace que cubra los 4 proyectos: `pnpm
-  test` (`turbo run test`) solo ejecuta el script `test` de los paquetes que lo
-  declaran (api, web, packages/domain); `mobile` no tiene script `test` ni
-  dependencias de testing instaladas, así que turbo lo omite en silencio, sin
-  fallar y sin ejecutar nada ahí. Sin un comando workspace-wide que cubra los 4
-  proyectos in-scope, la puerta de decisión de sdd-init cae a `strict_tdd:
-  false`. Revertir a `true` requiere agregar un test runner a `mobile` (por
-  ejemplo jest-expo) o excluir `mobile` explícitamente del alcance TDD.
 
 projects:
   - path: api
@@ -74,10 +58,4 @@ rules:
   - "Validación de entrada con Zod en el borde. Contraseñas con bcrypt (nunca en texto plano ni en logs). Auth con JWT + cookie-parser; la autorización se decide en el backend."
   - "Sin ESLint ni Biome: no reportar formato, comillas, punto y coma ni orden de imports. `pnpm lint` es `tsc --noEmit`."
   - "`mobile` no tiene test runner ni lint configurado: no asumir cobertura de tests ni de tipos ahí hasta que se agregue tooling."
-  - "No tocar `openspec/changes/` fuera del flujo SDD explícito: hay ciclos abiertos (`entrega-4-final`, `fix-select-empresa-role-premium-ui`, `mobile-app`) y archivados en `openspec/changes/archive/`."
-
-# Artefactos del ciclo SDD: fuente unica en Git, bajo openspec/changes/.
-# Engram queda como memoria (decisiones, hallazgos, contexto entre sesiones),
-# nunca como copia de estos artefactos. Decision del 2026-09-15.
-sdd:
-  artifact_store: openspec
+  - "`openspec/` es historia congelada desde el 2026-10-10 (ODD reemplazó a SDD): no se escribe en `openspec/changes/`. Ver la nota de ciclos heredados en `CLAUDE.md`."
